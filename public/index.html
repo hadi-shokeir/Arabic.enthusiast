@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arabic Tutor Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js" type="module"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Supabase Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bk:#000;--wh:#fff;--g50:#fafafa;--g100:#f0f0f0;--g200:#e0e0e0;--g300:#c0c0c0;--g400:#888;--g500:#666;--g600:#444;--g700:#333;--g800:#1a1a1a;--ok:#00aa55;--wn:#ff8800;--bd:#dd2222;--fh:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fa:'Noto Kufi Arabic',sans-serif}
+html,body,#root{height:100%;overflow:hidden}
+/* RTL support for Arabic content */
+[dir="rtl"]{font-family:var(--fa),var(--fb)}
+.ar-text{font-family:var(--fa),var(--fb);direction:rtl;text-align:right}
+textarea,input[type="text"],input:not([type]){font-family:var(--fa),var(--fb);direction:auto;unicode-bidi:plaintext}
+.app{display:flex;height:100vh;font-family:var(--fb);background:var(--wh);color:var(--bk);overflow:hidden}
+/* Sidebar */
+.sb{width:220px;min-width:220px;background:var(--bk);color:var(--wh);display:flex;flex-direction:column}
+.sb-hd{padding:24px 20px;border-bottom:1px solid var(--g700)}
+.sb-hd h1{font-family:var(--fh);font-size:24px;letter-spacing:3px}
+.sb-hd small{font-size:11px;color:var(--g400);display:block;margin-top:4px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-it{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;border-left:3px solid transparent;color:var(--g300);font-size:13px;font-weight:500;transition:background .1s}
+.sb-it:hover{background:var(--g800);color:var(--wh)}
+.sb-it.on{background:var(--wh);color:var(--bk);border-left-color:var(--wh);font-weight:700}
+.sb-ft{padding:14px 20px;border-top:1px solid var(--g700);font-size:11px;color:var(--g500)}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{padding:18px 28px;border-bottom:2px solid var(--bk);background:var(--wh);display:flex;align-items:center;gap:12px}
+.topbar h2{font-family:var(--fh);font-size:28px;letter-spacing:2px}
+.page{flex:1;overflow-y:auto;padding:24px 28px;background:var(--g50)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-family:var(--fb);font-size:12px;font-weight:600;border:2px solid var(--bk);cursor:pointer;text-transform:uppercase;letter-spacing:.8px;background:var(--wh);color:var(--bk);transition:all .1s}
+.btn:hover{background:var(--g100)}.btn-p{background:var(--bk);color:var(--wh)}.btn-p:hover{background:var(--g700)}
+.btn-d{border-color:var(--bd);color:var(--bd)}.btn-d:hover{background:var(--bd);color:#fff}
+.btn-wa{background:#25D366;color:#fff;border-color:#25D366}.btn-wa:hover{background:#1ebe5d}
+.btn-sm{padding:5px 10px;font-size:10px}.btn-xs{padding:3px 8px;font-size:10px}
+.bi{padding:6px;border:none;background:none;cursor:pointer;color:var(--g500);display:inline-flex}.bi:hover{color:var(--bk)}
+/* Cards */
+.card{background:var(--wh);border:2px solid var(--bk);padding:18px;margin-bottom:14px}
+.card h3{font-family:var(--fh);font-size:20px;letter-spacing:1.5px;margin-bottom:12px}
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--wh);border:2px solid var(--bk);padding:16px}
+.stat .lb{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--g500);font-weight:600}
+.stat .vl{font-family:var(--fh);font-size:36px;margin-top:2px}
+.stat .su{font-size:11px;color:var(--g500);margin-top:1px}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;border-bottom:2px solid var(--bk);color:var(--g600);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--g200)}
+tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
+/* Tags & badges */
+.tg{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;background:var(--bk);color:var(--wh);letter-spacing:.5px;text-transform:uppercase}
+.bg{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border:1.5px solid}
+.bg-ok{border-color:var(--ok);color:var(--ok)}.bg-bd{border-color:var(--bd);color:var(--bd)}.bg-n{border-color:var(--g300);color:var(--g500)}
+/* Forms */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:5px;color:var(--g600)}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border:2px solid var(--g200);font-family:var(--fa),var(--fb);font-size:13px;outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--bk)}
+.fg textarea{resize:vertical;min-height:70px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* Modal */
+.mo-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100}
+.mo{background:var(--wh);border:2px solid var(--bk);width:92%;max-width:580px;max-height:82vh;overflow-y:auto}
+.mo-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:2px solid var(--bk)}
+.mo-hd h3{font-family:var(--fh);font-size:22px;letter-spacing:1.5px}
+.mo-bd{padding:22px}
+.mo-ft{padding:14px 22px;border-top:2px solid var(--g200);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+/* Tabs */
+.tabs{display:flex;border-bottom:2px solid var(--bk);margin-bottom:18px;background:var(--wh);overflow-x:auto}
+.tab{padding:10px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--g400);white-space:nowrap}
+.tab:hover{color:var(--bk)}.tab.on{color:var(--bk);border-bottom-color:var(--bk)}
+/* Profile */
+.prof-hd{display:flex;gap:20px;align-items:flex-start;padding:20px;background:var(--wh);border:2px solid var(--bk);margin-bottom:20px}
+.prof-av{width:70px;height:70px;background:var(--bk);color:var(--wh);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:28px;flex-shrink:0}
+.prof-info{flex:1}.prof-info h2{font-family:var(--fh);font-size:26px;letter-spacing:1.5px}
+.prof-meta{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;align-items:center}
+/* Calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--g200);border:2px solid var(--bk)}
+.cal-h{background:var(--bk);color:var(--wh);padding:7px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.cal-c{background:var(--wh);min-height:80px;padding:5px}
+.cal-c.om{background:var(--g50);color:var(--g300)}.cal-c.today{box-shadow:inset 0 0 0 2px var(--bk)}
+.cal-d{font-size:11px;font-weight:700;margin-bottom:3px}
+.cal-e{font-size:9px;padding:2px 3px;margin-bottom:1px;background:var(--bk);color:var(--wh);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.cal-e.completed{background:var(--g300)}.cal-e.cancelled{background:var(--wh);border:1px solid var(--g300);color:var(--g400);text-decoration:line-through}
+/* Misc */
+.ll{font-family:var(--fh);font-size:20px}.ll.low{color:var(--bd)}.ll.ok{color:var(--wn)}.ll.good{color:var(--ok)}
+.rd{width:9px;height:9px;border-radius:50%;background:var(--bd);display:inline-block;margin-left:5px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ri td{opacity:.45}
+.nc{width:32px;text-align:center;font-family:var(--fh);font-size:16px;color:var(--g400)}
+.ni{padding:10px 14px;border:1px solid var(--g200);margin-bottom:6px;background:var(--wh)}
+.ni .nd{font-size:10px;color:var(--g400);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.ni .nt{margin-top:3px;font-size:13px;line-height:1.5}
+.ci{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1.5px solid var(--g200);margin-bottom:5px;background:var(--wh);cursor:pointer}
+.cb{width:20px;height:20px;border:2px solid var(--bk);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb.on{background:var(--bk);color:var(--wh)}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;font-size:10px;font-weight:600;border:1.5px solid var(--g300);margin:2px;background:var(--wh)}
+.chip-x{cursor:pointer;font-weight:700;color:var(--g400);margin-left:3px}.chip-x:hover{color:var(--bd)}
+.chip-add{cursor:pointer;border-style:dashed;color:var(--g400)}.chip-add:hover{border-color:var(--bk);color:var(--bk)}
+.fu{border:2px dashed var(--g300);padding:16px;text-align:center;cursor:pointer}.fu:hover{border-color:var(--bk)}.fu input{display:none}
+.empty{text-align:center;padding:50px 20px;color:var(--g400)}.empty h3{font-family:var(--fh);font-size:22px;color:var(--g300)}.empty p{font-size:13px;margin:6px 0 16px}
+.sb-x{display:flex;align-items:center;gap:8px;border:2px solid var(--g200);padding:7px 12px;background:var(--wh)}
+.sb-x input{border:none;outline:none;font-size:13px;font-family:var(--fb);width:180px}
+/* +/- stepper */
+.stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--bk)}
+.stepper .st-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--bk);color:var(--wh);font-size:16px;font-weight:700;border:none;font-family:var(--fb);transition:background .1s}
+.stepper .st-btn:hover{background:var(--g700)}
+.stepper .st-btn.minus{background:var(--g800)}
+.stepper .st-val{min-width:38px;text-align:center;font-family:var(--fh);font-size:20px;padding:0 4px;background:var(--wh)}
+/* Progress bar */
+.prog{height:6px;background:var(--g200);width:100%;margin-top:4px;overflow:hidden}
+.prog-fill{height:100%;transition:width .3s}
+.prog-fill.good{background:var(--ok)}.prog-fill.ok{background:var(--wn)}.prog-fill.low{background:var(--bd)}
+/* Student card grid */
+.stu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.stu-card{background:var(--wh);border:2px solid var(--bk);padding:16px;transition:border-color .15s;cursor:pointer;position:relative}
+.stu-card:hover{border-color:var(--g400)}
+.stu-card.alert{border-left:4px solid var(--bd)}
+.stu-card.inactive{opacity:.5;border-style:dashed}
+.stu-card .sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.stu-card .sc-name{font-weight:700;font-size:15px}
+.stu-card .sc-num{font-family:var(--fh);font-size:14px;color:var(--g400);margin-right:6px}
+.stu-card .sc-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.stu-card .sc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.stu-card .sc-stat{padding:6px 8px;background:var(--g50);border:1px solid var(--g200)}
+.stu-card .sc-stat .sc-sl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--g500);font-weight:600}
+.stu-card .sc-stat .sc-sv{font-family:var(--fh);font-size:22px;margin-top:1px}
+.sc-actions{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+/* Quick complete btn */
+.btn-done{background:var(--ok);color:#fff;border-color:var(--ok);font-size:10px;padding:4px 10px}.btn-done:hover{background:#008844}
+/* Skill bar */
+.skill-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.skill-label{width:80px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--g600)}
+.skill-dots{display:flex;gap:4px}
+.skill-dot{width:28px;height:28px;border:2px solid var(--bk);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s}
+.skill-dot.on{background:var(--bk);color:var(--wh)}
+.skill-dot:hover{background:var(--g200)}
+.skill-dot.on:hover{background:var(--g700)}
+.skill-level{font-size:10px;color:var(--g500);margin-left:6px;min-width:70px}
+/* Assessment card */
+.assess-card{background:var(--wh);border:2px solid var(--g200);padding:16px;margin-bottom:14px;border-left:4px solid var(--g300)}
+.assess-card.private{border-left-color:var(--bd);background:#fffafa}
+.assess-card h4{font-family:var(--fh);font-size:16px;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.assess-card textarea{width:100%;padding:9px 11px;border:2px solid var(--g200);font-family:var(--fa),var(--fb);font-size:13px;resize:vertical;min-height:70px;outline:none;line-height:1.6;direction:auto;unicode-bidi:plaintext}
+.assess-card textarea:focus{border-color:var(--bk)}
+/* Share button */
+.btn-share{background:#128C7E;color:#fff;border-color:#128C7E}.btn-share:hover{background:#075E54}
+.free-left-stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--ok);margin-top:4px}
+.free-left-stepper .st-btn{background:var(--ok)}.free-left-stepper .st-btn:hover{background:#008844}
+/* Auth screens */
+.auth-wrap{display:flex;align-items:center;justify-content:center;height:100vh;background:var(--bk);font-family:var(--fb)}
+.auth-box{background:var(--wh);border:2px solid var(--bk);padding:40px;width:92%;max-width:420px}
+.auth-box h1{font-family:var(--fh);font-size:36px;letter-spacing:4px;margin-bottom:4px}
+.auth-box .sub{font-size:12px;color:var(--g500);margin-bottom:28px}
+.auth-box .fg input{padding:12px 14px;font-size:14px}
+.auth-box .error{color:var(--bd);font-size:12px;margin-top:8px;font-weight:600}
+.auth-box .success{color:var(--ok);font-size:12px;margin-top:8px;font-weight:600}
+.auth-tabs{display:flex;border-bottom:2px solid var(--bk);margin-bottom:20px}
+.auth-tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--g400)}
+.auth-tab.on{color:var(--bk);border-bottom-color:var(--bk)}
+.auth-role-sel{display:flex;gap:10px;margin-bottom:20px}
+.auth-role{flex:1;padding:14px;border:2px solid var(--g200);text-align:center;cursor:pointer;transition:all .1s}
+.auth-role.on{border-color:var(--bk);background:var(--bk);color:var(--wh)}
+.auth-role h4{font-family:var(--fh);font-size:18px;letter-spacing:1px}
+.auth-role p{font-size:10px;margin-top:3px;opacity:.7}
+/* Student portal */
+.stu-portal-hd{padding:20px 28px;background:var(--bk);color:var(--wh);display:flex;align-items:center;justify-content:space-between}
+.stu-portal-hd h1{font-family:var(--fh);font-size:22px;letter-spacing:3px}
+/* Responsive */
+@media(max-width:768px){.app{flex-direction:column}.sb{width:100%;min-width:100%;flex-direction:row;overflow-x:auto;border-bottom:2px solid var(--bk)}.sb-hd{display:none}.sb-nav{display:flex;padding:0;-webkit-overflow-scrolling:touch}.sb-it{padding:10px 14px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:11px;gap:6px}.sb-it.on{border-bottom-color:var(--wh);border-left-color:transparent}.sb-it span{display:none}.sb-ft{display:none}.page{padding:14px}.fr,.fr3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.prof-hd{flex-direction:column;align-items:center;text-align:center}.stu-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+import htm from 'https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js';
+const h = htm.bind(React.createElement);
+const {useState, useEffect, useCallback, useRef} = React;
+
+// ═══════════════════════════════════════════════════
+// CONFIGURATION — Replace with your Supabase project
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL = window.__SUPABASE_URL__ || "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "YOUR_SUPABASE_ANON_KEY";
+
+// Initialize Supabase client (gracefully degrade if not configured)
+let supabase = null;
+const supabaseReady = SUPABASE_URL !== "YOUR_SUPABASE_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+if (supabaseReady && window.supabase) {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+// ─── Helpers ───
+const SK = "tutor-v5";
+const DATA_VERSION = 2;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+const today = () => new Date().toISOString().split("T")[0];
+
+// FIX #10: Configurable currency
+const fm = (n, currency) => (currency || "$") + (n||0).toFixed(2);
+
+// FIX #11: Configurable week start (0=Sun, 1=Mon, 6=Sat)
+const weekStart = (startDay) => {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  const day = d.getDay();
+  const sd = startDay || 1; // Default Monday
+  const diff = (day - sd + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+};
+
+// FIX #3: hadLesson only counts COMPLETED lessons
+const hadLesson = (sid, lessons, weekStartDay) => lessons.some(l =>
+  l.studentId===sid && l.status==="Completed" && new Date(l.date)>=weekStart(weekStartDay)
+);
+
+const DEFS = {
+  types:["Lebanese","Classical","Quranic"],
+  levels:["Beginner","Intermediate","Advanced"],
+  payPlans:["Per Lesson","Monthly","Bundle"],
+  payMethods:["Cash","Bank Transfer","Online","Other"],
+  statuses:["Scheduled","Completed","Cancelled","Missed"],
+  brand:"ARABIC TUTOR",
+  sub:"Student Management",
+  currency:"$",
+  weekStartDay:1, // 0=Sun,1=Mon,6=Sat
+  msgDay:"Hi {name}, reminder: Arabic lesson tomorrow ({date}) at {time}.",
+  msgHour:"Hi {name}, your Arabic lesson starts in 1 hour at {time}.",
+  msgGen:"Hi {name}, hope you're well! When would you like your next Arabic lesson?"
+};
+const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],settings:{...DEFS},_version:DATA_VERSION};
+
+// ─── IndexedDB Storage ───
+const DB_NAME = "TutorDB", DB_STORE = "appdata", DB_KEY = "main";
+const DB_FILES_STORE = "files"; // FIX #15: Separate store for file blobs
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 2);
+    r.onupgradeneeded = (e) => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+      if (!db.objectStoreNames.contains(DB_FILES_STORE)) db.createObjectStore(DB_FILES_STORE);
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbGet() {
+  try { const db = await openDB(); return new Promise(res => { const tx = db.transaction(DB_STORE,"readonly"); const r = tx.objectStore(DB_STORE).get(DB_KEY); r.onsuccess = () => res(r.result||null); r.onerror = () => res(null); }); }
+  catch { return null; }
+}
+async function dbSet(data) {
+  try { const db = await openDB(); return new Promise((res,rej) => { const tx = db.transaction(DB_STORE,"readwrite"); tx.objectStore(DB_STORE).put(data, DB_KEY); tx.oncomplete = () => res(true); tx.onerror = () => rej(tx.error); }); }
+  catch(e) { console.error("Save failed:", e); }
+}
+
+// FIX #14: Flush save immediately on beforeunload, debounce otherwise
+let _saveTimer = null;
+let _pendingData = null;
+const save = d => {
+  _pendingData = d;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => { dbSet(d); _pendingData = null; }, 250);
+};
+window.addEventListener("beforeunload", () => {
+  if (_pendingData) { dbSet(_pendingData); _pendingData = null; }
+});
+
+// FIX #16: Data migration
+function migrateData(data) {
+  if (!data) return {...DD};
+  const v = data._version || 1;
+  let d = {...DD, ...data, settings:{...DEFS,...(data.settings||{})}};
+  if (v < 2) {
+    // Add new settings fields
+    if (!d.settings.currency) d.settings.currency = "$";
+    if (d.settings.weekStartDay === undefined) d.settings.weekStartDay = 1;
+    d._version = DATA_VERSION;
+  }
+  return d;
+}
+
+async function loadData() {
+  let data = await dbGet();
+  if (!data) {
+    try { const old = localStorage.getItem(SK) || localStorage.getItem("tutor-v4");
+      if (old) { data = JSON.parse(old); localStorage.removeItem(SK); localStorage.removeItem("tutor-v4"); }
+    } catch {}
+  }
+  return migrateData(data);
+}
+function getStorageEstimate() { return (navigator.storage?.estimate) ? navigator.storage.estimate() : Promise.resolve({usage:0,quota:0}); }
+
+const mkStudent = S => ({id:uid(),name:"",email:"",phone:"",whatsapp:"",type:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],paymentPlan:(S?.payPlans||DEFS.payPlans)[0],lessonRate:0,bundleSize:10,lessonsTotal:0,lessonsTaken:0,freeTotal:0,freeTaken:0,totalPaid:0,startDate:today(),notes:[],assignedLessons:[],completedLessons:[],active:true,skillReading:3,skillWriting:3,skillListening:3,skillSpeaking:3,teacherSummary:"",teacherStrengths:"",teacherImprove:"",teacherPrivateNotes:"",goals:"",nextSteps:"",homeworkNotes:"",skillHistory:[],focusItems:[]});
+const mkLesson = S => ({id:uid(),studentId:"",groupId:"",date:today(),time:"10:00",duration:60,type:(S?.types||DEFS.types)[0],status:"Scheduled",notes:""});
+const mkPayment = () => ({id:uid(),studentId:"",amount:0,date:today(),method:"Cash",notes:"",lessonsAdded:0,status:"Pending"});
+const mkCurriculum = S => ({id:uid(),title:"",category:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],description:"",fileName:"",fileData:""});
+const mkGroup = S => ({id:uid(),name:"",type:(S?.types||DEFS.types)[0],studentIds:[],schedule:"",notes:""});
+
+function gcalUrl(l,name){const s=new Date(l.date+"T"+(l.time||"10:00")+":00"),e=new Date(s.getTime()+(l.duration||60)*6e4),p=n=>String(n).padStart(2,"0"),f=d=>d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"T"+p(d.getHours())+p(d.getMinutes())+"00";return"https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Arabic Lesson — "+(name||"Group"))+"&dates="+f(s)+"/"+f(e)+"&details="+encodeURIComponent("Type: "+l.type+(l.notes?"\nNotes: "+l.notes:""));}
+function openGcal(l,sts){const s=sts.find(x=>x.id===l.studentId);window.open(gcalUrl(l,s?.name||"Group"),"_blank");}
+function waMsg(ph,msg){if(!ph)return alert("No WhatsApp number for this student.");window.open("https://wa.me/"+ph.replace(/[^0-9+]/g,"")+"?text="+encodeURIComponent(msg),"_blank");}
+function fillMsg(t,s,l){return(t||"").replace(/\{name\}/g,s?.name||"").replace(/\{date\}/g,l?fmt(l.date):"").replace(/\{time\}/g,l?.time||"").replace(/\{type\}/g,l?.type||"");}
+
+// ─── Free Lesson Helpers ───
+const FREE_EXPIRY_WEEKS = 6;
+function freeExpiry(s) {
+  if (!s.startDate || !(s.freeTotal||0)) return {expired:false, daysLeft:0, expiryDate:null};
+  const start = new Date(s.startDate);
+  const expiry = new Date(start.getTime() + FREE_EXPIRY_WEEKS * 7 * 86400000);
+  const now = new Date();
+  const daysLeft = Math.ceil((expiry - now) / 86400000);
+  return {expired: daysLeft <= 0, daysLeft: Math.max(0, daysLeft), expiryDate: expiry.toISOString().split("T")[0]};
+}
+function freeLeft(s) {
+  const fe = freeExpiry(s);
+  if (fe.expired) return 0;
+  return Math.max(0, (s.freeTotal||0) - (s.freeTaken||0));
+}
+
+// ─── Skill Helpers ───
+const SKILL_LABELS = ["—","Beginner","Developing","Intermediate","Proficient","Advanced"];
+const SKILL_COLORS = ["#ccc","#dd2222","#ff8800","#ddaa00","#44aa44","#00aa55"];
+function skillAvg(s) { return Math.round(((s.skillReading||3)+(s.skillWriting||3)+(s.skillListening||3)+(s.skillSpeaking||3))/4*10)/10; }
+
+// FIX #6: Attendance & streak only count past completed lessons
+function attendanceStats(sid, lessons) {
+  const sL = lessons.filter(l => l.studentId === sid);
+  // Only count lessons that are in the past or have a definitive status
+  const pastLessons = sL.filter(l => l.status === "Completed" || l.status === "Missed" || l.status === "Cancelled");
+  const total = pastLessons.length;
+  const completed = pastLessons.filter(l => l.status === "Completed").length;
+  const missed = pastLessons.filter(l => l.status === "Missed").length;
+  const cancelled = pastLessons.filter(l => l.status === "Cancelled").length;
+  const rate = total > 0 ? Math.round(completed / total * 100) : 0;
+  const dates = pastLessons.filter(l => l.status === "Completed").map(l => new Date(l.date)).sort((a,b) => a-b);
+  let perWeek = 0;
+  if (dates.length >= 2) {
+    const weeks = Math.max(1, (dates[dates.length-1] - dates[0]) / (7 * 86400000));
+    perWeek = Math.round(dates.length / weeks * 10) / 10;
+  } else if (dates.length === 1) perWeek = 1;
+  // FIX: Streak from most recent, only consider past non-Scheduled lessons
+  const recent = [...pastLessons].sort((a,b) => new Date(b.date) - new Date(a.date));
+  let streak = 0;
+  for (const l of recent) { if (l.status === "Completed") streak++; else break; }
+  return {total, completed, missed, cancelled, rate, perWeek, streak};
+}
+
+function recordSkillSnapshot(s) {
+  const hist = s.skillHistory || [];
+  const last = hist[hist.length - 1];
+  const now = {date: today(), r: s.skillReading||3, w: s.skillWriting||3, l: s.skillListening||3, sp: s.skillSpeaking||3};
+  if (!last || last.r!==now.r || last.w!==now.w || last.l!==now.l || last.sp!==now.sp || (new Date()-new Date(last.date))>7*86400000) {
+    return [...hist, now].slice(-20);
+  }
+  return hist;
+}
+
+function genEncouragement(s, data) {
+  const name = s.name.split(" ")[0];
+  const avg = skillAvg(s);
+  const taken = s.lessonsTaken + (s.freeTaken||0);
+  const cur = data.curriculum||[];
+  const assigned = cur.filter(c=>(s.assignedLessons||[]).includes(c.id));
+  const doneCount = (s.completedLessons||[]).filter(id=>(s.assignedLessons||[]).includes(id)).length;
+  const startD = new Date(s.startDate);
+  const weeks = Math.max(1, Math.round((new Date() - startD) / (7*86400000)));
+  const att = attendanceStats(s.id, data.lessons);
+  const skills = [
+    {n:"Reading",v:s.skillReading||3},{n:"Writing",v:s.skillWriting||3},
+    {n:"Listening",v:s.skillListening||3},{n:"Speaking",v:s.skillSpeaking||3}
+  ].sort((a,b)=>b.v-a.v);
+  const best = skills[0];
+  const growing = skills[skills.length-1];
+  let p = "";
+  if (avg >= 4) p += name + " has shown exceptional dedication and growth in Arabic. ";
+  else if (avg >= 3) p += name + " is making excellent progress in Arabic and should be very proud of what has been achieved so far. ";
+  else p += name + " has been putting in great effort and is building a strong foundation in Arabic. Every lesson brings growth, and the commitment is clear. ";
+  if (taken > 0) p += "Over the past " + weeks + " week" + (weeks>1?"s":"") + ", " + name + " has completed " + taken + " lesson" + (taken>1?"s":"") + ". ";
+  if (att.rate >= 90 && att.total >= 3) p += "With an outstanding " + att.rate + "% attendance rate, " + name + " shows excellent commitment. ";
+  else if (att.rate >= 75 && att.total >= 3) p += name + " maintains a solid " + att.rate + "% attendance rate. ";
+  if (att.streak >= 5) p += "Impressively, " + name + " is on a " + att.streak + "-lesson streak! ";
+  if (doneCount > 0 && assigned.length > 0) p += doneCount + " out of " + assigned.length + " curriculum topics have been covered — " + (doneCount >= assigned.length ? "an incredible achievement!" : "great momentum!") + " ";
+  p += name + "'s strongest area is " + best.n + " (" + SKILL_LABELS[best.v] + "), which is a fantastic foundation to build on. ";
+  if (growing.v < best.v) {
+    p += growing.n + " is the next area of focus, and with " + name + "'s work ethic, improvement will come naturally. ";
+  }
+  const hist = s.skillHistory || [];
+  if (hist.length >= 2) {
+    const first = hist[0], last = hist[hist.length-1];
+    const totalGain = (last.r+last.w+last.l+last.sp) - (first.r+first.w+first.l+first.sp);
+    if (totalGain > 0) p += "Since starting, " + name + " has improved by " + totalGain + " skill point" + (totalGain>1?"s":"") + " across all areas — clear evidence of dedication. ";
+  }
+  if (s.teacherSummary) p += s.teacherSummary + " ";
+  if (s.teacherStrengths) p += "Key strengths: " + s.teacherStrengths + ". ";
+  if (avg >= 4) p += "Keep up the outstanding work — the sky is the limit!";
+  else if (avg >= 3) p += "The path forward is bright, and the next level is well within reach!";
+  else p += "With continued practice, amazing progress is just ahead. Keep going!";
+  return p;
+}
+
+// FIX #5: PDF with Arabic font support
+function exportProfilePDF(s, data, shareWA) {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF();
+  const W = doc.internal.pageSize.getWidth();
+  const CUR = data.settings.currency || "$";
+  const sLessons = data.lessons.filter(l=>l.studentId===s.id&&l.status==="Completed").sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const cur = data.curriculum||[];
+  const assigned = cur.filter(c=>(s.assignedLessons||[]).includes(c.id));
+  const completed = (s.completedLessons||[]);
+  const doneCount = assigned.filter(c=>completed.includes(c.id)).length;
+  const totalTaken = s.lessonsTaken + (s.freeTaken||0);
+  const att = attendanceStats(s.id, data.lessons);
+  let y = 20;
+  const ln = (inc=6) => { y+=inc; if(y>275){doc.addPage();y=20;} };
+
+  // Note: For full Arabic text support in PDF, you would need to embed an Arabic font.
+  // jsPDF's default Helvetica does not support Arabic glyphs.
+  // The workaround below uses the built-in font for Latin text.
+  // For production, load a custom font: doc.addFont('NotoKufiArabic-Regular.ttf', 'NotoKufi', 'normal');
+
+  doc.setFillColor(0,0,0);
+  doc.rect(0,0,W,42,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica","bold");
+  doc.text(data.settings.brand || "ARABIC TUTOR", 14, 20);
+  doc.setFontSize(11);
+  doc.setFont("helvetica","normal");
+  doc.text("Student Progress Report", 14, 30);
+  doc.setFontSize(9);
+  doc.text(new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"}), W-14, 30, {align:"right"});
+  doc.setTextColor(0,0,0);
+  y = 54;
+
+  doc.setFontSize(20);
+  doc.setFont("helvetica","bold");
+  doc.text(s.name, 14, y);
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.setTextColor(100);
+  doc.text(s.type + "  |  " + s.level + "  |  Started " + fmt(s.startDate), 14, y+8);
+  y += 18;
+
+  doc.setDrawColor(0,170,85); doc.setLineWidth(0.8);
+  doc.line(14, y, 18, y);
+  y += 6;
+  doc.setFontSize(10);
+  doc.setFont("helvetica","normal");
+  doc.setTextColor(30,30,30);
+  const summary = genEncouragement(s, data);
+  const sumLines = doc.splitTextToSize(summary, W-32);
+  sumLines.forEach(line => { doc.text(line, 16, y); ln(5); });
+  ln(4);
+
+  doc.setDrawColor(0); doc.setLineWidth(0.5);
+  doc.line(14, y, W-14, y); ln(8);
+  doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+  doc.text("ATTENDANCE & CONSISTENCY", 14, y); ln(10);
+
+  const attBoxW = (W-38)/4;
+  const attBoxes = [
+    {label:"ATTENDANCE RATE", val: att.rate+"%", color: att.rate>=90?[0,170,85]:att.rate>=75?[255,136,0]:[221,34,34]},
+    {label:"LESSONS/WEEK", val: att.perWeek.toFixed(1), color: att.perWeek>=2?[0,170,85]:att.perWeek>=1?[255,136,0]:[221,34,34]},
+    {label:"CURRENT STREAK", val: String(att.streak), color: att.streak>=5?[0,170,85]:att.streak>=3?[255,136,0]:[100,100,100]},
+    {label:"TOTAL COMPLETED", val: String(att.completed), color: [0,0,0]},
+  ];
+  attBoxes.forEach((b,i) => {
+    const bx = 14 + i*(attBoxW+5);
+    doc.setFillColor(245,245,245);
+    doc.rect(bx, y, attBoxW, 24, "F");
+    doc.setDrawColor(b.color[0],b.color[1],b.color[2]); doc.setLineWidth(1.5);
+    doc.line(bx, y, bx, y+24);
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
+    doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(120);
+    doc.text(b.label, bx+6, y+7);
+    doc.setFontSize(18); doc.setFont("helvetica","bold"); doc.setTextColor(b.color[0],b.color[1],b.color[2]);
+    doc.text(b.val, bx+6, y+20);
+  });
+  y += 32;
+  if (att.missed > 0 || att.cancelled > 0) {
+    doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(120);
+    doc.text("Missed: " + att.missed + "  |  Cancelled: " + att.cancelled + "  |  Total scheduled: " + att.total, 18, y);
+    ln(8);
+  }
+
+  // Skill ratings
+  doc.setDrawColor(0); doc.setLineWidth(0.5);
+  doc.line(14, y, W-14, y); ln(8);
+  doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+  doc.text("SKILL ASSESSMENT", 14, y); ln(10);
+
+  const drawSkill = (label, val, prevVal) => {
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(80);
+    doc.text(label.toUpperCase(), 18, y);
+    const bx = 70;
+    for (let i = 1; i <= 5; i++) {
+      const filled = i <= val;
+      if (filled) {
+        const r = i<=1?221:i<=2?255:i<=3?221:i<=4?68:0;
+        const g = i<=1?34:i<=2?136:i<=3?170:i<=4?170:170;
+        const b = i<=1?34:i<=2?0:i<=3?0:i<=4?68:85;
+        doc.setFillColor(r,g,b);
+        doc.rect(bx+(i-1)*22, y-5, 18, 7, "F");
+        doc.setTextColor(255);
+      } else {
+        doc.setFillColor(240,240,240);
+        doc.rect(bx+(i-1)*22, y-5, 18, 7, "F");
+        doc.setDrawColor(200); doc.rect(bx+(i-1)*22, y-5, 18, 7, "S");
+        doc.setTextColor(180);
+      }
+      doc.setFontSize(7); doc.setFont("helvetica","bold");
+      doc.text(String(i), bx+(i-1)*22+7, y);
+    }
+    doc.setFontSize(9); doc.setFont("helvetica","normal");
+    doc.setTextColor(60);
+    doc.text(SKILL_LABELS[val], bx + 5*22 + 4, y);
+    if (prevVal !== null && prevVal !== undefined && prevVal !== val) {
+      const diff = val - prevVal;
+      const arrow = diff > 0 ? " +" + diff + " ↑" : " " + diff + " ↓";
+      doc.setTextColor(diff>0?0:221, diff>0?170:34, diff>0?85:34);
+      doc.setFontSize(8); doc.setFont("helvetica","bold");
+      doc.text(arrow, bx + 5*22 + 4 + doc.getTextWidth(SKILL_LABELS[val]) + 4, y);
+    }
+    ln(11);
+  };
+
+  const histArr = s.skillHistory || [];
+  const prev = histArr.length >= 2 ? histArr[0] : null;
+  drawSkill("Reading", s.skillReading||3, prev?.r);
+  drawSkill("Writing", s.skillWriting||3, prev?.w);
+  drawSkill("Listening", s.skillListening||3, prev?.l);
+  drawSkill("Speaking", s.skillSpeaking||3, prev?.sp);
+
+  const avg = skillAvg(s);
+  doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(0,140,70);
+  doc.text("Overall: " + avg + " / 5", 18, y);
+  ln(10);
+
+  // Progress
+  doc.setDrawColor(0); doc.line(14, y, W-14, y); ln(8);
+  doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+  doc.text("PROGRESS SNAPSHOT", 14, y); ln(10);
+
+  const boxW = (W-38)/3;
+  const boxes = [
+    {label:"LESSONS COMPLETED", val:String(totalTaken)},
+    {label:"TOPICS COVERED", val:doneCount+"/"+assigned.length},
+    {label:"WEEKS OF STUDY", val:String(Math.max(1,Math.round((new Date()-new Date(s.startDate))/(7*86400000))))},
+  ];
+  boxes.forEach((b,i) => {
+    const bx = 14 + i*(boxW+5);
+    doc.setFillColor(245,245,245);
+    doc.rect(bx, y, boxW, 24, "F");
+    doc.setDrawColor(0); doc.rect(bx, y, boxW, 24, "S");
+    doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(120);
+    doc.text(b.label, bx+boxW/2, y+7, {align:"center"});
+    doc.setFontSize(18); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+    doc.text(b.val, bx+boxW/2, y+20, {align:"center"});
+  });
+  y += 32;
+
+  if (s.goals || s.nextSteps) {
+    doc.setDrawColor(0); doc.line(14, y, W-14, y); ln(8);
+    doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+    doc.text("GOALS & NEXT STEPS", 14, y); ln(8);
+    if (s.goals) {
+      doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.setTextColor(0,80,180);
+      doc.text("CURRENT GOALS", 18, y+1); ln(6);
+      doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(50);
+      doc.splitTextToSize(s.goals, W-40).forEach(line => { doc.text(line, 18, y); ln(5); });
+      ln(4);
+    }
+    if (s.nextSteps) {
+      doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.setTextColor(200,130,0);
+      doc.text("NEXT STEPS", 18, y+1); ln(6);
+      doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(50);
+      doc.splitTextToSize(s.nextSteps, W-40).forEach(line => { doc.text(line, 18, y); ln(5); });
+      ln(4);
+    }
+  }
+
+  if (s.homeworkNotes) {
+    doc.setDrawColor(0); doc.line(14, y, W-14, y); ln(8);
+    doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+    doc.text("HOMEWORK & PRACTICE", 14, y); ln(8);
+    doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(50);
+    doc.splitTextToSize(s.homeworkNotes, W-40).forEach(line => { doc.text(line, 18, y); ln(5); });
+    ln(4);
+  }
+
+  // Lesson history
+  if (sLessons.length > 0) {
+    doc.setDrawColor(0); doc.line(14, y, W-14, y); ln(8);
+    doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+    doc.text("RECENT LESSONS", 14, y); ln(8);
+    doc.setFillColor(0); doc.rect(14, y-4, W-28, 7, "F");
+    doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.setTextColor(255);
+    doc.text("DATE", 18, y+1); doc.text("TIME", 65, y+1); doc.text("TYPE", 100, y+1); doc.text("DURATION", 145, y+1);
+    ln(9);
+    doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.setFontSize(9);
+    sLessons.slice(0,12).forEach((l,i) => {
+      if (i%2===0) { doc.setFillColor(248,248,248); doc.rect(14, y-4, W-28, 7, "F"); }
+      doc.setTextColor(60);
+      doc.text(fmt(l.date), 18, y);
+      doc.text(l.time||"—", 65, y);
+      doc.text(l.type||"—", 100, y);
+      doc.text((l.duration||60)+" min", 145, y);
+      ln(7);
+    });
+    ln(4);
+  }
+
+  // Teacher notes (public only)
+  if (s.teacherStrengths || s.teacherImprove) {
+    doc.setDrawColor(0); doc.line(14, y, W-14, y); ln(8);
+    doc.setFontSize(13); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+    doc.text("TEACHER'S NOTES", 14, y); ln(8);
+    if (s.teacherStrengths) {
+      doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(0,140,70);
+      doc.text("Strengths:", 18, y); ln(6);
+      doc.setFont("helvetica","normal"); doc.setTextColor(50);
+      doc.splitTextToSize(s.teacherStrengths, W-40).forEach(line => { doc.text(line, 18, y); ln(5); });
+      ln(4);
+    }
+    if (s.teacherImprove) {
+      doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(200,130,0);
+      doc.text("Areas to Focus On:", 18, y); ln(6);
+      doc.setFont("helvetica","normal"); doc.setTextColor(50);
+      doc.splitTextToSize(s.teacherImprove, W-40).forEach(line => { doc.text(line, 18, y); ln(5); });
+      ln(4);
+    }
+  }
+
+  // Footer
+  doc.setDrawColor(0); doc.setLineWidth(0.5); doc.line(14, y, W-14, y); ln(6);
+  doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(0);
+  doc.text(data.settings.brand || "ARABIC TUTOR", 14, y);
+  doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(150);
+  doc.text("Progress Report — " + s.name, W-14, y, {align:"right"});
+
+  const fileName = s.name.replace(/\s+/g,"_") + "_progress.pdf";
+  if (shareWA && navigator.canShare) {
+    const blob = doc.output("blob");
+    const file = new File([blob], fileName, {type:"application/pdf"});
+    if (navigator.canShare({files:[file]})) {
+      navigator.share({files:[file], title:s.name+" Progress Report"}).catch(()=>doc.save(fileName));
+      return;
+    }
+  }
+  if (shareWA && s.whatsapp) {
+    doc.save(fileName);
+    setTimeout(()=>waMsg(s.whatsapp, "Hi " + s.name.split(" ")[0] + "! Here is your Arabic progress report."), 500);
+    return;
+  }
+  doc.save(fileName);
+}
+
+// ─── SVG Icons ───
+const mkSvg = (paths, sw="2") => {
+  const el = React.createElement("svg", {
+    viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:sw,
+    style:{width:16,height:16,display:"inline-block",verticalAlign:"middle"},
+    dangerouslySetInnerHTML:{__html:paths}
+  });
+  return el;
+};
+const IC = {
+  dash:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  stu:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>',
+  cal:'<rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  pay:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  cur:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  grp:'<circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5v2"/>',
+  set:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  back:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+  chk:'<polyline points="20 6 9 17 4 12"/>',
+  del:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>',
+  edt:'<path d="M11 4H4v16h16v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  fi:'<path d="M14 2H6v20h12V8z"/><polyline points="14 2 14 8 20 8"/>',
+  srch:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  cL:'<polyline points="15 18 9 12 15 6"/>',
+  cR:'<polyline points="9 18 15 12 9 6"/>',
+  gc:'<rect x="3" y="4" width="18" height="18"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14l2 2 4-4" stroke-width="2.5"/>',
+  wa:'<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+  pdf:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+};
+const ic = name => mkSvg(IC[name]);
+const icb = name => mkSvg(IC[name], "2.5");
+
+// ─── Modal ───
+function Modal({title, onClose, children, footer}) {
+  return h`<div class="mo-bg" onClick=${onClose}><div class="mo" onClick=${e=>e.stopPropagation()}><div class="mo-hd"><h3>${title}</h3><button class="bi" onClick=${onClose}>${icb('x')}</button></div><div class="mo-bd">${children}</div>${footer && h`<div class="mo-ft">${footer}</div>`}</div></div>`;
+}
+
+// ─── Chip Editor ───
+function Chips({items, onUpdate, label}) {
+  const [adding, setAdding] = useState(false);
+  const [val, setVal] = useState("");
+  const ref = useRef(null);
+  useEffect(() => { if (adding && ref.current) ref.current.focus(); }, [adding]);
+  const add = () => { if (val.trim() && !items.includes(val.trim())) { onUpdate([...items, val.trim()]); setVal(""); setAdding(false); }};
+  const rm = i => onUpdate(items.filter((_,idx) => idx !== i));
+  return h`<div class="fg"><label>${label}</label><div style=${{display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
+    ${items.map((t,i) => h`<div class="chip" key=${i}>${t}<span class="chip-x" onClick=${()=>rm(i)}>×</span></div>`)}
+    ${adding ? h`<div style=${{display:"flex",gap:4,alignItems:"center"}}><input ref=${ref} value=${val} onInput=${e=>setVal(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")add();if(e.key==="Escape")setAdding(false);}} style=${{padding:"3px 7px",border:"2px solid #000",fontSize:11,width:110,fontFamily:"var(--fb)"}} placeholder="Type & Enter"/><button class="bi" onClick=${add}>${ic('chk')}</button><button class="bi" onClick=${()=>setAdding(false)}>${ic('x')}</button></div>`
+    : h`<div class="chip chip-add" onClick=${()=>setAdding(true)}>+ Add</div>`}
+  </div></div>`;
+}
+
+// ════════════════════════════════════════
+// AUTH SYSTEM
+// ════════════════════════════════════════
+function AuthScreen({onAuth}) {
+  const [mode, setMode] = useState("login"); // login | signup
+  const [method, setMethod] = useState("email"); // email | phone
+  const [role, setRole] = useState("tutor"); // tutor | student
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleEmailAuth = async () => {
+    setLoading(true); setError(""); setSuccess("");
+    try {
+      if (supabase) {
+        if (mode === "signup") {
+          const {error: err} = await supabase.auth.signUp({email, password, options:{data:{role}}});
+          if (err) throw err;
+          setSuccess("Check your email for a confirmation link!");
+        } else {
+          const {data, error: err} = await supabase.auth.signInWithPassword({email, password});
+          if (err) throw err;
+          onAuth({user: data.user, role: data.user.user_metadata?.role || "student"});
+        }
+      } else {
+        // Offline / demo mode
+        onAuth({user:{email, id:"local"}, role});
+      }
+    } catch(e) { setError(e.message || "Authentication failed"); }
+    setLoading(false);
+  };
+
+  const handlePhoneAuth = async () => {
+    setLoading(true); setError(""); setSuccess("");
+    try {
+      if (supabase) {
+        if (!otpSent) {
+          const {error: err} = await supabase.auth.signInWithOtp({phone});
+          if (err) throw err;
+          setOtpSent(true);
+          setSuccess("OTP sent to your phone!");
+        } else {
+          const {data, error: err} = await supabase.auth.verifyOtp({phone, token: otp, type:"sms"});
+          if (err) throw err;
+          onAuth({user: data.user, role: data.user.user_metadata?.role || "student"});
+        }
+      } else {
+        onAuth({user:{phone, id:"local"}, role});
+      }
+    } catch(e) { setError(e.message || "Authentication failed"); }
+    setLoading(false);
+  };
+
+  const skipAuth = () => onAuth({user:{id:"local",email:"demo@local"}, role:"tutor"});
+
+  return h`<div class="auth-wrap">
+    <div class="auth-box">
+      <h1>ARABIC TUTOR</h1>
+      <div class="sub">Student Management System</div>
+
+      ${!supabaseReady && h`<div style=${{padding:"12px",background:"#fff8f0",border:"2px solid var(--wn)",marginBottom:20,fontSize:12}}>
+        <b>Demo Mode</b> — Supabase not configured. Data is stored locally in your browser.
+        <button class="btn btn-p btn-sm" style=${{marginTop:8,display:"block"}} onClick=${skipAuth}>Enter as Tutor (Demo)</button>
+        <button class="btn btn-sm" style=${{marginTop:6,display:"block"}} onClick=${()=>onAuth({user:{id:"demo-student"}, role:"student"})}>Enter as Student (Demo)</button>
+      </div>`}
+
+      ${supabaseReady && h`<div>
+        <div class="auth-tabs">
+          <div class=${"auth-tab "+(mode==="login"?"on":"")} onClick=${()=>setMode("login")}>Log In</div>
+          <div class=${"auth-tab "+(mode==="signup"?"on":"")} onClick=${()=>setMode("signup")}>Sign Up</div>
+        </div>
+
+        ${mode==="signup" && h`<div class="auth-role-sel">
+          <div class=${"auth-role "+(role==="tutor"?"on":"")} onClick=${()=>setRole("tutor")}>
+            <h4>TUTOR</h4>
+            <p>Manage students & lessons</p>
+          </div>
+          <div class=${"auth-role "+(role==="student"?"on":"")} onClick=${()=>setRole("student")}>
+            <h4>STUDENT</h4>
+            <p>View my progress</p>
+          </div>
+        </div>`}
+
+        <div class="auth-tabs" style=${{marginBottom:16}}>
+          <div class=${"auth-tab "+(method==="email"?"on":"")} onClick=${()=>{setMethod("email");setOtpSent(false);}}>Email</div>
+          <div class=${"auth-tab "+(method==="phone"?"on":"")} onClick=${()=>{setMethod("phone");setOtpSent(false);}}>Phone</div>
+        </div>
+
+        ${method==="email" ? h`<div>
+          <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="you@example.com"/></div>
+          <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Minimum 6 characters"/></div>
+          <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${handleEmailAuth} disabled=${loading}>
+            ${loading?"Please wait...":mode==="login"?"Log In":"Create Account"}
+          </button>
+        </div>` : h`<div>
+          <div class="fg"><label>Phone (with country code)</label><input type="tel" value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="+961 XX XXX XXX"/></div>
+          ${otpSent && h`<div class="fg"><label>Verification Code</label><input type="text" value=${otp} onInput=${e=>setOtp(e.target.value)} placeholder="Enter 6-digit code"/></div>`}
+          <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${handlePhoneAuth} disabled=${loading}>
+            ${loading?"Please wait...":otpSent?"Verify Code":"Send Code"}
+          </button>
+        </div>`}
+
+        ${error && h`<div class="error">${error}</div>`}
+        ${success && h`<div class="success">${success}</div>`}
+      </div>`}
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// STUDENT PORTAL (read-only view for students)
+// ════════════════════════════════════════
+function StudentPortal({data, user, onLogout}) {
+  const CUR = data.settings.currency || "$";
+  // Match student by email or phone
+  const s = data.students.find(st =>
+    (user.email && st.email && st.email.toLowerCase() === user.email.toLowerCase()) ||
+    (user.phone && st.whatsapp && st.whatsapp.replace(/\s/g,"") === user.phone.replace(/\s/g,""))
+  );
+
+  if (!s) return h`<div style=${{fontFamily:"var(--fb)",padding:40,textAlign:"center"}}>
+    <div class="stu-portal-hd" style=${{position:"fixed",top:0,left:0,right:0,zIndex:10}}>
+      <h1>ARABIC TUTOR</h1>
+      <button class="btn btn-sm" style=${{color:"var(--wh)",borderColor:"var(--g600)"}} onClick=${onLogout}>${ic('logout')} Log Out</button>
+    </div>
+    <div style=${{marginTop:100}}>
+      <h2 style=${{fontFamily:"var(--fh)",fontSize:28,color:"var(--g300)"}}>PROFILE NOT FOUND</h2>
+      <p style=${{color:"var(--g500)",marginTop:10}}>Your account (${user.email||user.phone}) isn't linked to a student profile yet. Please ask your tutor to add your email or phone number to your student record.</p>
+    </div>
+  </div>`;
+
+  const sLessons = data.lessons.filter(l=>l.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const left = s.lessonsTotal - s.lessonsTaken;
+  const att = attendanceStats(s.id, data.lessons);
+  const assigned = (data.curriculum||[]).filter(c=>(s.assignedLessons||[]).includes(c.id));
+  const doneCount = (s.completedLessons||[]).filter(id=>(s.assignedLessons||[]).includes(id)).length;
+
+  return h`<div style=${{fontFamily:"var(--fb)",minHeight:"100vh",background:"var(--g50)"}}>
+    <div class="stu-portal-hd">
+      <h1>${data.settings.brand || "ARABIC TUTOR"}</h1>
+      <button class="btn btn-sm" style=${{color:"var(--wh)",borderColor:"var(--g600)"}} onClick=${onLogout}>${ic('logout')} Log Out</button>
+    </div>
+
+    <div style=${{padding:24,maxWidth:800,margin:"0 auto"}}>
+      <div class="prof-hd">
+        <div class="prof-av">${s.name.charAt(0).toUpperCase()}</div>
+        <div class="prof-info">
+          <h2>${s.name}</h2>
+          <div class="prof-meta"><span class="tg">${s.type}</span><span class="tg" style=${{background:"transparent",color:"var(--bk)",border:"1.5px solid var(--g300)"}}>${s.level}</span></div>
+        </div>
+        <div style=${{textAlign:"center"}}>
+          <div style=${{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,color:"var(--g500)"}}>Lessons Left</div>
+          <div class=${"ll "+(left<=0?"low":left<=2?"ok":"good")} style=${{fontSize:44}}>${left}</div>
+        </div>
+      </div>
+
+      <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)"}}>
+        <div class="stat"><div class="lb">Lessons Done</div><div class="vl">${s.lessonsTaken}</div></div>
+        <div class="stat"><div class="lb">Attendance</div><div class="vl" style=${{color:att.rate>=80?"var(--ok)":att.rate>=60?"var(--wn)":"var(--bd)"}}>${att.rate}%</div></div>
+        <div class="stat"><div class="lb">Streak</div><div class="vl">${att.streak}</div></div>
+        <div class="stat"><div class="lb">Topics</div><div class="vl">${doneCount}/${assigned.length}</div></div>
+      </div>
+
+      ${[["skillReading","Reading"],["skillWriting","Writing"],["skillListening","Listening"],["skillSpeaking","Speaking"]].map(([k,label])=>h`<div key=${k} class="skill-row">
+        <div class="skill-label">${label}</div>
+        <div class="skill-dots">${[1,2,3,4,5].map(v=>h`<div key=${v} class=${"skill-dot "+(v<=(s[k]||3)?"on":"")} style=${{cursor:"default"}}>${v}</div>`)}</div>
+        <div class="skill-level" style=${{color:SKILL_COLORS[s[k]||3]}}>${SKILL_LABELS[s[k]||3]}</div>
+      </div>`)}
+
+      ${(s.goals || s.nextSteps || s.homeworkNotes) && h`<div class="card" style=${{marginTop:20}}>
+        ${s.goals && h`<div style=${{marginBottom:14}}><h3 style=${{fontFamily:"var(--fh)",fontSize:18,color:"#1976d2"}}>MY GOALS</h3><p style=${{fontSize:13,lineHeight:1.7,color:"var(--g600)",marginTop:6}}>${s.goals}</p></div>`}
+        ${s.nextSteps && h`<div style=${{marginBottom:14}}><h3 style=${{fontFamily:"var(--fh)",fontSize:18,color:"var(--wn)"}}>NEXT STEPS</h3><p style=${{fontSize:13,lineHeight:1.7,color:"var(--g600)",marginTop:6}}>${s.nextSteps}</p></div>`}
+        ${s.homeworkNotes && h`<div><h3 style=${{fontFamily:"var(--fh)",fontSize:18,color:"#7e57c2"}}>HOMEWORK</h3><p style=${{fontSize:13,lineHeight:1.7,color:"var(--g600)",marginTop:6}}>${s.homeworkNotes}</p></div>`}
+      </div>`}
+
+      <div class="card" style=${{marginTop:14}}><h3>RECENT LESSONS</h3>
+        ${sLessons.length===0?h`<p style=${{color:"var(--g400)",fontSize:13}}>No lessons yet</p>`:h`<table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Status</th></tr></thead><tbody>
+          ${sLessons.slice(0,10).map(l=>h`<tr key=${l.id}><td>${fmt(l.date)}</td><td>${l.time}</td><td><span class="tg">${l.type}</span></td><td><span class=${"bg "+(l.status==="Completed"?"bg-ok":"bg-n")}>${l.status}</span></td></tr>`)}
+        </tbody></table>`}
+      </div>
+
+      <div style=${{textAlign:"center",marginTop:20}}>
+        <button class="btn" onClick=${()=>exportProfilePDF(s,data,false)}>${ic('pdf')} Download My Progress Report</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// DASHBOARD (fixed #2: only paid revenue)
+// ════════════════════════════════════════
+function Dashboard({data}) {
+  const {students, lessons, payments, settings: S} = data;
+  const CUR = S.currency || "$";
+  const active = students.filter(s => s.active);
+  const now = new Date();
+  const mPay = payments.filter(p => { const d = new Date(p.date); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); });
+  // FIX #2: Only count paid payments for revenue
+  const mRev = mPay.filter(p=>p.status==="Paid").reduce((a,p) => a+(p.amount||0), 0);
+  const wk = lessons.filter(l => new Date(l.date) >= weekStart(S.weekStartDay) && l.status !== "Cancelled");
+  const noL = active.filter(s => !hadLesson(s.id, lessons, S.weekStartDay));
+  const up = lessons.filter(l => l.status==="Scheduled" && new Date(l.date)>=new Date(today())).sort((a,b) => new Date(a.date)-new Date(b.date)).slice(0,5);
+
+  return h`<div>
+    <div class="stats">
+      <div class="stat"><div class="lb">Active Students</div><div class="vl">${active.length}</div></div>
+      <div class="stat"><div class="lb">This Month (Paid)</div><div class="vl">${fm(mRev, CUR)}</div><div class="su">${mPay.filter(p=>p.status==="Paid").length} payments</div></div>
+      <div class="stat"><div class="lb">Lessons This Week</div><div class="vl">${wk.length}</div></div>
+      <div class="stat"><div class="lb">No Lesson This Week</div><div class="vl" style=${{color:noL.length?"var(--bd)":"var(--ok)"}}>${noL.length}</div></div>
+      <div class="stat"><div class="lb">Avg Attendance</div><div class="vl" style=${{color:(() => { const rates=active.map(s=>attendanceStats(s.id,lessons).rate); const avg=rates.length?Math.round(rates.reduce((a,b)=>a+b,0)/rates.length):0; return avg>=80?"var(--ok)":avg>=60?"var(--wn)":"var(--bd)"; })()}}>${(() => { const rates=active.map(s=>attendanceStats(s.id,lessons).rate); return rates.length?Math.round(rates.reduce((a,b)=>a+b,0)/rates.length):0; })()}%</div><div class="su">across all students</div></div>
+    </div>
+    <div style=${{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <div class="card"><h3>UPCOMING LESSONS</h3>
+        ${up.length===0 ? h`<p style=${{color:"var(--g400)",fontSize:13}}>None scheduled</p>` : h`<table><thead><tr><th>Date</th><th>Student</th><th>Time</th><th></th></tr></thead><tbody>
+          ${up.map(l => { const st = students.find(x => x.id===l.studentId); return h`<tr key=${l.id}><td style=${{fontWeight:600}}>${fmt(l.date)}</td><td>${st?.name||"Group"}</td><td>${l.time}</td><td style=${{whiteSpace:"nowrap"}}><button class="bi" onClick=${()=>openGcal(l,students)} title="Google Calendar">${ic('gc')}</button>${st?.whatsapp && h`<button class="bi" style=${{color:"#25D366"}} onClick=${()=>waMsg(st.whatsapp,fillMsg(S.msgDay,st,l))} title="WhatsApp">${ic('wa')}</button>`}</td></tr>`; })}
+        </tbody></table>`}
+      </div>
+      <div>
+        ${noL.length > 0 && h`<div class="card" style=${{borderColor:"var(--bd)"}}><h3 style=${{color:"var(--bd)"}}>NO LESSON THIS WEEK</h3>
+          ${noL.map(s => h`<div key=${s.id} style=${{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--g100)"}}><div style=${{display:"flex",alignItems:"center",gap:6}}><span class="rd"></span><span style=${{fontWeight:600}}>${s.name}</span></div>${s.whatsapp && h`<button class="btn btn-xs btn-wa" onClick=${()=>waMsg(s.whatsapp,fillMsg(S.msgGen,s,null))}>${ic('wa')} Remind</button>`}</div>`)}
+        </div>`}
+        <div class="card"><h3>LOW BALANCE</h3>
+          ${active.filter(s=>(s.lessonsTotal-s.lessonsTaken)<=2).length===0 ? h`<p style=${{color:"var(--g400)",fontSize:13}}>All good</p>` : h`<table><thead><tr><th>Student</th><th>Left</th></tr></thead><tbody>
+            ${active.filter(s=>(s.lessonsTotal-s.lessonsTaken)<=2).map(s => h`<tr key=${s.id}><td style=${{fontWeight:600}}>${s.name}</td><td><span class=${"ll "+(s.lessonsTotal-s.lessonsTaken<=0?"low":"ok")}>${s.lessonsTotal-s.lessonsTaken}</span></td></tr>`)}
+          </tbody></table>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// STUDENTS LIST — all bugs fixed
+// ════════════════════════════════════════
+function Students({data, setData, onProfile}) {
+  const [search, setSearch] = useState("");
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkStudent(data.settings));
+  const [viewMode, setViewMode] = useState("cards");
+  const S = data.settings;
+  const CUR = S.currency || "$";
+
+  const sorted = [...data.students].sort((a,b) => { if(a.active!==b.active) return a.active?-1:1; return a.name.localeCompare(b.name); });
+  const list = sorted.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
+
+  const doSave = () => { if (!form.name.trim()) return; const ex = data.students.find(s=>s.id===form.id); if(ex) { setData({...data,students:data.students.map(s=>s.id===form.id?{...form}:s)}); } else { const newPayment = {id:uid(),studentId:form.id,amount:form.lessonsTotal*form.lessonRate,date:today(),method:"Cash",notes:"Initial enrollment — "+form.lessonsTotal+" lessons",lessonsAdded:form.lessonsTotal,status:"Pending"}; setData({...data,students:[...data.students,{...form}],payments:form.lessonRate>0?[...data.payments,newPayment]:data.payments}); } setShow(false); setForm(mkStudent(S)); };
+  const doDelete = id => { if(confirm("Delete student and all their records?")) setData({...data,students:data.students.filter(s=>s.id!==id),lessons:data.lessons.filter(l=>l.studentId!==id),payments:data.payments.filter(p=>p.studentId!==id)}); };
+
+  const adjTaken = (sid, delta) => { setData({...data, students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: Math.max(0, s.lessonsTaken+delta)} : s)}); };
+  const adjTotal = (sid, delta) => { setData({...data, students: data.students.map(s => s.id===sid ? {...s, lessonsTotal: Math.max(0, s.lessonsTotal+delta)} : s)}); };
+  const adjFreeTaken = (sid, delta) => { setData({...data, students: data.students.map(s => { if(s.id!==sid) return s; const fe=freeExpiry(s); if(fe.expired && delta>0) return s; const nv=Math.max(0, Math.min((s.freeTotal||0), (s.freeTaken||0)+delta)); return {...s, freeTaken:nv}; })}); };
+
+  // FIX #4: Quick complete creates a lesson record if none exists
+  const completeLesson = (sid) => {
+    const todayL = data.lessons.find(l => l.studentId===sid && l.date===today() && l.status==="Scheduled");
+    if (todayL) {
+      setData({...data,
+        lessons: data.lessons.map(l => l.id===todayL.id ? {...l,status:"Completed"} : l),
+        students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: s.lessonsTaken+1} : s)
+      });
+    } else {
+      // Create a new completed lesson record + increment counter
+      const st = data.students.find(s=>s.id===sid);
+      const newLesson = {id:uid(),studentId:sid,groupId:"",date:today(),time:new Date().toTimeString().slice(0,5),duration:60,type:st?.type||(S.types||[])[0]||"Lebanese",status:"Completed",notes:"Quick-completed"};
+      setData({...data,
+        lessons: [...data.lessons, newLesson],
+        students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: s.lessonsTaken+1} : s)
+      });
+    }
+  };
+
+  return h`<div>
+    <div style=${{display:"flex",gap:10,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+      <div class="sb-x">${ic('srch')}<input placeholder="Search..." value=${search} onInput=${e=>setSearch(e.target.value)}/></div>
+      <button class="btn btn-p" onClick=${()=>{setForm(mkStudent(S));setShow(true);}}>${ic('plus')} Add Student</button>
+      <div style=${{marginLeft:"auto",display:"flex",gap:4}}>
+        <button class=${"btn btn-sm "+(viewMode==="cards"?"btn-p":"")} onClick=${()=>setViewMode("cards")}>Cards</button>
+        <button class=${"btn btn-sm "+(viewMode==="table"?"btn-p":"")} onClick=${()=>setViewMode("table")}>Table</button>
+      </div>
+    </div>
+    ${list.length===0 ? h`<div class="empty"><h3>NO STUDENTS</h3><p>Add your first student</p><button class="btn btn-p" onClick=${()=>{setForm(mkStudent(S));setShow(true);}}>${ic('plus')} Add</button></div>` :
+
+    viewMode==="cards" ? h`<div class="stu-grid">
+      ${list.map((s,i) => {
+        const left = s.lessonsTotal - s.lessonsTaken;
+        const noL = s.active && !hadLesson(s.id, data.lessons, S.weekStartDay);
+        const pct = s.lessonsTotal > 0 ? Math.round(s.lessonsTaken / s.lessonsTotal * 100) : 0;
+        const sPay = data.payments.filter(p=>p.studentId===s.id);
+        const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
+        const hasToday = data.lessons.some(l => l.studentId===s.id && l.date===today() && l.status==="Scheduled");
+        const att = attendanceStats(s.id, data.lessons);
+        return h`<div key=${s.id} class=${"stu-card"+(noL?" alert":"")+(s.active?"":" inactive")}>
+          <div class="sc-top">
+            <div onClick=${()=>onProfile(s.id)} style=${{cursor:"pointer",flex:1}}>
+              <div style=${{display:"flex",alignItems:"center"}}><span class="sc-num">#${i+1}</span><span class="sc-name">${s.name}</span>${noL && h`<span class="rd"></span>`}</div>
+              <div class="sc-row"><span class="tg">${s.type}</span><span class="tg" style=${{background:"transparent",color:"var(--bk)",border:"1.5px solid var(--g300)"}}>${s.level}</span><span class=${"bg "+(s.active?"bg-ok":"bg-n")}>${s.active?"Active":"Off"}</span></div>
+            </div>
+            <div style=${{display:"flex",gap:2}}><button class="bi" onClick=${()=>{setForm({...s});setShow(true);}}>${ic('edt')}</button><button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>doDelete(s.id)}>${ic('del')}</button></div>
+          </div>
+          <div class="sc-stats" style=${{gridTemplateColumns:"1fr 1fr 1fr"}}>
+            <div class="sc-stat">
+              <div class="sc-sl">Lessons Taken</div>
+              <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div class="stepper" onClick=${e=>e.stopPropagation()}>
+                  <button class="st-btn minus" onClick=${()=>adjTaken(s.id,-1)}>−</button>
+                  <div class="st-val">${s.lessonsTaken}</div>
+                  <button class="st-btn" onClick=${()=>adjTaken(s.id,1)}>+</button>
+                </div>
+              </div>
+            </div>
+            <div class="sc-stat">
+              <div class="sc-sl">Lessons Left</div>
+              <span class=${"ll "+(left<=0?"low":left<=2?"ok":"good")} style=${{fontSize:26}}>${left}</span>
+              <span style=${{fontSize:10,color:"var(--g400)"}}> / ${s.lessonsTotal}</span>
+              <div class="prog"><div class=${"prog-fill "+(pct>=80?"low":pct>=50?"ok":"good")} style=${{width:pct+"%"}}></div></div>
+            </div>
+            <div class="sc-stat">
+              <div class="sc-sl">Attendance</div>
+              <span class=${"ll "+(att.rate>=80?"good":att.rate>=60?"ok":"low")} style=${{fontSize:22}}>${att.rate}%</span>
+              ${att.streak>=3 && h`<span style=${{fontSize:9,color:"var(--ok)",fontWeight:600,marginLeft:4}}>${att.streak} streak</span>`}
+            </div>
+          </div>
+          <div class="sc-actions" onClick=${e=>e.stopPropagation()}>
+            ${hasToday && h`<button class="btn btn-xs btn-done" onClick=${()=>completeLesson(s.id)}>${ic('chk')} Done Today</button>`}
+            <button class="btn btn-xs btn-done" onClick=${()=>completeLesson(s.id)}>${ic('chk')} Complete</button>
+            ${s.whatsapp && h`<button class="btn btn-xs btn-wa" onClick=${()=>waMsg(s.whatsapp,fillMsg(S.msgGen,s,null))}>${ic('wa')}</button>`}
+            <button class="btn btn-xs" onClick=${()=>exportProfilePDF(s,data,false)}>${ic('pdf')} PDF</button>
+            <button class="btn btn-xs" onClick=${()=>onProfile(s.id)}>Profile →</button>
+          </div>
+        </div>`;
+      })}
+    </div>` :
+
+    h`<div class="card" style=${{padding:0,overflow:"hidden"}}><div style=${{overflowX:"auto"}}><table><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Taken</th><th>Left</th><th>Attend.</th><th>Paid</th><th>Status</th><th></th></tr></thead><tbody>
+      ${list.map((s,i) => {
+        const left = s.lessonsTotal - s.lessonsTaken;
+        const att = attendanceStats(s.id, data.lessons);
+        const sPay = data.payments.filter(p=>p.studentId===s.id);
+        const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
+        return h`<tr key=${s.id} class=${"ck"+(s.active?"":" ri")} onClick=${()=>onProfile(s.id)}>
+          <td class="nc">${i+1}</td>
+          <td style=${{fontWeight:600}}>${s.name}</td>
+          <td><span class="tg">${s.type}</span></td>
+          <td>${s.lessonsTaken}</td>
+          <td><span class=${"ll "+(left<=0?"low":left<=2?"ok":"good")}>${left}</span></td>
+          <td><span class=${"ll "+(att.rate>=80?"good":att.rate>=60?"ok":"low")} style=${{fontSize:16}}>${att.rate}%</span></td>
+          <td style=${{fontFamily:"var(--fh)",fontSize:16}}>${fm(totalPaid, CUR)}</td>
+          <td><span class=${"bg "+(s.active?"bg-ok":"bg-n")}>${s.active?"Active":"Off"}</span></td>
+          <td onClick=${e=>e.stopPropagation()} style=${{whiteSpace:"nowrap"}}>
+            <button class="bi" onClick=${()=>{setForm({...s});setShow(true);}}>${ic('edt')}</button>
+            <button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>doDelete(s.id)}>${ic('del')}</button>
+          </td>
+        </tr>`;
+      })}
+    </tbody></table></div></div>`}
+
+    ${show && h`<${Modal} title=${data.students.find(s=>s.id===form.id)?"EDIT STUDENT":"ADD STUDENT"} onClose=${()=>setShow(false)} footer=${h`<button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>`}>
+      <div class="fg"><label>Full Name</label><input value=${form.name} onInput=${e=>setForm({...form,name:e.target.value})} placeholder="Name"/></div>
+      <div class="fr3"><div class="fg"><label>Email</label><input type="email" value=${form.email} onInput=${e=>setForm({...form,email:e.target.value})}/></div><div class="fg"><label>Phone</label><input value=${form.phone} onInput=${e=>setForm({...form,phone:e.target.value})}/></div><div class="fg"><label>WhatsApp (+code)</label><input value=${form.whatsapp} onInput=${e=>setForm({...form,whatsapp:e.target.value})} placeholder="+961..."/></div></div>
+      <div class="fr3"><div class="fg"><label>Type</label><select value=${form.type} onChange=${e=>setForm({...form,type:e.target.value})}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Level</label><select value=${form.level} onChange=${e=>setForm({...form,level:e.target.value})}>${S.levels.map(l=>h`<option key=${l}>${l}</option>`)}</select></div><div class="fg"><label>Payment Plan</label><select value=${form.paymentPlan} onChange=${e=>setForm({...form,paymentPlan:e.target.value})}>${S.payPlans.map(p=>h`<option key=${p}>${p}</option>`)}</select></div></div>
+      <div class="fr3"><div class="fg"><label>Rate (${CUR})</label><input type="number" value=${form.lessonRate} onInput=${e=>setForm({...form,lessonRate:+e.target.value})}/></div><div class="fg"><label>Lessons Purchased</label><input type="number" value=${form.lessonsTotal} onInput=${e=>setForm({...form,lessonsTotal:+e.target.value})}/></div><div class="fg"><label>Lessons Taken</label><input type="number" value=${form.lessonsTaken} onInput=${e=>setForm({...form,lessonsTaken:+e.target.value})}/></div></div>
+      <div class="fr" style=${{borderLeft:"3px solid var(--ok)",paddingLeft:12}}><div class="fg"><label style=${{color:"var(--ok)"}}>Free Lessons Given</label><input type="number" value=${form.freeTotal||0} onInput=${e=>setForm({...form,freeTotal:Math.max(0,+e.target.value)})}/></div><div class="fg"><label style=${{color:"var(--ok)"}}>Free Lessons Taken</label><input type="number" value=${form.freeTaken||0} onInput=${e=>setForm({...form,freeTaken:Math.max(0,Math.min(form.freeTotal||0,+e.target.value))})}/></div></div>
+      <div class="fr"><div class="fg"><label>Start Date</label><input type="date" value=${form.startDate} onInput=${e=>setForm({...form,startDate:e.target.value})}/></div><div class="fg"><label>Status</label><select value=${form.active?"active":"inactive"} onChange=${e=>setForm({...form,active:e.target.value==="active"})}><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div>
+    <//>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// CALENDAR — FIX #11: configurable week start
+// ════════════════════════════════════════
+function Calendar({data, setData}) {
+  const [mo, setMo] = useState(new Date().getMonth());
+  const [yr, setYr] = useState(new Date().getFullYear());
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkLesson(data.settings));
+  const S = data.settings;
+  const wsd = S.weekStartDay || 1;
+  const fd = new Date(yr,mo,1).getDay(), dim = new Date(yr,mo+1,0).getDate(), pd = new Date(yr,mo,0).getDate();
+  // FIX #11: Adjust first day offset based on week start
+  const offset = (fd - wsd + 7) % 7;
+  const cells = []; for(let i=offset-1;i>=0;i--) cells.push({d:pd-i,m:false}); for(let i=1;i<=dim;i++) cells.push({d:i,m:true}); while(cells.length<42) cells.push({d:cells.length-offset-dim+1,m:false});
+  const ts = today(), MN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DAY_NAMES = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  const orderedDays = [...DAY_NAMES.slice(wsd), ...DAY_NAMES.slice(0,wsd)];
+  const getLessons = day => { const ds=yr+"-"+String(mo+1).padStart(2,"0")+"-"+String(day).padStart(2,"0"); return data.lessons.filter(l=>l.date===ds); };
+
+  const doSave = () => {
+    if (!form.studentId && !form.groupId) return;
+    const ex = data.lessons.find(l=>l.id===form.id);
+    let nL = ex ? data.lessons.map(l=>l.id===form.id?{...form}:l) : [...data.lessons,{...form}];
+    let nS = data.students;
+    if (form.status==="Completed" && ex?.status!=="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?{...s,lessonsTaken:s.lessonsTaken+1}:s);
+    if (form.status!=="Completed" && ex?.status==="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?{...s,lessonsTaken:Math.max(0,s.lessonsTaken-1)}:s);
+    setData({...data, lessons:nL, students:nS}); setShow(false); setForm(mkLesson(S));
+  };
+  const doDel = id => { if(confirm("Delete this lesson?")) { setData({...data, lessons:data.lessons.filter(l=>l.id!==id)}); setShow(false); } };
+
+  return h`<div>
+    <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+      <div style=${{display:"flex",alignItems:"center",gap:14}}>
+        <button class="bi" onClick=${()=>{if(mo===0){setMo(11);setYr(yr-1);}else setMo(mo-1);}}>${icb('cL')}</button>
+        <h3 style=${{fontFamily:"var(--fh)",fontSize:26,letterSpacing:2,minWidth:200,textAlign:"center"}}>${MN[mo]} ${yr}</h3>
+        <button class="bi" onClick=${()=>{if(mo===11){setMo(0);setYr(yr+1);}else setMo(mo+1);}}>${icb('cR')}</button>
+      </div>
+      <button class="btn btn-p" onClick=${()=>{setForm(mkLesson(S));setShow(true);}}>${ic('plus')} Add Lesson</button>
+    </div>
+    <div class="cal">
+      ${orderedDays.map(d=>h`<div key=${d} class="cal-h">${d}</div>`)}
+      ${cells.map((c,i) => { const ds=c.m?yr+"-"+String(mo+1).padStart(2,"0")+"-"+String(c.d).padStart(2,"0"):""; const dl=c.m?getLessons(c.d):[]; return h`<div key=${i} class=${"cal-c"+(c.m?"":" om")+(ds===ts?" today":"")}>
+        <div class="cal-d">${c.d}</div>
+        ${dl.map(l=>{const st=data.students.find(s=>s.id===l.studentId);return h`<div key=${l.id} class=${"cal-e "+l.status.toLowerCase()} onClick=${()=>{setForm({...l});setShow(true);}}>${l.time} ${st?.name||"Grp"}</div>`;})}
+      </div>`; })}
+    </div>
+    ${show && h`<${Modal} title=${data.lessons.find(l=>l.id===form.id)?"EDIT LESSON":"ADD LESSON"} onClose=${()=>setShow(false)} footer=${h`
+      ${data.lessons.find(l=>l.id===form.id) && h`<button class="btn btn-d btn-sm" onClick=${()=>doDel(form.id)}>Delete</button>`}
+      <button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>
+    `}>
+      <div class="fr"><div class="fg"><label>Student</label><select value=${form.studentId} onChange=${e=>setForm({...form,studentId:e.target.value})}><option value="">— Select —</option>${data.students.filter(s=>s.active).map(s=>h`<option key=${s.id} value=${s.id}>${s.name}</option>`)}</select></div><div class="fg"><label>Group</label><select value=${form.groupId} onChange=${e=>setForm({...form,groupId:e.target.value})}><option value="">— None —</option>${(data.groups||[]).map(g=>h`<option key=${g.id} value=${g.id}>${g.name}</option>`)}</select></div></div>
+      <div class="fr3"><div class="fg"><label>Date</label><input type="date" value=${form.date} onInput=${e=>setForm({...form,date:e.target.value})}/></div><div class="fg"><label>Time</label><input type="time" value=${form.time} onInput=${e=>setForm({...form,time:e.target.value})}/></div><div class="fg"><label>Duration</label><input type="number" value=${form.duration} onInput=${e=>setForm({...form,duration:+e.target.value})}/></div></div>
+      <div class="fr"><div class="fg"><label>Type</label><select value=${form.type} onChange=${e=>setForm({...form,type:e.target.value})}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Status</label><select value=${form.status} onChange=${e=>setForm({...form,status:e.target.value})}>${S.statuses.map(s=>h`<option key=${s}>${s}</option>`)}</select></div></div>
+      <div class="fg"><label>Notes</label><textarea value=${form.notes} onInput=${e=>setForm({...form,notes:e.target.value})}/></div>
+    <//>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// PAYMENTS — FIX #7 & #8
+// ════════════════════════════════════════
+function Payments({data, setData}) {
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkPayment());
+  const [search, setSearch] = useState("");
+  const S = data.settings;
+  const CUR = S.currency || "$";
+  const sorted = [...data.payments].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const filtered = search ? sorted.filter(p=>{const st=data.students.find(s=>s.id===p.studentId); return st?.name?.toLowerCase().includes(search.toLowerCase());}) : sorted;
+  const now = new Date();
+  const mPay = data.payments.filter(p=>{const d=new Date(p.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const mRev = mPay.filter(p=>p.status==="Paid").reduce((a,p)=>a+(p.amount||0),0);
+  const tRev = data.payments.filter(p=>p.status==="Paid").reduce((a,p)=>a+(p.amount||0),0);
+  const pending = data.payments.filter(p=>p.status!=="Paid");
+  const pendingTotal = pending.reduce((a,p)=>a+(p.amount||0),0);
+
+  // FIX #8: Track original lessonsAdded to adjust on edit
+  const doSave = () => {
+    if(!form.studentId||!form.amount) return;
+    const ex=data.payments.find(p=>p.id===form.id);
+    let nP, nS=data.students;
+    if(ex) {
+      nP=data.payments.map(p=>p.id===form.id?{...form}:p);
+      // Adjust lessons if lessonsAdded changed
+      const diff = (form.lessonsAdded||0) - (ex.lessonsAdded||0);
+      if(diff !== 0) {
+        nS = nS.map(s=>s.id===form.studentId?{...s,lessonsTotal:Math.max(0,s.lessonsTotal+diff)}:s);
+      }
+    } else {
+      nP=[...data.payments,{...form}];
+      if(form.lessonsAdded>0) nS=nS.map(s=>s.id===form.studentId?{...s,lessonsTotal:s.lessonsTotal+form.lessonsAdded,totalPaid:s.totalPaid+form.amount}:s);
+    }
+    setData({...data,payments:nP,students:nS}); setShow(false); setForm(mkPayment());
+  };
+  const toggleStatus = pid => { setData({...data, payments: data.payments.map(p => p.id===pid ? {...p, status: p.status==="Paid"?"Pending":"Paid"} : p)}); };
+
+  return h`<div>
+    <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)"}}>
+      <div class="stat"><div class="lb">This Month (Paid)</div><div class="vl">${fm(mRev,CUR)}</div></div>
+      <div class="stat"><div class="lb">Total Collected</div><div class="vl">${fm(tRev,CUR)}</div></div>
+      <div class="stat"><div class="lb">Pending</div><div class="vl" style=${{color:pendingTotal>0?"var(--wn)":"var(--ok)"}}>${fm(pendingTotal,CUR)}</div><div class="su">${pending.length} unpaid</div></div>
+      <div class="stat"><div class="lb">Avg Payment</div><div class="vl">${fm(data.payments.length?data.payments.reduce((a,p)=>a+(p.amount||0),0)/data.payments.length:0,CUR)}</div></div>
+    </div>
+    <div class="card" style=${{padding:0}}>
+      <div style=${{padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"2px solid var(--bk)",gap:10,flexWrap:"wrap"}}>
+        <h3 style=${{fontFamily:"var(--fh)",fontSize:20,letterSpacing:1.5,margin:0}}>PAYMENTS</h3>
+        <div style=${{display:"flex",gap:8,alignItems:"center"}}>
+          <div class="sb-x" style=${{border:"1.5px solid var(--g200)"}}>${ic('srch')}<input placeholder="Filter by student..." value=${search} onInput=${e=>setSearch(e.target.value)} style=${{width:140}}/></div>
+          <button class="btn btn-p btn-sm" onClick=${()=>{setForm(mkPayment());setShow(true);}}>${ic('plus')} Add</button>
+        </div>
+      </div>
+    <div style=${{overflowX:"auto"}}><table><thead><tr><th>Date</th><th>Student</th><th>Amount</th><th>Status</th><th>Method</th><th>Lessons+</th><th>Notes</th><th></th></tr></thead><tbody>
+      ${filtered.map(p=>{const st=data.students.find(s=>s.id===p.studentId); return h`<tr key=${p.id} style=${{background:p.status!=="Paid"?"#fff8f0":"transparent"}}>
+        <td style=${{fontWeight:600}}>${fmt(p.date)}</td>
+        <td>${st?.name||"?"}</td>
+        <td style=${{fontFamily:"var(--fh)",fontSize:18}}>${fm(p.amount,CUR)}</td>
+        <td><button class=${"btn btn-xs "+(p.status==="Paid"?"btn-done":"btn-d")} onClick=${()=>toggleStatus(p.id)} style=${{minWidth:70,justifyContent:"center"}}>${p.status==="Paid"?"✓ Paid":"Pending"}</button></td>
+        <td>${p.method}</td>
+        <td>${p.lessonsAdded||"—"}</td>
+        <td style=${{fontSize:12,maxWidth:150,overflow:"hidden",textOverflow:"ellipsis"}}>${p.notes||"—"}</td>
+        <td style=${{whiteSpace:"nowrap"}}><button class="bi" onClick=${()=>{setForm({...p});setShow(true);}}>${ic('edt')}</button><button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>{
+          // FIX #7: Confirm before deleting payment
+          if(confirm("Delete this payment record?")) setData({...data,payments:data.payments.filter(x=>x.id!==p.id)});
+        }}>${ic('del')}</button></td>
+      </tr>`;})}
+      ${filtered.length===0&&h`<tr><td colspan="8" style=${{textAlign:"center",color:"var(--g400)",padding:30}}>No payments</td></tr>`}
+    </tbody></table></div></div>
+    ${show && h`<${Modal} title=${data.payments.find(p=>p.id===form.id)?"EDIT PAYMENT":"ADD PAYMENT"} onClose=${()=>setShow(false)} footer=${h`<button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>`}>
+      <div class="fr"><div class="fg"><label>Student</label><select value=${form.studentId} onChange=${e=>setForm({...form,studentId:e.target.value})}><option value="">— Select —</option>${data.students.map(s=>h`<option key=${s.id} value=${s.id}>${s.name}</option>`)}</select></div><div class="fg"><label>Date</label><input type="date" value=${form.date} onInput=${e=>setForm({...form,date:e.target.value})}/></div></div>
+      <div class="fr3"><div class="fg"><label>Amount (${CUR})</label><input type="number" value=${form.amount} onInput=${e=>setForm({...form,amount:+e.target.value})}/></div><div class="fg"><label>Method</label><select value=${form.method} onChange=${e=>setForm({...form,method:e.target.value})}>${S.payMethods.map(m=>h`<option key=${m}>${m}</option>`)}</select></div><div class="fg"><label>Lessons Added</label><input type="number" value=${form.lessonsAdded} onInput=${e=>setForm({...form,lessonsAdded:+e.target.value})}/></div></div>
+      <div class="fr"><div class="fg"><label>Status</label><select value=${form.status||"Pending"} onChange=${e=>setForm({...form,status:e.target.value})}><option value="Pending">Pending</option><option value="Paid">Paid</option></select></div><div class="fg"><label>Notes</label><input value=${form.notes} onInput=${e=>setForm({...form,notes:e.target.value})}/></div></div>
+    <//>`}
+  </div>`;
+}
+
+// ─── CURRICULUM (simplified, same logic) ───
+function Curriculum({data, setData}) {
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkCurriculum(data.settings));
+  const [filter, setFilter] = useState("All");
+  const fileRef = useRef(null);
+  const S = data.settings;
+  const cur = data.curriculum || [];
+  const list = filter==="All" ? cur : cur.filter(c=>c.category===filter);
+  const doSave = () => { if(!form.title.trim()) return; const ex=cur.find(c=>c.id===form.id); setData({...data,curriculum:ex?cur.map(c=>c.id===form.id?{...form}:c):[...cur,{...form}]}); setShow(false); setForm(mkCurriculum(S)); };
+  const handleFile = e => { const f=e.target.files[0]; if(!f) return; if(f.size>4e6){alert("Max 4MB");return;} const r=new FileReader(); r.onload=()=>setForm({...form,fileName:f.name,fileData:r.result}); r.readAsDataURL(f); };
+  return h`<div>
+    <div style=${{display:"flex",gap:10,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+      <div style=${{display:"flex",gap:3}}>${["All",...S.types].map(t=>h`<button key=${t} class=${"btn btn-sm "+(filter===t?"btn-p":"")} onClick=${()=>setFilter(t)}>${t}</button>`)}</div>
+      <button class="btn btn-p" onClick=${()=>{setForm(mkCurriculum(S));setShow(true);}}>${ic('plus')} Add</button>
+    </div>
+    ${list.length===0 ? h`<div class="empty"><h3>NO ITEMS</h3><p>Build your library</p></div>` : h`
+    <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+      ${list.map(c=>h`<div key=${c.id} class="card" style=${{marginBottom:0}}>
+        <div style=${{display:"flex",justifyContent:"space-between"}}><h4 style=${{fontFamily:"var(--fh)",fontSize:18,letterSpacing:1}}>${c.title}</h4><div><button class="bi" onClick=${()=>{setForm({...c});setShow(true);}}>${ic('edt')}</button><button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>{if(confirm("Delete?"))setData({...data,curriculum:cur.filter(x=>x.id!==c.id)});}}>${ic('del')}</button></div></div>
+        <div style=${{marginTop:6}}><span class="tg">${c.category}</span> <span class="tg" style=${{background:"transparent",color:"var(--bk)",border:"1.5px solid var(--bk)"}}>${c.level}</span></div>
+        ${c.description&&h`<p style=${{fontSize:12,color:"var(--g500)",marginTop:6,lineHeight:1.5}}>${c.description}</p>`}
+        ${c.fileName&&h`<div style=${{marginTop:8,padding:6,background:"var(--g50)",border:"1px solid var(--g200)",cursor:"pointer",fontSize:12}} onClick=${()=>{const a=document.createElement("a");a.href=c.fileData;a.download=c.fileName;a.click();}}>${ic('fi')} ${c.fileName}</div>`}
+      </div>`)}
+    </div>`}
+    ${show && h`<${Modal} title=${cur.find(c=>c.id===form.id)?"EDIT":"ADD ITEM"} onClose=${()=>setShow(false)} footer=${h`<button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>`}>
+      <div class="fg"><label>Title</label><input value=${form.title} onInput=${e=>setForm({...form,title:e.target.value})}/></div>
+      <div class="fr"><div class="fg"><label>Category</label><select value=${form.category} onChange=${e=>setForm({...form,category:e.target.value})}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Level</label><select value=${form.level} onChange=${e=>setForm({...form,level:e.target.value})}>${S.levels.map(l=>h`<option key=${l}>${l}</option>`)}</select></div></div>
+      <div class="fg"><label>Description</label><textarea value=${form.description} onInput=${e=>setForm({...form,description:e.target.value})}/></div>
+      <div class="fg"><label>File (max 4MB)</label><div class="fu" onClick=${()=>fileRef.current?.click()}><input ref=${fileRef} type="file" onChange=${handleFile} accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"/>${form.fileName?h`<span>${ic('fi')} ${form.fileName}</span>`:h`<p style=${{fontWeight:600}}>Click to upload</p>`}</div></div>
+    <//>`}
+  </div>`;
+}
+
+// ─── GROUPS ───
+function Groups({data, setData}) {
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkGroup(data.settings));
+  const S = data.settings;
+  const groups = data.groups || [];
+  const doSave = () => { if(!form.name.trim()) return; const ex=groups.find(g=>g.id===form.id); setData({...data,groups:ex?groups.map(g=>g.id===form.id?{...form}:g):[...groups,{...form}]}); setShow(false); setForm(mkGroup(S)); };
+  const toggle = sid => { const ids=form.studentIds||[]; setForm({...form,studentIds:ids.includes(sid)?ids.filter(i=>i!==sid):[...ids,sid]}); };
+  return h`<div>
+    <div style=${{display:"flex",justifyContent:"flex-end",marginBottom:18}}><button class="btn btn-p" onClick=${()=>{setForm(mkGroup(S));setShow(true);}}>${ic('plus')} Add Group</button></div>
+    ${groups.length===0 ? h`<div class="empty"><h3>NO GROUPS</h3></div>` : h`
+    <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:14}}>
+      ${groups.map(g=>h`<div key=${g.id} class="card" style=${{marginBottom:0}}>
+        <div style=${{display:"flex",justifyContent:"space-between"}}><h3 style=${{fontFamily:"var(--fh)",fontSize:20,margin:0}}>${g.name}</h3><div><button class="bi" onClick=${()=>{setForm({...g});setShow(true);}}>${ic('edt')}</button><button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>{if(confirm("Delete group?"))setData({...data,groups:groups.filter(x=>x.id!==g.id)});}}>${ic('del')}</button></div></div>
+        <div style=${{marginTop:6}}><span class="tg">${g.type}</span>${g.schedule&&h`<span style=${{marginLeft:8,fontSize:12,color:"var(--g500)"}}>${g.schedule}</span>`}</div>
+        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)"}}>${(g.studentIds||[]).length} students</div>
+      </div>`)}
+    </div>`}
+    ${show && h`<${Modal} title=${groups.find(g=>g.id===form.id)?"EDIT":"ADD GROUP"} onClose=${()=>setShow(false)} footer=${h`<button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>`}>
+      <div class="fg"><label>Name</label><input value=${form.name} onInput=${e=>setForm({...form,name:e.target.value})}/></div>
+      <div class="fr"><div class="fg"><label>Type</label><select value=${form.type} onChange=${e=>setForm({...form,type:e.target.value})}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Schedule</label><input value=${form.schedule} onInput=${e=>setForm({...form,schedule:e.target.value})} placeholder="Mon & Wed 6PM"/></div></div>
+      <div class="fg"><label>Students</label><div style=${{border:"2px solid var(--g200)",maxHeight:180,overflowY:"auto"}}>${data.students.filter(s=>s.active).map(s=>{const sel=(form.studentIds||[]).includes(s.id);return h`<div key=${s.id} style=${{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",cursor:"pointer",background:sel?"var(--g100)":"transparent",borderBottom:"1px solid var(--g100)"}} onClick=${()=>toggle(s.id)}><div class=${"cb "+(sel?"on":"")} style=${{width:16,height:16}}>${sel&&ic('chk')}</div><span style=${{fontWeight:500,fontSize:13}}>${s.name}</span></div>`;})}</div></div>
+    <//>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// SETTINGS — with currency & week start
+// ════════════════════════════════════════
+function Settings({data, setData}) {
+  const S = data.settings;
+  const u = (k,v) => setData({...data, settings:{...S,[k]:v}});
+  const [storage, setStorage] = useState(null);
+  useEffect(() => { getStorageEstimate().then(est => setStorage(est)); }, [data]);
+  const dataSizeMB = (new Blob([JSON.stringify(data)]).size / 1024 / 1024).toFixed(2);
+
+  return h`<div>
+    <div class="card"><h3>STORAGE</h3>
+      <div style=${{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}>
+        <div><div style=${{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,color:"var(--g500)"}}>Your Data</div><div style=${{fontFamily:"var(--fh)",fontSize:32}}>${dataSizeMB} MB</div></div>
+        ${storage && storage.quota > 0 && h`<div><div style=${{fontSize:10,textTransform:"uppercase",letterSpacing:"1.5px",fontWeight:600,color:"var(--g500)"}}>Browser Quota</div><div style=${{fontFamily:"var(--fh)",fontSize:32}}>${(storage.quota/1024/1024).toFixed(0)} MB</div></div>`}
+      </div>
+    </div>
+    <div class="card"><h3>BRANDING</h3><div class="fr"><div class="fg"><label>App Title</label><input value=${S.brand} onInput=${e=>u("brand",e.target.value)}/></div><div class="fg"><label>Subtitle</label><input value=${S.sub} onInput=${e=>u("sub",e.target.value)}/></div></div></div>
+    <div class="card"><h3>REGIONAL</h3>
+      <div class="fr">
+        <div class="fg"><label>Currency Symbol</label><input value=${S.currency||"$"} onInput=${e=>u("currency",e.target.value)} placeholder="$" style=${{maxWidth:80}}/></div>
+        <div class="fg"><label>Week Starts On</label><select value=${S.weekStartDay||1} onChange=${e=>u("weekStartDay",+e.target.value)}><option value="0">Sunday</option><option value="1">Monday</option><option value="6">Saturday</option></select></div>
+      </div>
+    </div>
+    <div class="card"><h3>CATEGORIES</h3><p style=${{fontSize:12,color:"var(--g500)",marginBottom:14}}>Custom options for all dropdowns.</p>
+      <${Chips} items=${S.types} onUpdate=${v=>u("types",v)} label="Arabic Types"/>
+      <${Chips} items=${S.levels} onUpdate=${v=>u("levels",v)} label="Student Levels"/>
+      <${Chips} items=${S.payPlans} onUpdate=${v=>u("payPlans",v)} label="Payment Plans"/>
+      <${Chips} items=${S.payMethods} onUpdate=${v=>u("payMethods",v)} label="Payment Methods"/>
+    </div>
+    <div class="card"><h3>WHATSAPP TEMPLATES</h3><p style=${{fontSize:12,color:"var(--g500)",marginBottom:14}}>Use {name}, {date}, {time}, {type} as placeholders.</p>
+      <div class="fg"><label>Day-Before</label><textarea value=${S.msgDay} onInput=${e=>u("msgDay",e.target.value)} style=${{minHeight:60}}/></div>
+      <div class="fg"><label>Hour-Before</label><textarea value=${S.msgHour} onInput=${e=>u("msgHour",e.target.value)} style=${{minHeight:60}}/></div>
+      <div class="fg"><label>General</label><textarea value=${S.msgGen} onInput=${e=>u("msgGen",e.target.value)} style=${{minHeight:60}}/></div>
+    </div>
+    <div class="card"><h3>DATA BACKUP</h3>
+      <div style=${{display:"flex",gap:10,flexWrap:"wrap"}}>
+        <button class="btn btn-p" onClick=${()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="arabic-tutor-backup-"+today()+".json";a.click();URL.revokeObjectURL(url);}}>Export Backup</button>
+        <button class="btn" onClick=${()=>{const inp=document.createElement("input");inp.type="file";inp.accept=".json";inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.students&&d.settings){if(confirm("Replace ALL data?")){setData(migrateData(d));}}else{alert("Invalid backup.");}}catch{alert("Could not read file.");}};r.readAsText(f);};inp.click();}}>Import Backup</button>
+      </div>
+    </div>
+    <div class="card" style=${{borderColor:"var(--bd)"}}><h3 style=${{color:"var(--bd)"}}>DANGER ZONE</h3><button class="btn btn-d" onClick=${()=>{if(confirm("Delete ALL data? Cannot be undone.")){indexedDB.deleteDatabase(DB_NAME);localStorage.removeItem(SK);location.reload();}}}>Reset All Data</button></div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// MAIN APP with Auth
+// ════════════════════════════════════════
+function App() {
+  const [data, setData] = useState(null);
+  const [view, setView] = useState("dashboard");
+  const [profileId, setProfileId] = useState(null);
+  const [auth, setAuth] = useState(null); // {user, role}
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check existing session
+  useEffect(() => {
+    (async () => {
+      if (supabase) {
+        const {data: {session}} = await supabase.auth.getSession();
+        if (session?.user) {
+          setAuth({user: session.user, role: session.user.user_metadata?.role || "student"});
+        }
+      }
+      setCheckingAuth(false);
+    })();
+  }, []);
+
+  // Load data
+  useEffect(() => { if (auth) loadData().then(d => setData(d)); }, [auth]);
+  // Save on change
+  useEffect(() => { if (data) save(data); }, [data]);
+
+  const update = useCallback(d => setData(d), []);
+  const openProfile = id => { setProfileId(id); setView("profile"); };
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setAuth(null); setData(null);
+  };
+
+  if (checkingAuth) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
+  if (!auth) return h`<${AuthScreen} onAuth=${setAuth}/>`;
+  if (!data) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
+
+  // Student role → student portal
+  if (auth.role === "student") return h`<${StudentPortal} data=${data} user=${auth.user} onLogout=${handleLogout}/>`;
+
+  const S = data.settings;
+  const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["groups","Groups","grp"],["settings","Settings","set"]];
+  const activeNav = view === "profile" ? "students" : view;
+
+  return h`<div class="app">
+    <div class="sb">
+      <div class="sb-hd"><h1>${S.brand}</h1><small>${S.sub}</small></div>
+      <div class="sb-nav">${nav.map(([k,l,i]) => h`<div key=${k} class=${"sb-it"+(activeNav===k?" on":"")} onClick=${()=>{setView(k);setProfileId(null);}}>${ic(i)}<span>${l}</span></div>`)}</div>
+      <div class="sb-ft">
+        <div>${data.students.filter(s=>s.active).length} active students</div>
+        <div style=${{marginTop:8,cursor:"pointer",color:"var(--g400)"}} onClick=${handleLogout}>${ic('logout')} Log out</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">${view==="profile"&&h`<button class="bi" onClick=${()=>setView("students")}>${icb('back')}</button>`}<h2>${view==="profile"?"STUDENT PROFILE":(nav.find(([k])=>k===activeNav)?.[1]||"").toUpperCase()}</h2></div>
+      <div class="page">
+        ${view==="dashboard" && h`<${Dashboard} data=${data}/>`}
+        ${view==="students" && h`<${Students} data=${data} setData=${update} onProfile=${openProfile}/>`}
+        ${view==="calendar" && h`<${Calendar} data=${data} setData=${update}/>`}
+        ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
+        ${view==="curriculum" && h`<${Curriculum} data=${data} setData=${update}/>`}
+        ${view==="groups" && h`<${Groups} data=${data} setData=${update}/>`}
+        ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h`<${App}/>`);
+</script>
+</body>
+</html>

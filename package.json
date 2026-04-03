@@ -1,0 +1,10 @@
+{
+  "name": "arabic-tutor-manager",
+  "version": "2.0.0",
+  "description": "Arabic Tutor Student Management System with auth, RTL support, and student portal",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "start": "npx serve public"
+  }
+}
