@@ -9,8 +9,6 @@
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js" type="module"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- Supabase Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bk:#000;--wh:#fff;--g50:#fafafa;--g100:#f0f0f0;--g200:#e0e0e0;--g300:#c0c0c0;--g400:#888;--g500:#666;--g600:#444;--g700:#333;--g800:#1a1a1a;--ok:#00aa55;--wn:#ff8800;--bd:#dd2222;--fh:'Bebas Neue',sans-serif;--fb:'DM Sans',sans-serif;--fa:'Noto Kufi Arabic',sans-serif}
@@ -196,16 +194,16 @@ const h = htm.bind(React.createElement);
 const {useState, useEffect, useCallback, useRef} = React;
 
 // ═══════════════════════════════════════════════════
-// CONFIGURATION — Replace with your Supabase project
+// CUSTOM AUTH — token stored in localStorage
 // ═══════════════════════════════════════════════════
-const SUPABASE_URL = window.__SUPABASE_URL__ || "https://aojfgnpzfqkkvfdtaegd.supabase.co";
-const SUPABASE_ANON_KEY = window.__SUPABASE_ANON_KEY__ || "sb_publishable_5DZe9ePFxlV0IkhogzBynw_Weow3Iv0";
+const AUTH_KEY = "tutor_auth";
+const getAuth = () => { try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || null; } catch { return null; } };
+const setAuthStore = v => localStorage.setItem(AUTH_KEY, JSON.stringify(v));
+const clearAuthStore = () => localStorage.removeItem(AUTH_KEY);
 
-// Initialize Supabase client (gracefully degrade if not configured)
-let supabase = null;
-const supabaseReady = SUPABASE_URL !== "YOUR_SUPABASE_URL" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
-if (supabaseReady && window.supabase) {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+async function apiPost(endpoint, body) {
+  const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return r.json();
 }
 
 // ─── Helpers ───
@@ -842,88 +840,93 @@ function StudentAIPanel({student, data}) {
 }
 
 // ════════════════════════════════════════
-// AUTH SYSTEM
+// AUTH SCREEN — login + request access + first setup
 // ════════════════════════════════════════
 function AuthScreen({onAuth}) {
-  const [mode, setMode] = useState("login"); // login | signup
-  const [method, setMethod] = useState("email"); // email | phone
-  const [role, setRole] = useState("tutor"); // tutor | student
+  const [mode, setMode] = useState("login"); // login | request | setup
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [setupKey, setSetupKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleEmailAuth = async () => {
-    setLoading(true); setError(""); setSuccess("");
-    try {
-      if (supabase) {
-        if (mode === "signup") {
-          const {error: err} = await supabase.auth.signUp({email, password, options:{data:{role}}});
-          if (err) throw err;
-          setSuccess("Check your email for a confirmation link!");
-        } else {
-          const {data, error: err} = await supabase.auth.signInWithPassword({email, password});
-          if (err) throw err;
-          onAuth({user: data.user, role: data.user.user_metadata?.role || "student"});
-        }
-      } else {
-        // Offline / demo mode
-        onAuth({user:{email, id:"local"}, role});
-      }
-    } catch(e) { setError(e.message || "Authentication failed"); }
+  const reset = () => { setError(""); setSuccess(""); };
+
+  const doLogin = async () => {
+    if (!email || !password) return setError("Email and password required");
+    setLoading(true); reset();
+    const d = await apiPost("/api/auth", {action:"login", email, password});
     setLoading(false);
+    if (d.error === "pending") return setError("Your request is pending. Your teacher hasn't confirmed it yet.");
+    if (d.error === "rejected") return setError("Access denied. Contact your teacher.");
+    if (d.error) return setError(d.error);
+    if (d.error === "kv_not_configured") return setError("System not set up yet. Contact your teacher.");
+    setAuthStore(d);
+    onAuth({token: d.token, role: d.role, name: d.name, email: d.email, user: {email: d.email, id: d.email}});
   };
 
-  const handlePhoneAuth = async () => {
-    setLoading(true); setError(""); setSuccess("");
-    try {
-      if (supabase) {
-        if (!otpSent) {
-          const {error: err} = await supabase.auth.signInWithOtp({phone});
-          if (err) throw err;
-          setOtpSent(true);
-          setSuccess("OTP sent to your phone!");
-        } else {
-          const {data, error: err} = await supabase.auth.verifyOtp({phone, token: otp, type:"sms"});
-          if (err) throw err;
-          onAuth({user: data.user, role: data.user.user_metadata?.role || "student"});
-        }
-      } else {
-        onAuth({user:{phone, id:"local"}, role});
-      }
-    } catch(e) { setError(e.message || "Authentication failed"); }
+  const doRequest = async () => {
+    if (!name || !email || !password) return setError("Name, email and password are all required");
+    if (password.length < 6) return setError("Password must be at least 6 characters");
+    setLoading(true); reset();
+    const d = await apiPost("/api/auth", {action:"request", name, email, password, message});
     setLoading(false);
+    if (d.error) return setError(d.error);
+    setSuccess("Request sent! Your teacher will confirm your access and let you know.");
+    setMode("login");
   };
 
-  const skipAuth = () => onAuth({user:{id:"local",email:"demo@local"}, role:"tutor"});
+  const doSetup = async () => {
+    if (!name || !email || !password || !setupKey) return setError("All fields required");
+    setLoading(true); reset();
+    const d = await apiPost("/api/auth", {action:"setup", name, email, password, setupKey});
+    setLoading(false);
+    if (d.error) return setError(d.error);
+    setSuccess("Tutor account created! You can now log in.");
+    setMode("login");
+  };
 
   return h`<div class="auth-wrap">
     <div class="auth-box">
       <h1>ARABIC TUTOR</h1>
       <div class="sub">Student Management System</div>
 
-      ${!supabaseReady && h`<div style=${{padding:"12px",background:"#fff8f0",border:"2px solid var(--wn)",marginBottom:20,fontSize:12}}>
-        <b>Demo Mode</b> — Supabase not configured. Data is stored locally in your browser.
-        <button class="btn btn-p btn-sm" style=${{marginTop:8,display:"block"}} onClick=${skipAuth}>Enter as Tutor (Demo)</button>
-        <button class="btn btn-sm" style=${{marginTop:6,display:"block"}} onClick=${()=>onAuth({user:{id:"demo-student"}, role:"student"})}>Enter as Student (Demo)</button>
+      <div class="auth-tabs" style=${{marginBottom:20}}>
+        <div class=${"auth-tab "+(mode==="login"?"on":"")} onClick=${()=>{setMode("login");reset();}}>Log In</div>
+        <div class=${"auth-tab "+(mode==="request"?"on":"")} onClick=${()=>{setMode("request");reset();}}>Request Access</div>
+      </div>
+
+      ${mode==="login" && h`<div>
+        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/></div>
+        <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Your password" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/></div>
+        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doLogin} disabled=${loading}>${loading?"Please wait...":"Log In"}</button>
+        <div style=${{marginTop:12,fontSize:11,color:"var(--g500)",textAlign:"center",cursor:"pointer"}} onClick=${()=>{setMode("setup");reset();}}>First time setting up? →</div>
       </div>`}
 
-      ${supabaseReady && h`<div>
-        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="you@example.com"/></div>
-        <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Your password"/></div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${handleEmailAuth} disabled=${loading}>
-          ${loading?"Please wait...":"Log In"}
-        </button>
-        <div style=${{marginTop:14,padding:"10px 12px",background:"var(--g50)",border:"1px solid var(--g200)",fontSize:11,color:"var(--g500)",lineHeight:1.6}}>
-          No account yet? Contact your tutor — accounts are set up for you.
-        </div>
-        ${error && h`<div class="error">${error}</div>`}
-        ${success && h`<div class="success">${success}</div>`}
+      ${mode==="request" && h`<div>
+        <div class="fg"><label>Your Name</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="Full name"/></div>
+        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/></div>
+        <div class="fg"><label>Choose a Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
+        <div class="fg"><label>Message to teacher (optional)</label><textarea value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm your student from Monday classes..." style=${{minHeight:60}}/></div>
+        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request"}</button>
+        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Your teacher will review your request and confirm your access.</div>
       </div>`}
+
+      ${mode==="setup" && h`<div>
+        <div style=${{marginBottom:16,padding:"10px 12px",background:"#fff8f0",border:"2px solid var(--wn)",fontSize:12,lineHeight:1.6}}>First-time setup. Create your tutor account. You'll need the <b>Setup Key</b> from your Vercel environment variables.</div>
+        <div class="fg"><label>Your Name</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="Your name"/></div>
+        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)}/></div>
+        <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
+        <div class="fg"><label>Setup Key</label><input value=${setupKey} onInput=${e=>setSetupKey(e.target.value)} placeholder="From Vercel env vars"/></div>
+        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doSetup} disabled=${loading}>${loading?"Creating...":"Create Tutor Account"}</button>
+        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",cursor:"pointer"}} onClick=${()=>{setMode("login");reset();}}>← Back to login</div>
+      </div>`}
+
+      ${error && h`<div class="error" style=${{marginTop:12}}>${error}</div>`}
+      ${success && h`<div class="success" style=${{marginTop:12}}>${success}</div>`}
     </div>
   </div>`;
 }
@@ -1693,6 +1696,128 @@ function Settings({data, setData}) {
 }
 
 // ════════════════════════════════════════
+// USER MANAGEMENT — teacher panel
+// ════════════════════════════════════════
+function UserManagement({auth}) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("requests"); // requests | all | create
+  const [createForm, setCreateForm] = useState({name:"",email:"",password:"",role:"student"});
+  const [pwForm, setPwForm] = useState({email:"",password:""});
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  const call = async body => apiPost("/api/users", {token: auth.token, ...body});
+
+  const load = async () => {
+    setLoading(true);
+    const d = await call({action:"list"});
+    setUsers(d.users || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const pending = users.filter(u=>u.status==="pending");
+  const approved = users.filter(u=>u.status==="approved");
+
+  const approve = async email => {
+    await call({action:"approve", email});
+    setMsg("Approved!"); load();
+  };
+  const reject = async email => {
+    if (!confirm("Reject and remove this request?")) return;
+    await call({action:"reject", email});
+    setMsg("Removed."); load();
+  };
+  const del = async email => {
+    if (!confirm("Delete this user? They will lose access immediately.")) return;
+    await call({action:"delete", email});
+    setMsg("Deleted."); load();
+  };
+  const resetPw = async (email, pw) => {
+    if (!pw || pw.length < 6) return setErr("Password must be at least 6 characters");
+    const d = await call({action:"setPassword", email, password:pw});
+    if (d.error) return setErr(d.error);
+    setMsg("Password updated for "+email);
+    setPwForm({email:"",password:""});
+  };
+  const create = async () => {
+    setErr(""); setMsg("");
+    if (!createForm.name||!createForm.email||!createForm.password) return setErr("All fields required");
+    const d = await call({action:"create",...createForm});
+    if (d.error) return setErr(d.error);
+    setMsg("Account created for "+createForm.email);
+    setCreateForm({name:"",email:"",password:"",role:"student"});
+    load();
+  };
+
+  const fmt2 = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+
+  if (loading) return h`<div style=${{textAlign:"center",padding:40,color:"var(--g400)"}}>Loading...</div>`;
+
+  return h`<div>
+    ${msg && h`<div style=${{padding:"10px 14px",background:"#f0fff4",border:"1px solid var(--ok)",marginBottom:14,fontSize:13,color:"var(--ok)",fontWeight:600}}>${msg}</div>`}
+    ${err && h`<div style=${{padding:"10px 14px",background:"#fff0f0",border:"1px solid var(--bd)",marginBottom:14,fontSize:13,color:"var(--bd)",fontWeight:600}}>${err}</div>`}
+
+    <div class="auth-tabs" style=${{marginBottom:20}}>
+      <div class=${"auth-tab "+(tab==="requests"?"on":"")} onClick=${()=>{setTab("requests");setMsg("");setErr("");}}>Requests ${pending.length>0?h`<span style=${{marginLeft:4,background:"var(--bd)",color:"#fff",borderRadius:10,padding:"1px 7px",fontSize:10,fontWeight:700}}>${pending.length}</span>`:""}</div>
+      <div class=${"auth-tab "+(tab==="all"?"on":"")} onClick=${()=>{setTab("all");setMsg("");setErr("");}}>All Users (${approved.length})</div>
+      <div class=${"auth-tab "+(tab==="create"?"on":"")} onClick=${()=>{setTab("create");setMsg("");setErr("");}}>Create Account</div>
+    </div>
+
+    ${tab==="requests" && h`<div>
+      ${pending.length===0 ? h`<div class="empty"><h3>NO PENDING REQUESTS</h3><p>When a student requests access, they'll appear here.</p></div>` :
+      h`<div>${pending.map(u=>h`<div key=${u.email} class="assess-card" style=${{borderLeftColor:"var(--wn)"}}>
+        <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+          <div>
+            <div style=${{fontWeight:700,fontSize:15}}>${u.name}</div>
+            <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${u.email}</div>
+            <div style=${{fontSize:11,color:"var(--g400)",marginTop:2}}>Requested: ${fmt2(u.createdAt)}</div>
+            ${u.message&&h`<div style=${{marginTop:8,padding:"8px 10px",background:"var(--g50)",fontSize:12,lineHeight:1.6,borderLeft:"2px solid var(--g300)"}}>"${u.message}"</div>`}
+          </div>
+          <div style=${{display:"flex",gap:6,flexShrink:0}}>
+            <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email)}>✓ Approve</button>
+            <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
+          </div>
+        </div>
+      </div>`)}</div>`}
+    </div>`}
+
+    ${tab==="all" && h`<div>
+      ${approved.length===0 ? h`<div class="empty"><h3>NO APPROVED USERS</h3></div>` :
+      h`<div class="card" style=${{padding:0}}>
+        <div style=${{overflowX:"auto"}}><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Since</th><th>Reset Password</th><th></th></tr></thead><tbody>
+          ${approved.map(u=>h`<tr key=${u.email}>
+            <td style=${{fontWeight:600}}>${u.name}</td>
+            <td style=${{fontSize:12}}>${u.email}</td>
+            <td><span class="tg">${u.role}</span></td>
+            <td style=${{fontSize:12,color:"var(--g500)"}}>${fmt2(u.createdAt)}</td>
+            <td>
+              <div style=${{display:"flex",gap:4,alignItems:"center"}}>
+                <input style=${{padding:"5px 8px",border:"1.5px solid var(--g200)",fontFamily:"var(--fb)",fontSize:12,width:120}} type="password" placeholder="New password" value=${pwForm.email===u.email?pwForm.password:""} onFocus=${()=>setPwForm({email:u.email,password:""})} onInput=${e=>setPwForm({email:u.email,password:e.target.value})}/>
+                <button class="btn btn-xs" onClick=${()=>resetPw(u.email, pwForm.email===u.email?pwForm.password:"")}>Set</button>
+              </div>
+            </td>
+            <td><button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>del(u.email)}>${ic('del')}</button></td>
+          </tr>`)}
+        </tbody></table></div>
+      </div>`}
+    </div>`}
+
+    ${tab==="create" && h`<div class="card" style=${{maxWidth:480}}>
+      <h3 style=${{marginBottom:16}}>CREATE ACCOUNT</h3>
+      <div class="fg"><label>Name</label><input value=${createForm.name} onInput=${e=>setCreateForm({...createForm,name:e.target.value})} placeholder="Student's full name"/></div>
+      <div class="fg"><label>Email</label><input type="email" value=${createForm.email} onInput=${e=>setCreateForm({...createForm,email:e.target.value})}/></div>
+      <div class="fg"><label>Password</label><input type="password" value=${createForm.password} onInput=${e=>setCreateForm({...createForm,password:e.target.value})} placeholder="Min 6 characters"/></div>
+      <div class="fg"><label>Role</label><select value=${createForm.role} onChange=${e=>setCreateForm({...createForm,role:e.target.value})}><option value="student">Student</option><option value="tutor">Tutor</option></select></div>
+      <button class="btn btn-p" onClick=${create}>Create Account</button>
+      <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Share the email and password with the student via WhatsApp. They can log in immediately.</div>
+    </div>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
 // MAIN APP with Auth
 // ════════════════════════════════════════
 function App() {
@@ -1702,14 +1827,19 @@ function App() {
   const [auth, setAuth] = useState(null); // {user, role}
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Check existing session
+  // Check existing session from localStorage token
   useEffect(() => {
     (async () => {
-      if (supabase) {
-        const {data: {session}} = await supabase.auth.getSession();
-        if (session?.user) {
-          setAuth({user: session.user, role: session.user.user_metadata?.role || "student"});
-        }
+      const stored = getAuth();
+      if (stored?.token) {
+        try {
+          const d = await apiPost("/api/auth", {action:"validate", token: stored.token});
+          if (d.valid) {
+            setAuth({...stored, token: stored.token, role: d.role, name: d.name, email: d.email, user: {email: d.email, id: d.email}});
+          } else {
+            clearAuthStore();
+          }
+        } catch { /* network error — let them try again */ }
       }
       setCheckingAuth(false);
     })();
@@ -1723,19 +1853,22 @@ function App() {
   const update = useCallback(d => setData(d), []);
   const openProfile = id => { setProfileId(id); setView("profile"); };
   const handleLogout = async () => {
-    if (supabase) await supabase.auth.signOut();
+    const stored = getAuth();
+    if (stored?.token) apiPost("/api/auth", {action:"logout", token: stored.token}).catch(()=>{});
+    clearAuthStore();
     setAuth(null); setData(null);
   };
 
   if (checkingAuth) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
-  if (!auth) return h`<${AuthScreen} onAuth=${setAuth}/>`;
+  if (!auth) return h`<${AuthScreen} onAuth=${a=>setAuth({...a, user:{email:a.email||a.user?.email,id:a.email||a.user?.email}})}/>`;
+
   if (!data) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
 
   // Student role → student portal
   if (auth.role === "student") return h`<${StudentPortal} data=${data} setData=${update} user=${auth.user} onLogout=${handleLogout}/>`;
 
   const S = data.settings;
-  const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["groups","Groups","grp"],["homework","Homework","hw"],["settings","Settings","set"]];
+  const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["groups","Groups","grp"],["homework","Homework","hw"],["access","Access","stu"],["settings","Settings","set"]];
   const activeNav = view === "profile" ? "students" : view;
 
   return h`<div class="app">
@@ -1758,6 +1891,7 @@ function App() {
         ${view==="curriculum" && h`<${Curriculum} data=${data} setData=${update}/>`}
         ${view==="groups" && h`<${Groups} data=${data} setData=${update}/>`}
         ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
+        ${view==="access" && h`<${UserManagement} auth=${auth}/>`}
         ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
       </div>
     </div>
