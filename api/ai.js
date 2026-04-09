@@ -46,6 +46,17 @@ Student submission: ${context.submission}`;
         userMessage = `Homework: ${context.title}\n${context.description || ''}`;
         break;
 
+      case 'student_tasks':
+        model = 'claude-haiku-4-5-20251001';
+        systemPrompt = `You are an Arabic language tutor. Generate exactly 5 concrete, practical practice tasks for this student to do this week. Each task must be on its own line, starting with a checkbox emoji ☐. Be specific — not generic. Match the tasks to their level, weakest skills, and goals. No explanations, no headers, just 5 lines.`;
+        userMessage = `Student: ${context.name}
+Level: ${context.level} | Dialect: ${context.type}
+Skills (1=weakest, 5=best): Reading ${context.skillReading}/5, Writing ${context.skillWriting}/5, Listening ${context.skillListening}/5, Speaking ${context.skillSpeaking}/5
+Goals: ${context.goals || 'general improvement'}
+Next focus: ${context.nextSteps || 'not specified'}
+Lessons completed: ${context.lessonsTaken} | Attendance: ${context.attendance}%`;
+        break;
+
       default:
         return res.status(400).json({ error: 'Unknown type: ' + type });
     }

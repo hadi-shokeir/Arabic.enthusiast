@@ -176,6 +176,14 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 /* Student portal */
 .stu-portal-hd{padding:20px 28px;background:var(--bk);color:var(--wh);display:flex;align-items:center;justify-content:space-between}
 .stu-portal-hd h1{font-family:var(--fh);font-size:22px;letter-spacing:3px}
+.portal-grid{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+.ai-panel{background:var(--wh);border:2px solid var(--bk);position:sticky;top:20px}
+.ai-panel-hd{padding:12px 16px;background:var(--bk);color:var(--wh)}
+.ai-task{font-size:12px;line-height:1.7;padding:7px 10px;border-left:3px solid var(--ok);background:var(--g50);margin-bottom:6px}
+.ai-chat-msgs{height:200px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ai-msg-user{padding:6px 9px;font-size:12px;line-height:1.6;background:var(--g100);align-self:flex-end;max-width:90%}
+.ai-msg-ai{padding:6px 9px;font-size:12px;line-height:1.6;background:#f0fff4;align-self:flex-start;max-width:90%;white-space:pre-wrap}
+@media(max-width:900px){.portal-grid{grid-template-columns:1fr}}
 /* Responsive */
 @media(max-width:768px){.app{flex-direction:column}.sb{width:100%;min-width:100%;flex-direction:row;overflow-x:auto;border-bottom:2px solid var(--bk)}.sb-hd{display:none}.sb-nav{display:flex;padding:0;-webkit-overflow-scrolling:touch}.sb-it{padding:10px 14px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:11px;gap:6px}.sb-it.on{border-bottom-color:var(--wh);border-left-color:transparent}.sb-it span{display:none}.sb-ft{display:none}.page{padding:14px}.fr,.fr3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.prof-hd{flex-direction:column;align-items:center;text-align:center}.stu-grid{grid-template-columns:1fr}}
 </style>
@@ -753,40 +761,83 @@ function StudentHwSubmit({hw, data, setData}) {
 }
 
 // ════════════════════════════════════════
-// AI CHAT WIDGET (floating, for students)
+// AI RIGHT PANEL (sticky sidebar for students)
 // ════════════════════════════════════════
-function StudentAIChat({student}) {
-  const [open, setOpen] = useState(false);
+function StudentAIPanel({student, data}) {
+  const CACHE_KEY = "ai_tasks_" + student.id;
+  const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+  const [tasks, setTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
   const [msgs, setMsgs] = useState([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const {items, ts} = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL && items?.length) { setTasks(items); setTasksLoading(false); return; }
+      }
+    } catch {}
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    setTasksLoading(true);
+    const att = attendanceStats(student.id, data.lessons);
+    try {
+      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"student_tasks",context:{name:student.name,level:student.level,type:student.type,skillReading:student.skillReading||3,skillWriting:student.skillWriting||3,skillListening:student.skillListening||3,skillSpeaking:student.skillSpeaking||3,goals:student.goals||"",nextSteps:student.nextSteps||"",attendance:att.rate,lessonsTaken:student.lessonsTaken}})});
+      const d = await res.json();
+      const lines = (d.result||"").split("\n").map(l=>l.trim()).filter(l=>l&&l.length>2);
+      setTasks(lines);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({items:lines,ts:Date.now()})); } catch {}
+    } catch(e) { setTasks(["Could not load. Check your connection."]); }
+    setTasksLoading(false);
+  };
+
   const send = async () => {
     const msg = input.trim(); if (!msg) return;
-    setInput(""); setMsgs(m=>[...m,{r:"user",t:msg}]); setLoading(true);
+    setInput(""); setMsgs(m=>[...m,{r:"user",t:msg}]); setChatLoading(true);
     try {
       const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"student_chat",context:{message:msg,level:student.level,type:student.type,goals:student.goals||""}})});
       const d = await res.json();
-      setMsgs(m=>[...m,{r:"ai",t:d.result||d.error||"Sorry, no response."}]);
+      setMsgs(m=>[...m,{r:"ai",t:d.result||d.error||"No response."}]);
     } catch(e) { setMsgs(m=>[...m,{r:"ai",t:"Error: "+e.message}]); }
-    setLoading(false);
+    setChatLoading(false);
   };
-  return h`<div style=${{position:"fixed",bottom:24,right:24,zIndex:200}}>
-    ${open && h`<div style=${{position:"absolute",bottom:64,right:0,width:310,background:"#fff",border:"2px solid #000",boxShadow:"0 4px 24px rgba(0,0,0,0.18)"}}>
-      <div style=${{padding:"10px 14px",background:"#000",color:"#fff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span style=${{fontWeight:700,fontSize:13,letterSpacing:1}}>AI ASSISTANT</span>
-        <button style=${{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:20,lineHeight:1}} onClick=${()=>setOpen(false)}>×</button>
+
+  return h`<div class="ai-panel">
+    <div class="ai-panel-hd">
+      <div style=${{fontWeight:700,fontSize:13,letterSpacing:1}}>🤖 AI ASSISTANT</div>
+      <div style=${{fontSize:10,color:"#aaa",marginTop:2}}>Your personal learning guide</div>
+    </div>
+
+    <div style=${{padding:"14px 16px",borderBottom:"2px solid var(--g100)"}}>
+      <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:"var(--g600)"}}>THIS WEEK'S TASKS</div>
+        <button style=${{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"var(--g400)",padding:0}} onClick=${loadTasks} title="Refresh">↻ refresh</button>
       </div>
-      <div style=${{height:240,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:8}} id="ai-chat-box">
-        ${msgs.length===0&&h`<p style=${{color:"var(--g400)",fontSize:12,textAlign:"center",marginTop:30}}>Ask me anything about Arabic learning!</p>`}
-        ${msgs.map((m,i)=>h`<div key=${i} style=${{padding:"8px 10px",fontSize:13,lineHeight:1.6,background:m.r==="user"?"var(--g100)":"#f0fff4",maxWidth:"90%",alignSelf:m.r==="user"?"flex-end":"flex-start",whiteSpace:"pre-wrap"}}>${m.t}</div>`)}
-        ${loading&&h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic"}}>Thinking...</div>`}
+      ${tasksLoading
+        ? h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic",padding:"10px 0"}}>Generating your tasks...</div>`
+        : tasks.length===0
+          ? h`<div style=${{fontSize:12,color:"var(--g400)"}}>No tasks yet. Try refreshing.</div>`
+          : h`<div>${tasks.map((t,i)=>h`<div key=${i} class="ai-task">${t}</div>`)}</div>`
+      }
+    </div>
+
+    <div style=${{borderBottom:"2px solid var(--g100)"}}>
+      <div style=${{padding:"10px 16px",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1.2px",color:"var(--g600)"}}>ASK A QUESTION</div>
+      <div class="ai-chat-msgs">
+        ${msgs.length===0&&h`<p style=${{color:"var(--g400)",fontSize:12,textAlign:"center",marginTop:20}}>Ask me anything about Arabic!</p>`}
+        ${msgs.map((m,i)=>h`<div key=${i} class=${m.r==="user"?"ai-msg-user":"ai-msg-ai"}>${m.t}</div>`)}
+        ${chatLoading&&h`<div style=${{fontSize:11,color:"var(--g400)",fontStyle:"italic"}}>Thinking...</div>`}
       </div>
-      <div style=${{padding:"10px 12px",borderTop:"2px solid var(--g200)",display:"flex",gap:6}}>
-        <input style=${{flex:1,padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,outline:"none"}} placeholder="Ask a question..." value=${input} onInput=${e=>setInput(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")send();}}/>
-        <button class="btn btn-p" style=${{padding:"8px 12px"}} onClick=${send}>${ic('snd')}</button>
+      <div style=${{padding:"8px 12px",borderTop:"1px solid var(--g100)",display:"flex",gap:6}}>
+        <input style=${{flex:1,padding:"7px 9px",border:"1.5px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:12,outline:"none"}} placeholder="Type your question..." value=${input} onInput=${e=>setInput(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")send();}}/>
+        <button class="btn btn-p" style=${{padding:"7px 12px"}} onClick=${send}>${ic('snd')}</button>
       </div>
-    </div>`}
-    <button class="btn btn-p" style=${{width:52,height:52,borderRadius:"50%",fontSize:22,justifyContent:"center",padding:0,boxShadow:"0 2px 12px rgba(0,0,0,0.2)"}} onClick=${()=>setOpen(!open)} title="Ask AI">🤖</button>
+    </div>
   </div>`;
 }
 
@@ -940,7 +991,9 @@ function StudentPortal({data, setData, user, onLogout}) {
       <button class="btn btn-sm" style=${{color:"var(--wh)",borderColor:"var(--g600)"}} onClick=${onLogout}>${ic('logout')} Log Out</button>
     </div>
 
-    <div style=${{padding:24,maxWidth:800,margin:"0 auto"}}>
+    <div style=${{padding:24,maxWidth:1100,margin:"0 auto"}}>
+    <div class="portal-grid">
+    <div>
       <div class="prof-hd">
         <div class="prof-av">${s.name.charAt(0).toUpperCase()}</div>
         <div class="prof-info">
@@ -1011,7 +1064,10 @@ function StudentPortal({data, setData, user, onLogout}) {
         <button class="btn" onClick=${()=>exportProfilePDF(s,data,false)}>${ic('pdf')} Download My Progress Report</button>
       </div>
     </div>
-    <${StudentAIChat} student=${s}/>
+
+    <${StudentAIPanel} student=${s} data=${data}/>
+    </div>
+    </div>
   </div>`;
 }
 
