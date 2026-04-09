@@ -59,7 +59,7 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 /* Tags & badges */
 .tg{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;background:var(--bk);color:var(--wh);letter-spacing:.5px;text-transform:uppercase}
 .bg{display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border:1.5px solid}
-.bg-ok{border-color:var(--ok);color:var(--ok)}.bg-bd{border-color:var(--bd);color:var(--bd)}.bg-n{border-color:var(--g300);color:var(--g500)}
+.bg-ok{border-color:var(--ok);color:var(--ok)}.bg-bd{border-color:var(--bd);color:var(--bd)}.bg-n{border-color:var(--g300);color:var(--g500)}.bg-wn{border-color:var(--wn);color:var(--wn)}
 /* Forms */
 .fg{margin-bottom:14px}
 .fg label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:5px;color:var(--g600)}
@@ -202,7 +202,7 @@ if (supabaseReady && window.supabase) {
 
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
@@ -227,7 +227,7 @@ const hadLesson = (sid, lessons, weekStartDay) => lessons.some(l =>
 );
 
 const DEFS = {
-  types:["Lebanese","Classical","Quranic"],
+  types:["Lebanese","Classical","Quranic","Mixed Dialects"],
   levels:["Beginner","Intermediate","Advanced"],
   payPlans:["Per Lesson","Monthly","Bundle"],
   payMethods:["Cash","Bank Transfer","Online","Other"],
@@ -240,7 +240,7 @@ const DEFS = {
   msgHour:"Hi {name}, your Arabic lesson starts in 1 hour at {time}.",
   msgGen:"Hi {name}, hope you're well! When would you like your next Arabic lesson?"
 };
-const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],settings:{...DEFS},_version:DATA_VERSION};
+const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],settings:{...DEFS},_version:DATA_VERSION};
 
 // ─── IndexedDB Storage ───
 const DB_NAME = "TutorDB", DB_STORE = "appdata", DB_KEY = "main";
@@ -284,9 +284,11 @@ function migrateData(data) {
   const v = data._version || 1;
   let d = {...DD, ...data, settings:{...DEFS,...(data.settings||{})}};
   if (v < 2) {
-    // Add new settings fields
     if (!d.settings.currency) d.settings.currency = "$";
     if (d.settings.weekStartDay === undefined) d.settings.weekStartDay = 1;
+  }
+  if (v < 3) {
+    if (!d.homework) d.homework = [];
     d._version = DATA_VERSION;
   }
   return d;
@@ -308,6 +310,7 @@ const mkLesson = S => ({id:uid(),studentId:"",groupId:"",date:today(),time:"10:0
 const mkPayment = () => ({id:uid(),studentId:"",amount:0,date:today(),method:"Cash",notes:"",lessonsAdded:0,status:"Pending"});
 const mkCurriculum = S => ({id:uid(),title:"",category:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],description:"",fileName:"",fileData:""});
 const mkGroup = S => ({id:uid(),name:"",type:(S?.types||DEFS.types)[0],studentIds:[],schedule:"",notes:""});
+const mkHomework = sid => ({id:uid(),studentId:sid||"",title:"",description:"",dueDate:today(),assignedDate:today(),status:"assigned",submissionText:"",submissionUrl:"",submittedAt:null,teacherComment:"",reviewedAt:null});
 
 function gcalUrl(l,name){const s=new Date(l.date+"T"+(l.time||"10:00")+":00"),e=new Date(s.getTime()+(l.duration||60)*6e4),p=n=>String(n).padStart(2,"0"),f=d=>d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"T"+p(d.getHours())+p(d.getMinutes())+"00";return"https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Arabic Lesson — "+(name||"Group"))+"&dates="+f(s)+"/"+f(e)+"&details="+encodeURIComponent("Type: "+l.type+(l.notes?"\nNotes: "+l.notes:""));}
 function openGcal(l,sts){const s=sts.find(x=>x.id===l.studentId);window.open(gcalUrl(l,s?.name||"Group"),"_blank");}
@@ -701,6 +704,9 @@ const IC = {
   pdf:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
   dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+  hw:'<rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>',
+  ai:'<path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 0 2v1a1 1 0 0 1 0 2h-1a7 7 0 0 1-7 7H8a7 7 0 0 1-7-7H0a1 1 0 0 1 0-2v-1a1 1 0 0 1 0-2h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm6 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>',
+  snd:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
 };
 const ic = name => mkSvg(IC[name]);
 const icb = name => mkSvg(IC[name], "2.5");
@@ -723,6 +729,65 @@ function Chips({items, onUpdate, label}) {
     ${adding ? h`<div style=${{display:"flex",gap:4,alignItems:"center"}}><input ref=${ref} value=${val} onInput=${e=>setVal(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")add();if(e.key==="Escape")setAdding(false);}} style=${{padding:"3px 7px",border:"2px solid #000",fontSize:11,width:110,fontFamily:"var(--fb)"}} placeholder="Type & Enter"/><button class="bi" onClick=${add}>${ic('chk')}</button><button class="bi" onClick=${()=>setAdding(false)}>${ic('x')}</button></div>`
     : h`<div class="chip chip-add" onClick=${()=>setAdding(true)}>+ Add</div>`}
   </div></div>`;
+}
+
+// ════════════════════════════════════════
+// STUDENT HOMEWORK SUBMIT (used in portal)
+// ════════════════════════════════════════
+function StudentHwSubmit({hw, data, setData}) {
+  const [text, setText] = useState(hw.submissionText||"");
+  const [url, setUrl] = useState(hw.submissionUrl||"");
+  const [saved, setSaved] = useState(hw.status==="submitted"||hw.status==="reviewed");
+  const submit = () => {
+    if (!text.trim()) return alert("Please write your submission first.");
+    setData({...data, homework: data.homework.map(x=>x.id===hw.id?{...x,submissionText:text,submissionUrl:url,status:"submitted",submittedAt:today()}:x)});
+    setSaved(true);
+  };
+  if (saved) return h`<div style=${{marginTop:8,padding:"8px 12px",background:"#f0fff4",border:"1px solid var(--ok)",fontSize:12,color:"var(--ok)",fontWeight:600}}>✓ Submitted</div>`;
+  return h`<div style=${{marginTop:10,padding:"12px",background:"var(--g50)",border:"2px dashed var(--g300)"}}>
+    <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",marginBottom:8,color:"var(--g600)"}}>Submit Your Work</div>
+    <textarea style=${{width:"100%",padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,resize:"vertical",minHeight:80,boxSizing:"border-box"}} placeholder="Write your answer or response here..." value=${text} onInput=${e=>setText(e.target.value)}/>
+    <input style=${{width:"100%",marginTop:6,padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,boxSizing:"border-box"}} placeholder="Paste a file/link URL (optional)" value=${url} onInput=${e=>setUrl(e.target.value)}/>
+    <button class="btn btn-p btn-sm" style=${{marginTop:8}} onClick=${submit}>Submit Homework</button>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// AI CHAT WIDGET (floating, for students)
+// ════════════════════════════════════════
+function StudentAIChat({student}) {
+  const [open, setOpen] = useState(false);
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const send = async () => {
+    const msg = input.trim(); if (!msg) return;
+    setInput(""); setMsgs(m=>[...m,{r:"user",t:msg}]); setLoading(true);
+    try {
+      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"student_chat",context:{message:msg,level:student.level,type:student.type,goals:student.goals||""}})});
+      const d = await res.json();
+      setMsgs(m=>[...m,{r:"ai",t:d.result||d.error||"Sorry, no response."}]);
+    } catch(e) { setMsgs(m=>[...m,{r:"ai",t:"Error: "+e.message}]); }
+    setLoading(false);
+  };
+  return h`<div style=${{position:"fixed",bottom:24,right:24,zIndex:200}}>
+    ${open && h`<div style=${{position:"absolute",bottom:64,right:0,width:310,background:"#fff",border:"2px solid #000",boxShadow:"0 4px 24px rgba(0,0,0,0.18)"}}>
+      <div style=${{padding:"10px 14px",background:"#000",color:"#fff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <span style=${{fontWeight:700,fontSize:13,letterSpacing:1}}>AI ASSISTANT</span>
+        <button style=${{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:20,lineHeight:1}} onClick=${()=>setOpen(false)}>×</button>
+      </div>
+      <div style=${{height:240,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:8}} id="ai-chat-box">
+        ${msgs.length===0&&h`<p style=${{color:"var(--g400)",fontSize:12,textAlign:"center",marginTop:30}}>Ask me anything about Arabic learning!</p>`}
+        ${msgs.map((m,i)=>h`<div key=${i} style=${{padding:"8px 10px",fontSize:13,lineHeight:1.6,background:m.r==="user"?"var(--g100)":"#f0fff4",maxWidth:"90%",alignSelf:m.r==="user"?"flex-end":"flex-start",whiteSpace:"pre-wrap"}}>${m.t}</div>`)}
+        ${loading&&h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic"}}>Thinking...</div>`}
+      </div>
+      <div style=${{padding:"10px 12px",borderTop:"2px solid var(--g200)",display:"flex",gap:6}}>
+        <input style=${{flex:1,padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,outline:"none"}} placeholder="Ask a question..." value=${input} onInput=${e=>setInput(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")send();}}/>
+        <button class="btn btn-p" style=${{padding:"8px 12px"}} onClick=${send}>${ic('snd')}</button>
+      </div>
+    </div>`}
+    <button class="btn btn-p" style=${{width:52,height:52,borderRadius:"50%",fontSize:22,justifyContent:"center",padding:0,boxShadow:"0 2px 12px rgba(0,0,0,0.2)"}} onClick=${()=>setOpen(!open)} title="Ask AI">🤖</button>
+  </div>`;
 }
 
 // ════════════════════════════════════════
@@ -842,7 +907,7 @@ function AuthScreen({onAuth}) {
 // ════════════════════════════════════════
 // STUDENT PORTAL (read-only view for students)
 // ════════════════════════════════════════
-function StudentPortal({data, user, onLogout}) {
+function StudentPortal({data, setData, user, onLogout}) {
   const CUR = data.settings.currency || "$";
   // Match student by email or phone
   const s = data.students.find(st =>
@@ -862,6 +927,8 @@ function StudentPortal({data, user, onLogout}) {
   </div>`;
 
   const sLessons = data.lessons.filter(l=>l.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sHomework = (data.homework||[]).filter(hw=>hw.studentId===s.id).sort((a,b)=>new Date(b.dueDate)-new Date(a.dueDate));
+  const pendingHw = sHomework.filter(hw=>hw.status==="assigned");
   const left = s.lessonsTotal - s.lessonsTaken;
   const att = attendanceStats(s.id, data.lessons);
   const assigned = (data.curriculum||[]).filter(c=>(s.assignedLessons||[]).includes(c.id));
@@ -905,6 +972,35 @@ function StudentPortal({data, user, onLogout}) {
         ${s.homeworkNotes && h`<div><h3 style=${{fontFamily:"var(--fh)",fontSize:18,color:"#7e57c2"}}>HOMEWORK</h3><p style=${{fontSize:13,lineHeight:1.7,color:"var(--g600)",marginTop:6}}>${s.homeworkNotes}</p></div>`}
       </div>`}
 
+      ${pendingHw.length>0&&h`<div style=${{marginTop:14,padding:"12px 16px",background:"#fff8f0",border:"2px solid var(--wn)"}}>
+        <div style=${{fontWeight:700,fontSize:11,textTransform:"uppercase",letterSpacing:"1px",color:"var(--wn)",marginBottom:6}}>📋 ${pendingHw.length} Homework Task${pendingHw.length>1?"s":""} Pending</div>
+        ${pendingHw.map(hw=>h`<div key=${hw.id} style=${{fontSize:13,padding:"4px 0"}}>• ${hw.title} <span style=${{fontSize:11,color:"var(--g500)"}}>due ${fmt(hw.dueDate)}</span></div>`)}
+      </div>`}
+
+      ${sHomework.length>0&&h`<div class="card" style=${{marginTop:14}}>
+        <h3>HOMEWORK</h3>
+        ${sHomework.map(hw=>h`<div key=${hw.id} style=${{padding:"14px 0",borderBottom:"1px solid var(--g100)"}}>
+          <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+            <div>
+              <div style=${{fontWeight:700,fontSize:14}}>${hw.title}</div>
+              <div style=${{fontSize:11,color:"var(--g400)",marginTop:2}}>Assigned: ${fmt(hw.assignedDate)} · Due: ${fmt(hw.dueDate)}</div>
+            </div>
+            <span class=${"bg "+(hw.status==="reviewed"?"bg-ok":hw.status==="submitted"?"bg-wn":"bg-n")}>${hw.status}</span>
+          </div>
+          ${hw.description&&h`<p style=${{fontSize:13,color:"var(--g600)",marginTop:8,lineHeight:1.6}}>${hw.description}</p>`}
+          ${hw.status==="assigned"&&h`<${StudentHwSubmit} hw=${hw} data=${data} setData=${setData}/>`}
+          ${(hw.status==="submitted"||hw.status==="reviewed")&&hw.submissionText&&h`<div style=${{marginTop:8,padding:"10px 12px",background:"var(--g50)",border:"1px solid var(--g200)",fontSize:13,lineHeight:1.6}}>
+            <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",color:"var(--g500)",marginBottom:4}}>Your Submission</div>
+            ${hw.submissionText}
+            ${hw.submissionUrl&&h`<div style=${{marginTop:4}}><a href=${hw.submissionUrl} target="_blank" style=${{fontSize:12,color:"var(--ok)"}}>🔗 Attached file</a></div>`}
+          </div>`}
+          ${hw.status==="reviewed"&&hw.teacherComment&&h`<div style=${{marginTop:8,padding:"10px 12px",background:"#f0fff4",border:"1px solid var(--ok)",fontSize:13,lineHeight:1.6}}>
+            <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",color:"var(--ok)",marginBottom:4}}>Teacher Feedback</div>
+            ${hw.teacherComment}
+          </div>`}
+        </div>`)}
+      </div>`}
+
       <div class="card" style=${{marginTop:14}}><h3>RECENT LESSONS</h3>
         ${sLessons.length===0?h`<p style=${{color:"var(--g400)",fontSize:13}}>No lessons yet</p>`:h`<table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Status</th></tr></thead><tbody>
           ${sLessons.slice(0,10).map(l=>h`<tr key=${l.id}><td>${fmt(l.date)}</td><td>${l.time}</td><td><span class="tg">${l.type}</span></td><td><span class=${"bg "+(l.status==="Completed"?"bg-ok":"bg-n")}>${l.status}</span></td></tr>`)}
@@ -915,6 +1011,196 @@ function StudentPortal({data, user, onLogout}) {
         <button class="btn" onClick=${()=>exportProfilePDF(s,data,false)}>${ic('pdf')} Download My Progress Report</button>
       </div>
     </div>
+    <${StudentAIChat} student=${s}/>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// STUDENT PROFILE (teacher view)
+// ════════════════════════════════════════
+function StudentProfile({data, setData, profileId}) {
+  const s = data.students.find(x=>x.id===profileId);
+  const [tab, setTab] = useState("overview");
+  const [aiResult, setAiResult] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showHwForm, setShowHwForm] = useState(false);
+  const [hwForm, setHwForm] = useState(null);
+  const S = data.settings;
+
+  if (!s) return h`<div style=${{padding:40,textAlign:"center",color:"var(--g400)"}}>Student not found.</div>`;
+
+  const upd = (k,v) => setData({...data, students:data.students.map(x=>x.id===s.id?{...x,[k]:v}:x)});
+  const sLessons = data.lessons.filter(l=>l.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sHomework = (data.homework||[]).filter(hw=>hw.studentId===s.id).sort((a,b)=>new Date(b.assignedDate)-new Date(a.assignedDate));
+  const att = attendanceStats(s.id, data.lessons);
+
+  const runAI = async () => {
+    setAiLoading(true); setAiResult("");
+    try {
+      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"student_analysis",context:{name:s.name,level:s.level,type:s.type,lessonsTaken:s.lessonsTaken,attendance:att.rate,skillReading:s.skillReading||3,skillWriting:s.skillWriting||3,skillListening:s.skillListening||3,skillSpeaking:s.skillSpeaking||3,goals:s.goals||"",nextSteps:s.nextSteps||"",teacherNotes:s.teacherPrivateNotes||"",homeworkNotes:s.homeworkNotes||""}})});
+      const d = await res.json();
+      setAiResult(d.result||d.error||"No response from AI.");
+    } catch(e) { setAiResult("Error: "+e.message); }
+    setAiLoading(false);
+  };
+
+  const saveHw = () => {
+    if (!hwForm||!hwForm.title.trim()) return;
+    const ex=(data.homework||[]).find(x=>x.id===hwForm.id);
+    const nHw = ex?data.homework.map(x=>x.id===hwForm.id?{...hwForm}:x):[...(data.homework||[]),{...hwForm,studentId:s.id}];
+    setData({...data,homework:nHw}); setShowHwForm(false); setHwForm(null);
+  };
+
+  const deleteHw = id => { if(confirm("Delete this homework?")) setData({...data,homework:(data.homework||[]).filter(x=>x.id!==id)}); };
+
+  const sendHwReminder = hw => {
+    if(!s.whatsapp) return alert("No WhatsApp number set for this student.");
+    waMsg(s.whatsapp,`Hi ${s.name.split(" ")[0]}! 📝 Reminder: You have homework due ${fmt(hw.dueDate)}.\n\nTask: ${hw.title}${hw.description?"\n\n"+hw.description:""}`);
+  };
+
+  const draftAiFeedback = async hw => {
+    if (!hw.submissionText) return alert("No submission to give feedback on.");
+    const btn = document.activeElement; if(btn) btn.textContent="Loading...";
+    try {
+      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"homework_feedback",context:{title:hw.title,description:hw.description,submission:hw.submissionText}})});
+      const d = await res.json();
+      const comment = d.result||d.error||"";
+      setData({...data,homework:data.homework.map(x=>x.id===hw.id?{...x,teacherComment:comment}:x)});
+    } catch(e) { alert("Error: "+e.message); }
+    if(btn) btn.textContent="AI Draft";
+  };
+
+  const markReviewed = hw => setData({...data,homework:data.homework.map(x=>x.id===hw.id?{...x,status:"reviewed",reviewedAt:today()}:x)});
+
+  const tabs = [["overview","Overview"],["homework","Homework ("+sHomework.length+")"],["ai","AI Analysis"]];
+
+  return h`<div>
+    <div class="prof-hd" style=${{marginBottom:20}}>
+      <div class="prof-av">${s.name.charAt(0).toUpperCase()}</div>
+      <div class="prof-info">
+        <h2>${s.name}</h2>
+        <div class="prof-meta"><span class="tg">${s.type}</span><span class="tg" style=${{background:"transparent",color:"var(--bk)",border:"1.5px solid var(--g300)"}}>${s.level}</span><span class=${"bg "+(s.active?"bg-ok":"bg-n")}>${s.active?"Active":"Off"}</span></div>
+        ${s.email&&h`<div style=${{fontSize:12,color:"var(--g500)",marginTop:4}}>${s.email}${s.phone?" · "+s.phone:""}</div>`}
+      </div>
+      <div style=${{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+        <button class="btn btn-sm" onClick=${()=>exportProfilePDF(s,data,false)}>${ic('pdf')} PDF</button>
+        ${s.whatsapp&&h`<button class="btn btn-sm btn-share" onClick=${()=>exportProfilePDF(s,data,true)}>${ic('wa')} Share</button>`}
+      </div>
+    </div>
+
+    <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)",marginBottom:20}}>
+      <div class="stat"><div class="lb">Lessons Done</div><div class="vl">${s.lessonsTaken}</div></div>
+      <div class="stat"><div class="lb">Lessons Left</div><div class=${"vl ll "+((s.lessonsTotal-s.lessonsTaken)<=0?"low":(s.lessonsTotal-s.lessonsTaken)<=2?"ok":"good")}>${s.lessonsTotal-s.lessonsTaken}</div></div>
+      <div class="stat"><div class="lb">Attendance</div><div class="vl" style=${{color:att.rate>=80?"var(--ok)":att.rate>=60?"var(--wn)":"var(--bd)"}}>${att.rate}%</div></div>
+      <div class="stat"><div class="lb">HW Pending</div><div class="vl" style=${{color:sHomework.filter(x=>x.status==="assigned").length>0?"var(--wn)":"var(--ok)"}}>${sHomework.filter(x=>x.status==="assigned").length}</div></div>
+    </div>
+
+    <div class="auth-tabs" style=${{marginBottom:20}}>
+      ${tabs.map(([k,l])=>h`<div key=${k} class=${"auth-tab "+(tab===k?"on":"")} onClick=${()=>setTab(k)}>${l}</div>`)}
+    </div>
+
+    ${tab==="overview" && h`<div>
+      <div class="assess-card">
+        <h4>SKILL ASSESSMENT</h4>
+        ${[["skillReading","Reading"],["skillWriting","Writing"],["skillListening","Listening"],["skillSpeaking","Speaking"]].map(([k,label])=>h`<div key=${k} class="skill-row">
+          <div class="skill-label">${label}</div>
+          <div class="skill-dots">${[1,2,3,4,5].map(v=>h`<div key=${v} class=${"skill-dot "+(v<=(s[k]||3)?"on":"")} onClick=${()=>{const hist=recordSkillSnapshot(s);upd("skillHistory",hist);upd(k,v);}}>${v}</div>`)}</div>
+          <div class="skill-level" style=${{color:SKILL_COLORS[s[k]||3]}}>${SKILL_LABELS[s[k]||3]}</div>
+        </div>`)}
+        <div style=${{marginTop:8,fontSize:11,color:"var(--g500)"}}>Overall avg: ${skillAvg(s)} / 5</div>
+      </div>
+
+      <div class="assess-card">
+        <h4>🎯 Goals & Next Steps</h4>
+        <div class="fg"><label>Student Goals</label><textarea value=${s.goals||""} onInput=${e=>upd("goals",e.target.value)} placeholder="What does this student want to achieve?"/></div>
+        <div class="fg"><label>Next Steps</label><textarea value=${s.nextSteps||""} onInput=${e=>upd("nextSteps",e.target.value)} placeholder="What are we working on next?"/></div>
+      </div>
+
+      <div class="assess-card">
+        <h4>📝 Teacher Notes (visible to student in PDF)</h4>
+        <div class="fg"><label>Strengths</label><textarea value=${s.teacherStrengths||""} onInput=${e=>upd("teacherStrengths",e.target.value)} placeholder="What is this student good at?"/></div>
+        <div class="fg"><label>Areas to Improve</label><textarea value=${s.teacherImprove||""} onInput=${e=>upd("teacherImprove",e.target.value)} placeholder="What needs more work?"/></div>
+        <div class="fg"><label>General Summary</label><textarea value=${s.teacherSummary||""} onInput=${e=>upd("teacherSummary",e.target.value)} placeholder="Overall assessment..."/></div>
+      </div>
+
+      <div class="assess-card private">
+        <h4>🔒 Private Notes (never shared)</h4>
+        <textarea value=${s.teacherPrivateNotes||""} onInput=${e=>upd("teacherPrivateNotes",e.target.value)} placeholder="These notes are NOT visible to the student..."/>
+      </div>
+
+      <div class="assess-card">
+        <h4>📚 Homework Observations</h4>
+        <textarea value=${s.homeworkNotes||""} onInput=${e=>upd("homeworkNotes",e.target.value)} placeholder="General homework notes..."/>
+      </div>
+
+      <${Chips} items=${s.focusItems||[]} onUpdate=${v=>upd("focusItems",v)} label="Focus Items"/>
+
+      <div class="card" style=${{marginTop:20}}>
+        <h3>LESSON HISTORY</h3>
+        ${sLessons.length===0?h`<p style=${{color:"var(--g400)",fontSize:13}}>No lessons yet.</p>`:h`<table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Status</th><th>Notes</th></tr></thead><tbody>
+          ${sLessons.slice(0,15).map(l=>h`<tr key=${l.id}><td>${fmt(l.date)}</td><td>${l.time}</td><td><span class="tg">${l.type}</span></td><td><span class=${"bg "+(l.status==="Completed"?"bg-ok":"bg-n")}>${l.status}</span></td><td style=${{fontSize:12,color:"var(--g500)",maxWidth:200}}>${l.notes||"—"}</td></tr>`)}
+        </tbody></table>`}
+      </div>
+    </div>`}
+
+    ${tab==="homework" && h`<div>
+      <div style=${{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
+        <button class="btn btn-p" onClick=${()=>{setHwForm(mkHomework(s.id));setShowHwForm(true);}}>${ic('plus')} Assign Homework</button>
+      </div>
+
+      ${sHomework.length===0?h`<div class="empty"><h3>NO HOMEWORK</h3><p>Assign the first task to ${s.name}</p></div>`:
+      h`<div>${sHomework.map(hw=>h`<div key=${hw.id} class="assess-card" style=${{borderLeftColor:hw.status==="reviewed"?"var(--ok)":hw.status==="submitted"?"var(--wn)":"var(--g300)"}}>
+        <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+          <div>
+            <h4 style=${{marginBottom:4,fontSize:15}}>${hw.title}</h4>
+            <div style=${{fontSize:11,color:"var(--g500)"}}>Assigned: ${fmt(hw.assignedDate)} · Due: ${fmt(hw.dueDate)}</div>
+            <span class=${"bg "+(hw.status==="reviewed"?"bg-ok":hw.status==="submitted"?"bg-wn":"bg-n")} style=${{marginTop:6,display:"inline-block"}}>${hw.status}</span>
+          </div>
+          <div style=${{display:"flex",gap:4,flexShrink:0}}>
+            ${s.whatsapp&&h`<button class="btn btn-xs btn-wa" onClick=${()=>sendHwReminder(hw)} title="WhatsApp reminder">${ic('wa')}</button>`}
+            <button class="bi" onClick=${()=>{setHwForm({...hw});setShowHwForm(true);}}>${ic('edt')}</button>
+            <button class="bi" style=${{color:"var(--bd)"}} onClick=${()=>deleteHw(hw.id)}>${ic('del')}</button>
+          </div>
+        </div>
+        ${hw.description&&h`<p style=${{fontSize:13,color:"var(--g600)",marginTop:8,lineHeight:1.6}}>${hw.description}</p>`}
+        ${hw.submissionText&&h`<div style=${{marginTop:12,padding:"10px 12px",background:"#f0f7ff",border:"1px solid #c3d9f5"}}>
+          <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",color:"#1976d2",marginBottom:4}}>Student Submission</div>
+          <p style=${{fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}}>${hw.submissionText}</p>
+          ${hw.submissionUrl&&h`<a href=${hw.submissionUrl} target="_blank" style=${{fontSize:12,color:"var(--ok)",display:"block",marginTop:4}}>🔗 Attached file</a>`}
+          <div style=${{fontSize:11,color:"var(--g400)",marginTop:4}}>Submitted: ${hw.submittedAt?fmt(hw.submittedAt):"—"}</div>
+        </div>`}
+        ${hw.status==="submitted"&&h`<div style=${{marginTop:10}}>
+          <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <label style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"1px",color:"var(--g600)"}}>Teacher Comment / Correction</label>
+            <button class="btn btn-xs" onClick=${()=>draftAiFeedback(hw)}>🤖 AI Draft</button>
+          </div>
+          <textarea style=${{width:"100%",padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,resize:"vertical",minHeight:70,boxSizing:"border-box"}} placeholder="Write your feedback..." value=${hw.teacherComment||""} onInput=${e=>{const v=e.target.value;setData({...data,homework:data.homework.map(x=>x.id===hw.id?{...x,teacherComment:v}:x)});}}/>
+          <button class="btn btn-p btn-sm" style=${{marginTop:6}} onClick=${()=>markReviewed(hw)}>${ic('chk')} Mark as Reviewed</button>
+        </div>`}
+        ${hw.status==="reviewed"&&hw.teacherComment&&h`<div style=${{marginTop:10,padding:"10px 12px",background:"#f0fff4",border:"1px solid var(--ok)"}}>
+          <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",color:"var(--ok)",marginBottom:4}}>Your Feedback</div>
+          <p style=${{fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap"}}>${hw.teacherComment}</p>
+        </div>`}
+      </div>`)}</div>`}
+
+      ${showHwForm&&h`<${Modal} title=${hwForm?.id&&(data.homework||[]).find(x=>x.id===hwForm.id)?"EDIT HOMEWORK":"ASSIGN HOMEWORK"} onClose=${()=>setShowHwForm(false)} footer=${h`<button class="btn" onClick=${()=>setShowHwForm(false)}>Cancel</button><button class="btn btn-p" onClick=${saveHw}>Save</button>`}>
+        <div class="fg"><label>Title / Task</label><input value=${hwForm?.title||""} onInput=${e=>setHwForm({...hwForm,title:e.target.value})} placeholder="e.g. Write 5 sentences using past tense"/></div>
+        <div class="fg"><label>Description / Instructions</label><textarea value=${hwForm?.description||""} onInput=${e=>setHwForm({...hwForm,description:e.target.value})} placeholder="Detailed instructions for the student..."/></div>
+        <div class="fr">
+          <div class="fg"><label>Due Date</label><input type="date" value=${hwForm?.dueDate||today()} onInput=${e=>setHwForm({...hwForm,dueDate:e.target.value})}/></div>
+          <div class="fg"><label>Status</label><select value=${hwForm?.status||"assigned"} onChange=${e=>setHwForm({...hwForm,status:e.target.value})}><option value="assigned">Assigned</option><option value="submitted">Submitted</option><option value="reviewed">Reviewed</option></select></div>
+        </div>
+      <//>`}
+    </div>`}
+
+    ${tab==="ai" && h`<div>
+      <div class="assess-card">
+        <h4>🤖 AI Student Analysis</h4>
+        <p style=${{fontSize:13,color:"var(--g500)",marginBottom:14,lineHeight:1.6}}>Uses Claude AI to analyze ${s.name}'s full profile — skills, attendance, goals, notes — and provide a concise teaching recommendation.</p>
+        <button class="btn btn-p" onClick=${runAI} disabled=${aiLoading}>${aiLoading?"Analyzing...":"Run AI Analysis"}</button>
+        ${aiResult&&h`<div style=${{marginTop:16,padding:"14px 16px",background:"var(--g50)",border:"2px solid var(--bk)",whiteSpace:"pre-wrap",fontSize:13,lineHeight:1.8,fontFamily:"var(--fb)"}}>${aiResult}</div>`}
+      </div>
+    </div>`}
   </div>`;
 }
 
@@ -1293,6 +1579,46 @@ function Groups({data, setData}) {
 }
 
 // ════════════════════════════════════════
+// HOMEWORK — teacher overview of all HW
+// ════════════════════════════════════════
+function HomeworkView({data, onProfile}) {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const all = (data.homework||[]);
+  const counts = {all:all.length,assigned:all.filter(x=>x.status==="assigned").length,submitted:all.filter(x=>x.status==="submitted").length,reviewed:all.filter(x=>x.status==="reviewed").length};
+  const filtered = all
+    .filter(hw=>filter==="all"||hw.status===filter)
+    .filter(hw=>{
+      if(!search) return true;
+      const s=data.students.find(x=>x.id===hw.studentId);
+      return s?.name?.toLowerCase().includes(search.toLowerCase())||hw.title.toLowerCase().includes(search.toLowerCase());
+    })
+    .sort((a,b)=>new Date(b.assignedDate)-new Date(a.assignedDate));
+  return h`<div>
+    <div style=${{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+      ${[["all","All"],["assigned","Pending"],["submitted","Submitted"],["reviewed","Reviewed"]].map(([k,l])=>h`<button key=${k} class=${"btn btn-sm "+(filter===k?"btn-p":"")} onClick=${()=>setFilter(k)}>${l}${counts[k]>0?" ("+counts[k]+")":""}</button>`)}
+      <div class="sb-x" style=${{marginLeft:"auto"}}>${ic('srch')}<input placeholder="Search student or task..." value=${search} onInput=${e=>setSearch(e.target.value)}/></div>
+    </div>
+    ${filtered.length===0?h`<div class="empty"><h3>NO HOMEWORK</h3><p>Assign homework from a student profile page</p></div>`:
+    h`<div class="card" style=${{padding:0}}>
+      <div style=${{overflowX:"auto"}}><table><thead><tr><th>Student</th><th>Task</th><th>Due</th><th>Status</th><th>Submitted</th><th></th></tr></thead><tbody>
+        ${filtered.map(hw=>{
+          const s=data.students.find(x=>x.id===hw.studentId);
+          return h`<tr key=${hw.id}>
+            <td style=${{fontWeight:600,cursor:"pointer",textDecoration:"underline"}} onClick=${()=>onProfile(hw.studentId)}>${s?.name||"?"}</td>
+            <td>${hw.title}</td>
+            <td style=${{whiteSpace:"nowrap"}}>${fmt(hw.dueDate)}</td>
+            <td><span class=${"bg "+(hw.status==="reviewed"?"bg-ok":hw.status==="submitted"?"bg-wn":"bg-n")}>${hw.status}</span></td>
+            <td style=${{fontSize:12,color:"var(--g500)"}}>${hw.submittedAt?fmt(hw.submittedAt):"—"}</td>
+            <td><button class="btn btn-xs" onClick=${()=>onProfile(hw.studentId)}>Profile →</button></td>
+          </tr>`;
+        })}
+      </tbody></table></div>
+    </div>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
 // SETTINGS — with currency & week start
 // ════════════════════════════════════════
 function Settings({data, setData}) {
@@ -1377,10 +1703,10 @@ function App() {
   if (!data) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
 
   // Student role → student portal
-  if (auth.role === "student") return h`<${StudentPortal} data=${data} user=${auth.user} onLogout=${handleLogout}/>`;
+  if (auth.role === "student") return h`<${StudentPortal} data=${data} setData=${update} user=${auth.user} onLogout=${handleLogout}/>`;
 
   const S = data.settings;
-  const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["groups","Groups","grp"],["settings","Settings","set"]];
+  const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["groups","Groups","grp"],["homework","Homework","hw"],["settings","Settings","set"]];
   const activeNav = view === "profile" ? "students" : view;
 
   return h`<div class="app">
@@ -1397,10 +1723,12 @@ function App() {
       <div class="page">
         ${view==="dashboard" && h`<${Dashboard} data=${data}/>`}
         ${view==="students" && h`<${Students} data=${data} setData=${update} onProfile=${openProfile}/>`}
+        ${view==="profile" && h`<${StudentProfile} data=${data} setData=${update} profileId=${profileId}/>`}
         ${view==="calendar" && h`<${Calendar} data=${data} setData=${update}/>`}
         ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
         ${view==="curriculum" && h`<${Curriculum} data=${data} setData=${update}/>`}
         ${view==="groups" && h`<${Groups} data=${data} setData=${update}/>`}
+        ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
         ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
       </div>
     </div>
