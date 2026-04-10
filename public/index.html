@@ -258,6 +258,8 @@ const DEFS = {
   themeSidebar:"#000000",
   themeBackground:"#fafafa",
   themeCardBg:"#ffffff",
+  themeTopbar:"#ffffff",
+  themeStatBg:"#ffffff",
   themeBackgroundImage:"",
   tutorAvatar:""
 };
@@ -2261,7 +2263,7 @@ function Curriculum({data, setData}) {
   const cur = data.curriculum || [];
   const list = filter==="All" ? cur : cur.filter(c=>c.category===filter);
   const doSave = () => { if(!form.title.trim()) return; const ex=cur.find(c=>c.id===form.id); setData({...data,curriculum:ex?cur.map(c=>c.id===form.id?{...form}:c):[...cur,{...form}]}); setShow(false); setForm(mkCurriculum(S)); };
-  const handleFile = e => { const f=e.target.files[0]; if(!f) return; if(f.size>20e6){alert("Max 20MB");return;} const r=new FileReader(); r.onload=()=>setForm({...form,fileName:f.name,fileData:r.result}); r.readAsDataURL(f); };
+  const handleFile = e => { const f=e.target.files[0]; if(!f) return; if(f.size>50e6){alert("Max 50MB");return;} const r=new FileReader(); r.onload=()=>setForm({...form,fileName:f.name,fileData:r.result}); r.readAsDataURL(f); };
   return h`<div>
     <div style=${{display:"flex",gap:10,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
       <div style=${{display:"flex",gap:3}}>${["All",...S.types].map(t=>h`<button key=${t} class=${"btn btn-sm "+(filter===t?"btn-p":"")} onClick=${()=>setFilter(t)}>${t}</button>`)}</div>
@@ -2280,7 +2282,7 @@ function Curriculum({data, setData}) {
       <div class="fg"><label>Title</label><input value=${form.title} onInput=${e=>setForm({...form,title:e.target.value})}/></div>
       <div class="fr"><div class="fg"><label>Category</label><select value=${form.category} onChange=${e=>setForm({...form,category:e.target.value})}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Level</label><select value=${form.level} onChange=${e=>setForm({...form,level:e.target.value})}>${S.levels.map(l=>h`<option key=${l}>${l}</option>`)}</select></div></div>
       <div class="fg"><label>Description</label><textarea value=${form.description} onInput=${e=>setForm({...form,description:e.target.value})}/></div>
-      <div class="fg"><label>File (max 20MB)</label><div class="fu" onClick=${()=>fileRef.current?.click()}><input ref=${fileRef} type="file" onChange=${handleFile} accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"/>${form.fileName?h`<span>${ic('fi')} ${form.fileName}</span>`:h`<p style=${{fontWeight:600}}>Click to upload</p>`}</div></div>
+      <div class="fg"><label>File (max 50MB)</label><div class="fu" onClick=${()=>fileRef.current?.click()}><input ref=${fileRef} type="file" onChange=${handleFile} accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"/>${form.fileName?h`<span>${ic('fi')} ${form.fileName}</span>`:h`<p style=${{fontWeight:600}}>Click to upload</p>`}</div></div>
     <//>`}
   </div>`;
 }
@@ -2397,7 +2399,7 @@ function Settings({data, setData}) {
     <div class="card"><h3>🎨 THEME COLORS</h3>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:14}}>Customize the look of your dashboard.</p>
       <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:14}}>
-        ${[["themeAccent","✨ Accent / Gold","#c9922a"],["themeSidebar","🖤 Sidebar Background","#000000"],["themeBackground","🌫 Page Background","#fafafa"],["themeCardBg","🃏 Card Background","#ffffff"]].map(([k,label,def])=>h`<div key=${k}>
+        ${[["themeAccent","✨ Accent / Gold","#c9922a"],["themeSidebar","🖤 Sidebar","#000000"],["themeBackground","🌫 Page Background","#fafafa"],["themeTopbar","🔲 Topbar","#ffffff"],["themeCardBg","🃏 Cards & Panels","#ffffff"],["themeStatBg","📊 Stats & Charts","#ffffff"]].map(([k,label,def])=>h`<div key=${k}>
           <label style=${{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"block",marginBottom:6}}>${label}</label>
           <div style=${{display:"flex",alignItems:"center",gap:8}}>
             <input type="color" value=${S[k]||def} onInput=${e=>u(k,e.target.value)} style=${{width:40,height:36,border:"2px solid var(--g200)",borderRadius:6,cursor:"pointer",padding:2}}/>
@@ -2405,7 +2407,7 @@ function Settings({data, setData}) {
           </div>
         </div>`)}
       </div>
-      <button class="btn btn-sm" style=${{marginTop:14}} onClick=${()=>setData({...data, settings:{...S, themeAccent:"#c9922a", themeSidebar:"#000000", themeBackground:"#fafafa", themeCardBg:"#ffffff"}})}>Reset to defaults</button>
+      <button class="btn btn-sm" style=${{marginTop:14}} onClick=${()=>setData({...data, settings:{...S, themeAccent:"#c9922a", themeSidebar:"#000000", themeBackground:"#fafafa", themeCardBg:"#ffffff", themeTopbar:"#ffffff", themeStatBg:"#ffffff"}})}>Reset to defaults</button>
     </div>
     <div class="card"><h3>🖼 BACKGROUND IMAGE</h3>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:14}}>Upload an image to use as the page background. It will fill and cover the whole dashboard area.</p>
@@ -2915,9 +2917,11 @@ function App() {
   const sidebarBg = S.themeSidebar||"#000000";
   const pageBg = S.themeBackground||"#fafafa";
   const cardBg = S.themeCardBg||"#ffffff";
+  const topbarBg = S.themeTopbar||"#ffffff";
+  const statBg = S.themeStatBg||"#ffffff";
   const bgImage = S.themeBackgroundImage||"";
   const bgImageCSS = bgImage ? ";background-image:url("+bgImage+")!important;background-size:cover!important;background-position:center!important;background-attachment:fixed!important" : "";
-  const themeCSS = `.sb{background:${sidebarBg}!important}.page{background:${pageBg}!important${bgImageCSS}}.card,.assess-card{background:${cardBg}!important}.sb-it.on{background:${cardBg}!important;color:${sidebarBg}!important;border-left-color:${accent}!important}.sb-hd h1{color:${accent}!important}.sb-it.on{color:${sidebarBg}!important}`;
+  const themeCSS = `.sb{background:${sidebarBg}!important}.page{background:${pageBg}!important${bgImageCSS}}.topbar{background:${topbarBg}!important}.card,.assess-card,.mo{background:${cardBg}!important}.stat{background:${statBg}!important}.sb-it.on{background:${cardBg}!important;color:${sidebarBg}!important;border-left-color:${accent}!important}.sb-hd h1{color:${accent}!important}.sb-it.on{color:${sidebarBg}!important}`;
 
   return h`<div class="app">
     <style>${themeCSS}</style>
