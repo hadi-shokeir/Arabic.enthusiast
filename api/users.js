@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 
-const KV = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const KV = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function kv(cmd) {
   const r = await fetch(KV, {
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
     if (action === 'setPassword') {
       const { email, password } = req.body;
       if (!password || password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-      const idx = users.findIndex(u => u.email === email);
+      const idx = users.findIndex(u => u.email === email.toLowerCase().trim());
       if (idx === -1) return res.status(404).json({ error: 'User not found' });
       const { hash, salt } = hashPw(password);
       users[idx].passwordHash = hash;

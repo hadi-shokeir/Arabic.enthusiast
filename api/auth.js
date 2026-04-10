@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 
-const KV = process.env.KV_REST_API_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const KV = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function kv(cmd) {
   if (!KV || !KV_TOKEN) throw new Error('KV_NOT_CONFIGURED');
@@ -112,9 +112,7 @@ export default async function handler(req, res) {
 
     // ── FIRST SETUP (create tutor account) ────────────────
     if (action === 'setup') {
-      const { name, email, password, setupKey } = req.body;
-      const expected = process.env.SETUP_KEY || 'arabic-setup';
-      if (setupKey !== expected) return res.status(403).json({ error: 'Invalid setup key' });
+      const { name, email, password } = req.body;
       const users = await getUsers();
       if (users.find(u => u.role === 'tutor')) return res.status(409).json({ error: 'Tutor account already exists. Log in instead.' });
       if (users.find(u => u.email === email.toLowerCase().trim())) return res.status(409).json({ error: 'Email already in use' });
