@@ -41,10 +41,16 @@ export default async function handler(req, res) {
     if (session.role !== 'tutor') return res.status(403).json({ error: 'Unauthorized' });
 
     if (action === 'backup') {
-      // Strip file blobs to save space, keep everything else
+      // Strip large blobs (images, files) to stay within KV payload limits
       const stripped = { ...data };
       if (stripped.curriculum) {
         stripped.curriculum = stripped.curriculum.map(c => ({ ...c, fileData: '' }));
+      }
+      // Strip background images from settings — these are stored locally only
+      if (stripped.settings) {
+        stripped.settings = { ...stripped.settings };
+        const imgKeys = ['themeBackgroundImage','themeSidebarImage','themeSidebarHeaderImage','themeCardImage','tutorAvatar'];
+        imgKeys.forEach(k => { if (stripped.settings[k]) stripped.settings[k] = ''; });
       }
       await kv(['SET', 'student_data', JSON.stringify(stripped)]);
       await kv(['SET', 'student_data_saved_at', new Date().toISOString()]);
