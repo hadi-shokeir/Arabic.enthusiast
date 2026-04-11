@@ -200,7 +200,7 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 <script type="module">
 import htm from 'https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js';
 const h = htm.bind(React.createElement);
-const {useState, useEffect, useCallback, useRef} = React;
+const {useState, useEffect, useLayoutEffect, useCallback, useRef} = React;
 
 // ═══════════════════════════════════════════════════
 // CUSTOM AUTH — token stored in localStorage
@@ -3467,22 +3467,31 @@ function App() {
   const bgSz           = bgZoom !== undefined ? bgZoom+"%" : "cover";
   const sbSz           = sbZoom !== undefined ? sbZoom+"%" : "cover";
   const cardSz         = cardZoom !== undefined ? cardZoom+"%" : "cover";
-  const bgImageCSS     = bgImage ? ";background-image:url("+bgImage+")!important;background-size:"+bgSz+"!important;background-position:"+bgImageX+"% "+bgImageY+"%!important;background-attachment:fixed!important" : "";
-  const sbImageCSS     = sidebarImage ? ";background-image:url("+sidebarImage+")!important;background-size:"+sbSz+"!important;background-position:"+sbImageX+"% "+sbImageY+"%!important" : "";
-  const cardImageCSS   = cardImage ? ";background-image:url("+cardImage+")!important;background-size:"+cardSz+"!important;background-position:"+cardImageX+"% "+cardImageY+"%!important" : "";
+  // Inline styles for images — applied directly on elements (avoids browser CSSOM issues with large base64 in style tags)
+  const sbInlineStyle  = sidebarImage ? {backgroundImage:"url("+sidebarImage+")",backgroundSize:sbSz,backgroundPosition:sbImageX+"% "+sbImageY+"%"} : {};
+  const pageInlineStyle= bgImage ? {backgroundImage:"url("+bgImage+")",backgroundSize:bgSz,backgroundPosition:bgImageX+"% "+bgImageY+"%",backgroundAttachment:"fixed"} : {};
+  const sbHdInlineStyle= sbHdImage
+    ? {backgroundImage:"linear-gradient("+sbHdOverlay+","+sbHdOverlay+"),url("+sbHdImage+")",backgroundSize:"100% 100%,"+sbHdSz,backgroundPosition:"0 0,"+sbHdImageX+"% "+sbHdImageY+"%",backgroundRepeat:"no-repeat,no-repeat"}
+    : (sbHdOvOpacity > 0 ? {backgroundColor:sbHdOverlay} : {});
+  // Card image goes in a separate dedicated style element (updated via ref)
+  const cardImageCSS   = cardImage ? ".card,.assess-card,.mo,.stu-card{background-image:url("+cardImage+")!important;background-size:"+cardSz+"!important;background-position:"+cardImageX+"% "+cardImageY+"%!important}" : "";
+  const cardImgStyleRef = useRef(null);
+  useLayoutEffect(() => {
+    if (cardImgStyleRef.current) cardImgStyleRef.current.textContent = cardImageCSS;
+  }, [cardImageCSS]);
+
   const themeCSS = (
     ".app{color:"+textMain+";font-family:'"+fontB+"',sans-serif;font-size:"+fontSizeB+"px}" +
-    ".sb{background:"+sidebarBg+"!important"+sbImageCSS+"}" +
+    ".sb{background-color:"+sidebarBg+"}" +
     ".sb-it{color:"+sidebarText+"!important}" +
     ".sb-it:hover{color:#fff!important}" +
-    ".sb-hd{"+sbHdImageCSS+"}" +
     ".sb-hd h1{color:"+accent+"!important;font-family:'"+fontBrand+"',sans-serif!important;font-size:"+fontSizeBrand+"px!important}" +
     ".sb-hd small{color:"+accent+"99!important}" +
     ".sb-it.on{background:"+cardBg+"!important;color:"+sidebarBg+"!important;border-left-color:"+accent+"!important}" +
-    ".page{background:"+pageBg+"!important"+bgImageCSS+"}" +
+    ".page{background-color:"+pageBg+"}" +
     ".topbar{background:"+topbarBg+"!important;border-bottom-color:"+topbarBorder+"!important}" +
     ".topbar h2,.card h3,.mo-hd h3,.assess-card h4,.stat .vl,.ll,.auth-box h1,.prof-info h2{font-family:'"+fontH+"',sans-serif!important;font-size:"+fontSizeH+"px!important}" +
-    ".card,.assess-card,.mo,.stu-card{background:"+cardBg+"!important;border-color:"+cardBorder+"!important"+cardImageCSS+"}" +
+    ".card,.assess-card,.mo,.stu-card{background-color:"+cardBg+";border-color:"+cardBorder+"!important}" +
     ".stat{background:"+statBg+"!important;border-color:"+statBorder+"!important}" +
     "th{background:"+tblHdrBg+"!important;color:"+tblHdrText+"!important;border-bottom-color:"+tblHdrBg+"!important}" +
     ".cal-h{background:"+calHdrBg+"!important;color:"+calHdrText+"!important}" +
@@ -3491,8 +3500,9 @@ function App() {
 
   return h`<div class="app">
     <style>${themeCSS}</style>
-    <div class="sb">
-      <div class="sb-hd">
+    <style ref=${cardImgStyleRef}></style>
+    <div class="sb" style=${sbInlineStyle}>
+      <div class="sb-hd" style=${sbHdInlineStyle}>
         ${S.tutorAvatar
           ? h`<img src=${S.tutorAvatar} style=${{width:70,height:70,borderRadius:"50%",objectFit:"cover",display:"block",margin:"0 auto 10px",border:"2px solid rgba(201,146,42,0.5)"}}/>`
           : h`<img src="/logo.jpeg" style=${{width:110,height:110,objectFit:"contain",display:"block",margin:"0 auto 10px",borderRadius:20}}/>`}
@@ -3521,7 +3531,7 @@ function App() {
           <button style=${{background:"none",border:"1px solid var(--g300)",borderRadius:6,padding:"4px 9px",cursor:"pointer",fontSize:11,fontWeight:700,color:"var(--g500)"}} onClick=${handleLogout}>Log Out</button>
         </div>
       </div>
-      <div class="page">
+      <div class="page" style=${pageInlineStyle}>
         ${view==="dashboard" && h`<${Dashboard} data=${data} setData=${update} auth=${auth}/>`}
         ${view==="students" && h`<${StudentsAndGroups} data=${data} setData=${update} onProfile=${openProfile}/>`}
         ${view==="profile" && h`<${StudentProfile} data=${data} setData=${update} profileId=${profileId}/>`}
