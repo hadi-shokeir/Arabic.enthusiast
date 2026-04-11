@@ -275,9 +275,18 @@ const DEFS = {
   themeFontHeading:"Bebas Neue",
   themeFontBody:"DM Sans",
   themeFontBrand:"Bebas Neue",
+  themeFontSizeHeading:28,
+  themeFontSizeBody:14,
+  themeFontSizeBrand:24,
   themeBackgroundImage:"",
+  themeBackgroundImageX:50,
+  themeBackgroundImageY:50,
   themeSidebarImage:"",
+  themeSidebarImageX:50,
+  themeSidebarImageY:50,
   themeCardImage:"",
+  themeCardImageX:50,
+  themeCardImageY:50,
   tutorAvatar:""
 };
 const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],settings:{...DEFS},_version:DATA_VERSION};
@@ -2632,7 +2641,12 @@ function Settings({data, setData}) {
               <option value="Montserrat">Montserrat</option>
             </optgroup>
           </select>
-          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontHeading||"Bebas Neue")+"',sans-serif",fontSize:22,letterSpacing:2,color:"var(--g600)"}}>ARABIC ENTHUSIAST</div>
+          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontHeading||"Bebas Neue")+"',sans-serif",fontSize:S.themeFontSizeHeading||28,letterSpacing:2,color:"var(--g600)",lineHeight:1.2}}>HEADING</div>
+          <div style=${{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+            <span style=${{fontSize:11,color:"var(--g500)",minWidth:32}}>Size</span>
+            <input type="range" min="14" max="72" value=${S.themeFontSizeHeading||28} onInput=${e=>u("themeFontSizeHeading",+e.target.value)} style=${{flex:1,cursor:"pointer"}}/>
+            <span style=${{fontSize:12,fontWeight:700,minWidth:34,textAlign:"right"}}>${S.themeFontSizeHeading||28}px</span>
+          </div>
         </div>
         <div class="fg">
           <label>Body Font</label>
@@ -2655,7 +2669,12 @@ function Settings({data, setData}) {
               <option value="Montserrat">Montserrat</option>
             </optgroup>
           </select>
-          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontBody||"DM Sans")+"',sans-serif",fontSize:13,color:"var(--g600)",lineHeight:1.6}}>Your students, your schedule, your way.</div>
+          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontBody||"DM Sans")+"',sans-serif",fontSize:S.themeFontSizeBody||14,color:"var(--g600)",lineHeight:1.6}}>Your students, your schedule, your way.</div>
+          <div style=${{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+            <span style=${{fontSize:11,color:"var(--g500)",minWidth:32}}>Size</span>
+            <input type="range" min="10" max="22" value=${S.themeFontSizeBody||14} onInput=${e=>u("themeFontSizeBody",+e.target.value)} style=${{flex:1,cursor:"pointer"}}/>
+            <span style=${{fontSize:12,fontWeight:700,minWidth:34,textAlign:"right"}}>${S.themeFontSizeBody||14}px</span>
+          </div>
         </div>
         <div class="fg">
           <label>Branding Font (Sidebar Logo)</label>
@@ -2682,20 +2701,27 @@ function Settings({data, setData}) {
               <option value="Manrope">Manrope</option>
             </optgroup>
           </select>
-          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontBrand||"Bebas Neue")+"',sans-serif",fontSize:22,letterSpacing:2,color:"var(--g600)"}}>ARABIC ENTHUSIAST</div>
+          <div style=${{marginTop:8,fontFamily:"'"+(S.themeFontBrand||"Bebas Neue")+"',sans-serif",fontSize:S.themeFontSizeBrand||24,letterSpacing:2,color:"var(--g600)",lineHeight:1.2}}>ARABIC ENTHUSIAST</div>
+          <div style=${{display:"flex",alignItems:"center",gap:8,marginTop:8}}>
+            <span style=${{fontSize:11,color:"var(--g500)",minWidth:32}}>Size</span>
+            <input type="range" min="12" max="60" value=${S.themeFontSizeBrand||24} onInput=${e=>u("themeFontSizeBrand",+e.target.value)} style=${{flex:1,cursor:"pointer"}}/>
+            <span style=${{fontSize:12,fontWeight:700,minWidth:34,textAlign:"right"}}>${S.themeFontSizeBrand||24}px</span>
+          </div>
         </div>
       </div>
-      <button class="btn btn-sm" style=${{marginTop:6}} onClick=${()=>setData({...data,settings:{...S,themeFontHeading:"Bebas Neue",themeFontBody:"DM Sans",themeFontBrand:"Bebas Neue"}})}>Reset fonts</button>
+      <button class="btn btn-sm" style=${{marginTop:6}} onClick=${()=>setData({...data,settings:{...S,themeFontHeading:"Bebas Neue",themeFontBody:"DM Sans",themeFontBrand:"Bebas Neue",themeFontSizeHeading:28,themeFontSizeBody:14,themeFontSizeBrand:24}})}>Reset fonts</button>
     </div>
     <div class="card"><h3>🖼 BACKGROUND IMAGES</h3>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:18}}>Upload images for each area. They overlay the color settings above.</p>
       <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
         ${[
-          ["themeBackgroundImage","🌅 Page Background","1920x1080",1920,1080,0.8],
-          ["themeSidebarImage","🗂 Sidebar","400x900",400,900,0.85],
-          ["themeCardImage","🃏 Cards & Panels","800x600",800,600,0.85],
-        ].map(([key,label,hint,maxW,maxH,quality])=>{
+          ["themeBackgroundImage","themeBackgroundImageX","themeBackgroundImageY","🌅 Page Background","1920x1080",1920,1080,0.8],
+          ["themeSidebarImage","themeSidebarImageX","themeSidebarImageY","🗂 Sidebar","400x900",400,900,0.85],
+          ["themeCardImage","themeCardImageX","themeCardImageY","🃏 Cards & Panels","800x600",800,600,0.85],
+        ].map(([key,keyX,keyY,label,hint,maxW,maxH,quality])=>{
           const val = S[key]||"";
+          const posX = S[keyX] !== undefined ? S[keyX] : 50;
+          const posY = S[keyY] !== undefined ? S[keyY] : 50;
           const compress = (file, cb) => {
             const canvas = document.createElement("canvas");
             const img = new Image();
@@ -2718,7 +2744,7 @@ function Settings({data, setData}) {
               ${val && h`<button onClick=${()=>u(key,"")} style=${{background:"rgba(200,0,0,0.08)",border:"1px solid var(--bd)",color:"var(--bd)",borderRadius:5,padding:"3px 8px",cursor:"pointer",fontSize:11,fontWeight:700}}>✕ Remove</button>`}
             </div>
             ${val
-              ? h`<img src=${val} style=${{display:"block",width:"100%",height:120,objectFit:"cover"}}/>`
+              ? h`<img src=${val} style=${{display:"block",width:"100%",height:120,objectFit:"cover",objectPosition:posX+"% "+posY+"%"}}/>`
               : h`<div style=${{height:120,display:"flex",alignItems:"center",justifyContent:"center",background:"#fafafa",color:"var(--g300)",fontSize:28}}>🖼</div>`
             }
             <div style=${{padding:"10px 12px"}}>
@@ -2726,6 +2752,19 @@ function Settings({data, setData}) {
                 📷 ${val?"Replace":"Upload"}
                 <input type="file" accept="image/*" style=${{display:"none"}} onInput=${e=>{const f=e.target.files[0];if(f) compress(f,data=>u(key,data));}}/>
               </label>
+              ${val && h`<div style=${{marginTop:10}}>
+                <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--g500)",marginBottom:4}}>Crop / Position</div>
+                <div style=${{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <span style=${{fontSize:10,color:"var(--g400)",minWidth:18}}>↔</span>
+                  <input type="range" min="0" max="100" value=${posX} onInput=${e=>u(keyX,+e.target.value)} style=${{flex:1,cursor:"pointer"}}/>
+                  <span style=${{fontSize:10,minWidth:28,textAlign:"right"}}>${posX}%</span>
+                </div>
+                <div style=${{display:"flex",alignItems:"center",gap:6}}>
+                  <span style=${{fontSize:10,color:"var(--g400)",minWidth:18}}>↕</span>
+                  <input type="range" min="0" max="100" value=${posY} onInput=${e=>u(keyY,+e.target.value)} style=${{flex:1,cursor:"pointer"}}/>
+                  <span style=${{fontSize:10,minWidth:28,textAlign:"right"}}>${posY}%</span>
+                </div>
+              </div>`}
             </div>
           </div>`;
         })}
@@ -3290,23 +3329,32 @@ function App() {
   const fontH          = S.themeFontHeading||"Bebas Neue";
   const fontB          = S.themeFontBody||"DM Sans";
   const fontBrand      = S.themeFontBrand||"Bebas Neue";
+  const fontSizeH      = S.themeFontSizeHeading||28;
+  const fontSizeB      = S.themeFontSizeBody||14;
+  const fontSizeBrand  = S.themeFontSizeBrand||24;
   const bgImage        = S.themeBackgroundImage||"";
+  const bgImageX       = S.themeBackgroundImageX !== undefined ? S.themeBackgroundImageX : 50;
+  const bgImageY       = S.themeBackgroundImageY !== undefined ? S.themeBackgroundImageY : 50;
   const sidebarImage   = S.themeSidebarImage||"";
+  const sbImageX       = S.themeSidebarImageX !== undefined ? S.themeSidebarImageX : 50;
+  const sbImageY       = S.themeSidebarImageY !== undefined ? S.themeSidebarImageY : 50;
   const cardImage      = S.themeCardImage||"";
-  const bgImageCSS     = bgImage ? ";background-image:url("+bgImage+")!important;background-size:cover!important;background-position:center!important;background-attachment:fixed!important" : "";
-  const sbImageCSS     = sidebarImage ? ";background-image:url("+sidebarImage+")!important;background-size:cover!important;background-position:center!important" : "";
-  const cardImageCSS   = cardImage ? ";background-image:url("+cardImage+")!important;background-size:cover!important;background-position:center!important" : "";
+  const cardImageX     = S.themeCardImageX !== undefined ? S.themeCardImageX : 50;
+  const cardImageY     = S.themeCardImageY !== undefined ? S.themeCardImageY : 50;
+  const bgImageCSS     = bgImage ? ";background-image:url("+bgImage+")!important;background-size:cover!important;background-position:"+bgImageX+"% "+bgImageY+"%!important;background-attachment:fixed!important" : "";
+  const sbImageCSS     = sidebarImage ? ";background-image:url("+sidebarImage+")!important;background-size:cover!important;background-position:"+sbImageX+"% "+sbImageY+"%!important" : "";
+  const cardImageCSS   = cardImage ? ";background-image:url("+cardImage+")!important;background-size:cover!important;background-position:"+cardImageX+"% "+cardImageY+"%!important" : "";
   const themeCSS = (
-    ".app{color:"+textMain+";font-family:'"+fontB+"',sans-serif}" +
+    ".app{color:"+textMain+";font-family:'"+fontB+"',sans-serif;font-size:"+fontSizeB+"px}" +
     ".sb{background:"+sidebarBg+"!important"+sbImageCSS+"}" +
     ".sb-it{color:"+sidebarText+"!important}" +
     ".sb-it:hover{color:#fff!important}" +
-    ".sb-hd h1{color:"+accent+"!important;font-family:'"+fontBrand+"',sans-serif!important}" +
+    ".sb-hd h1{color:"+accent+"!important;font-family:'"+fontBrand+"',sans-serif!important;font-size:"+fontSizeBrand+"px!important}" +
     ".sb-hd small{color:"+accent+"99!important}" +
     ".sb-it.on{background:"+cardBg+"!important;color:"+sidebarBg+"!important;border-left-color:"+accent+"!important}" +
     ".page{background:"+pageBg+"!important"+bgImageCSS+"}" +
     ".topbar{background:"+topbarBg+"!important;border-bottom-color:"+topbarBorder+"!important}" +
-    ".topbar h2,.card h3,.mo-hd h3,.assess-card h4,.stat .vl,.ll,.auth-box h1,.prof-info h2{font-family:'"+fontH+"',sans-serif!important}" +
+    ".topbar h2,.card h3,.mo-hd h3,.assess-card h4,.stat .vl,.ll,.auth-box h1,.prof-info h2{font-family:'"+fontH+"',sans-serif!important;font-size:"+fontSizeH+"px!important}" +
     ".card,.assess-card,.mo,.stu-card{background:"+cardBg+"!important;border-color:"+cardBorder+"!important"+cardImageCSS+"}" +
     ".stat{background:"+statBg+"!important;border-color:"+statBorder+"!important}" +
     "th{background:"+tblHdrBg+"!important;color:"+tblHdrText+"!important;border-bottom-color:"+tblHdrBg+"!important}" +
