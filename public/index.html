@@ -830,15 +830,43 @@ function Modal({title, onClose, children, footer}) {
 function Chips({items, onUpdate, label}) {
   const [adding, setAdding] = useState(false);
   const [val, setVal] = useState("");
+  const [dropTarget, setDropTarget] = useState(null);
   const ref = useRef(null);
+  const dragIdx = useRef(null);
   useEffect(() => { if (adding && ref.current) ref.current.focus(); }, [adding]);
   const add = () => { if (val.trim() && !items.includes(val.trim())) { onUpdate([...items, val.trim()]); setVal(""); setAdding(false); }};
   const rm = i => onUpdate(items.filter((_,idx) => idx !== i));
-  return h`<div class="fg"><label>${label}</label><div style=${{display:"flex",flexWrap:"wrap",gap:2,alignItems:"center"}}>
-    ${items.map((t,i) => h`<div class="chip" key=${i}>${t}<span class="chip-x" onClick=${()=>rm(i)}>×</span></div>`)}
-    ${adding ? h`<div style=${{display:"flex",gap:4,alignItems:"center"}}><input ref=${ref} value=${val} onInput=${e=>setVal(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")add();if(e.key==="Escape")setAdding(false);}} style=${{padding:"3px 7px",border:"2px solid #000",fontSize:11,width:110,fontFamily:"var(--fb)"}} placeholder="Type & Enter"/><button class="bi" onClick=${add}>${ic('chk')}</button><button class="bi" onClick=${()=>setAdding(false)}>${ic('x')}</button></div>`
-    : h`<div class="chip chip-add" onClick=${()=>setAdding(true)}>+ Add</div>`}
-  </div></div>`;
+  const onDragStart = (e, i) => { dragIdx.current = i; e.dataTransfer.effectAllowed = "move"; };
+  const onDragOver = (e, i) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; setDropTarget(i); };
+  const onDrop = (e, i) => {
+    e.preventDefault();
+    const from = dragIdx.current;
+    if (from === null || from === i) { setDropTarget(null); return; }
+    const arr = [...items];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(i, 0, moved);
+    onUpdate(arr);
+    dragIdx.current = null;
+    setDropTarget(null);
+  };
+  const onDragEnd = () => { dragIdx.current = null; setDropTarget(null); };
+  return h`<div class="fg">
+    <label>${label}</label>
+    <div style=${{display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
+      ${items.map((t,i) => h`<div key=${i} class="chip"
+        draggable=${true}
+        onDragStart=${e=>onDragStart(e,i)}
+        onDragOver=${e=>onDragOver(e,i)}
+        onDrop=${e=>onDrop(e,i)}
+        onDragEnd=${onDragEnd}
+        style=${{cursor:"grab",outline:dropTarget===i?"2px dashed var(--ac)":"2px solid transparent",outlineOffset:1}}>
+        <span style=${{opacity:.4,fontSize:10,marginRight:3,userSelect:"none"}}>⠿</span>${t}<span class="chip-x" onClick=${()=>rm(i)}>×</span>
+      </div>`)}
+      ${adding ? h`<div style=${{display:"flex",gap:4,alignItems:"center"}}><input ref=${ref} value=${val} onInput=${e=>setVal(e.target.value)} onKeyDown=${e=>{if(e.key==="Enter")add();if(e.key==="Escape")setAdding(false);}} style=${{padding:"3px 7px",border:"2px solid #000",fontSize:11,width:110,fontFamily:"var(--fb)"}} placeholder="Type & Enter"/><button class="bi" onClick=${add}>${ic('chk')}</button><button class="bi" onClick=${()=>setAdding(false)}>${ic('x')}</button></div>`
+      : h`<div class="chip chip-add" onClick=${()=>setAdding(true)}>+ Add</div>`}
+    </div>
+    <div style=${{fontSize:10,color:"var(--g400)",marginTop:3}}>Drag to reorder</div>
+  </div>`;
 }
 
 // ════════════════════════════════════════
