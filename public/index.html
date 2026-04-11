@@ -3473,12 +3473,8 @@ function App() {
   const sbHdInlineStyle= sbHdImage
     ? {backgroundImage:"linear-gradient("+sbHdOverlay+","+sbHdOverlay+"),url("+sbHdImage+")",backgroundSize:"100% 100%,"+sbHdSz,backgroundPosition:"0 0,"+sbHdImageX+"% "+sbHdImageY+"%",backgroundRepeat:"no-repeat,no-repeat"}
     : (sbHdOvOpacity > 0 ? {backgroundColor:sbHdOverlay} : {});
-  // Card image goes in a separate dedicated style element (updated via ref)
+  // Card image: stays in CSS (cards are spread across many components; image is smaller so style tag is fine)
   const cardImageCSS   = cardImage ? ".card,.assess-card,.mo,.stu-card{background-image:url("+cardImage+")!important;background-size:"+cardSz+"!important;background-position:"+cardImageX+"% "+cardImageY+"%!important}" : "";
-  const cardImgStyleRef = useRef(null);
-  useLayoutEffect(() => {
-    if (cardImgStyleRef.current) cardImgStyleRef.current.textContent = cardImageCSS;
-  }, [cardImageCSS]);
 
   const themeCSS = (
     ".app{color:"+textMain+";font-family:'"+fontB+"',sans-serif;font-size:"+fontSizeB+"px}" +
@@ -3492,6 +3488,7 @@ function App() {
     ".topbar{background:"+topbarBg+"!important;border-bottom-color:"+topbarBorder+"!important}" +
     ".topbar h2,.card h3,.mo-hd h3,.assess-card h4,.stat .vl,.ll,.auth-box h1,.prof-info h2{font-family:'"+fontH+"',sans-serif!important;font-size:"+fontSizeH+"px!important}" +
     ".card,.assess-card,.mo,.stu-card{background-color:"+cardBg+";border-color:"+cardBorder+"!important}" +
+    cardImageCSS +
     ".stat{background:"+statBg+"!important;border-color:"+statBorder+"!important}" +
     "th{background:"+tblHdrBg+"!important;color:"+tblHdrText+"!important;border-bottom-color:"+tblHdrBg+"!important}" +
     ".cal-h{background:"+calHdrBg+"!important;color:"+calHdrText+"!important}" +
@@ -3500,7 +3497,6 @@ function App() {
 
   return h`<div class="app">
     <style>${themeCSS}</style>
-    <style ref=${cardImgStyleRef}></style>
     <div class="sb" style=${sbInlineStyle}>
       <div class="sb-hd" style=${sbHdInlineStyle}>
         ${S.tutorAvatar
