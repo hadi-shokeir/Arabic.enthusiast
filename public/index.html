@@ -194,47 +194,90 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 
 /* ── Mobile — admin panel ── */
 @media(max-width:768px){
+  /* App shell */
   .app{flex-direction:column}
   .sb{width:100%;min-width:100%;flex-direction:column;border-bottom:2px solid var(--bk);flex-shrink:0}
   .sb-hd{display:none}
   .sb-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .sb-nav::-webkit-scrollbar{display:none}
-  .sb-it{padding:8px 12px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:10px;font-weight:700;gap:4px;flex-shrink:0;flex-direction:column;align-items:center;min-width:60px;text-align:center}
+  .sb-it{padding:8px 10px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:10px;font-weight:700;gap:3px;flex-shrink:0;flex-direction:column;align-items:center;min-width:56px;text-align:center}
   .sb-it svg{width:18px;height:18px}
   .sb-it span{display:block;font-size:9px;margin-top:2px;letter-spacing:.3px}
   .sb-it.on{border-bottom-color:var(--wh);border-left-color:transparent;background:rgba(255,255,255,0.12)}
   .sb-ft{display:none}
   .main{flex:1;overflow:hidden}
+  /* Page */
   .topbar{padding:10px 14px;gap:8px}
-  .topbar h2{font-size:18px;letter-spacing:1px}
-  .page{padding:10px 12px;padding-bottom:20px}
-  .fr,.fr3{grid-template-columns:1fr}
-  .stats{grid-template-columns:1fr 1fr}
-  .prof-hd{flex-direction:column;align-items:center;text-align:center}
+  .topbar h2{font-size:16px;letter-spacing:1px}
+  .page{padding:10px 10px;padding-bottom:24px}
+  .card{padding:12px}
+  /* Grids — collapse to single column; !important overrides inline styles */
+  .fr,.fr3{grid-template-columns:1fr !important}
+  .stats{grid-template-columns:1fr 1fr !important}
+  .sc-stats{grid-template-columns:1fr 1fr !important}
   .stu-grid{grid-template-columns:1fr}
-  .card{padding:14px}
-  .mo{width:96%;max-height:90vh}
-  .mo-bd{padding:14px}
-  .auth-box{padding:24px 18px}
-  table{font-size:12px}
-  td,th{padding:6px 8px}
-  /* Make tables scroll horizontally */
-  .card > div > table, .card > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 2-col dashboard/profile grids → 1 col */
+  .dash-two-col,.prof-two-col{grid-template-columns:1fr !important}
+  /* Profile header */
+  .prof-hd{flex-direction:column;align-items:center;text-align:center}
+  /* Modals */
+  .mo{width:98%;max-height:92vh}
+  .mo-bd{padding:12px}
+  .mo-ft{padding:10px 12px;gap:8px}
+  /* Auth */
+  .auth-box{padding:20px 16px}
+  /* Tables: smaller text, horizontal scroll */
+  table{font-size:11px}
+  td,th{padding:5px 6px}
+  .tbl-wrap{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  .card > div > table,.card > table,.tbl-wrap > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Calendar — fit 7 cols on phone */
+  .cal-h{font-size:8px !important;padding:5px 2px !important;letter-spacing:0 !important}
+  .cal-c{min-height:44px !important;padding:3px !important}
+  .cal-d{font-size:10px}
+  .cal-e{font-size:7px !important}
+  /* Availability time range row */
+  .avail-range-row{flex-wrap:wrap !important;gap:6px !important}
+  .avail-range-row input[type="time"]{flex:1 !important;min-width:120px !important;font-size:14px !important}
+  /* Tabs — scroll horizontally */
+  .auth-tabs,.tabs{overflow-x:auto;flex-wrap:nowrap}
+  .auth-tab{white-space:nowrap;flex-shrink:0}
+  /* Topbar sync button */
+  .topbar-sync-text{display:none}
 }
 
 /* ── Student portal mobile ── */
 @media(max-width:600px){
   /* Compact sticky header */
-  .sp-hd{padding:8px 12px !important;gap:8px !important}
-  .sp-hd-brand{padding:8px 12px !important;gap:8px !important}
-  .sp-hd-brand img{width:36px !important;height:36px !important}
-  .sp-hd-brand .sp-brand-text{font-size:14px !important;letter-spacing:1.5px !important}
+  .sp-hd{padding:8px 10px !important;gap:8px !important}
+  .sp-hd-brand{padding:7px 10px !important;gap:8px !important}
+  .sp-hd-brand img{width:32px !important;height:32px !important}
+  .sp-hd-brand .sp-brand-text{font-size:13px !important;letter-spacing:1px !important}
   .sp-hd-brand .sp-brand-sub{display:none !important}
-  .sp-hd-greeting{padding:8px 10px !important}
-  .sp-hd-greeting .sp-greet-main{font-size:15px !important}
+  .sp-hd-greeting{padding:6px 8px !important}
+  .sp-hd-greeting .sp-greet-main{font-size:14px !important}
   .sp-hd-greeting .sp-greet-sub{display:none !important}
   .sp-stats{grid-template-columns:repeat(2,1fr) !important}
-  .sp-content{padding:10px 10px !important}
+  .sp-content{padding:10px 8px !important}
+  /* Availability time range row — stack fully on small phones */
+  .avail-range-row{flex-direction:column !important;align-items:stretch !important}
+  .avail-range-row input[type="time"]{width:100% !important;box-sizing:border-box !important}
+  /* Lesson slot grid — 2 per row max */
+  .slot-grid{grid-template-columns:repeat(2,1fr) !important}
+}
+
+/* ── Very small phones (iPhone SE, Galaxy A series) ── */
+@media(max-width:400px){
+  /* Admin nav — even more compact */
+  .sb-it{min-width:48px !important;padding:6px 6px !important;font-size:8px !important}
+  .sb-it svg{width:16px !important;height:16px !important}
+  /* Student portal header — stack brand + controls */
+  .sp-hd{flex-wrap:wrap !important}
+  .sp-hd-greeting{order:3;flex-basis:100% !important;justify-content:flex-start !important}
+  /* Stats — 2 wide */
+  .stats{grid-template-columns:1fr 1fr !important}
+  /* Availability time inputs */
+  .avail-range-row input[type="time"]{font-size:16px !important}
 }
 </style>
 </head>
@@ -1409,7 +1452,7 @@ function StudentLessonRequest({student, data, setData}) {
           ? h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>All slots for the next 4 weeks are taken. Check back soon!</div>`
           : h`<div>
               <div style=${{fontSize:11,color:"var(--g500)",marginBottom:14}}>Pick a time that works for you (shown in your local time):</div>
-              <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
+              <div class="slot-grid" style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}}>
                 ${available.slice(0,12).map(sl=>{
                   const {dayName,dateDisp,timeDisp} = fmtSlot(sl.date, sl.time);
                   return h`<button key=${sl.date+sl.time}
@@ -2284,7 +2327,7 @@ function Dashboard({data, setData, auth}) {
       </div>`)}
     </div>`}
 
-    <div style=${{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+    <div class="dash-two-col" style=${{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
       <div>
         <div class="card" style=${{marginBottom:14}}>
           <h3>🗓 SCHEDULE A LESSON</h3>
@@ -2613,21 +2656,21 @@ function Calendar({data, setData}) {
   const doDel = id => { if(confirm("Delete this lesson?")) { setData({...data, lessons:data.lessons.filter(l=>l.id!==id)}); setShow(false); } };
 
   return h`<div>
-    <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
-      <div style=${{display:"flex",alignItems:"center",gap:14}}>
+    <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+      <div style=${{display:"flex",alignItems:"center",gap:10}}>
         <button class="bi" onClick=${()=>{if(mo===0){setMo(11);setYr(yr-1);}else setMo(mo-1);}}>${icb('cL')}</button>
-        <h3 style=${{fontFamily:"var(--fh)",fontSize:26,letterSpacing:2,minWidth:200,textAlign:"center"}}>${MN[mo]} ${yr}</h3>
+        <h3 style=${{fontFamily:"var(--fh)",fontSize:22,letterSpacing:1.5,minWidth:160,textAlign:"center"}}>${MN[mo]} ${yr}</h3>
         <button class="bi" onClick=${()=>{if(mo===11){setMo(0);setYr(yr+1);}else setMo(mo+1);}}>${icb('cR')}</button>
       </div>
       <button class="btn btn-p" onClick=${()=>{setForm(mkLesson(S));setShow(true);}}>${ic('plus')} Add Lesson</button>
     </div>
-    <div class="cal">
+    <div style=${{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div class="cal" style=${{minWidth:320}}>
       ${orderedDays.map(d=>h`<div key=${d} class="cal-h">${d}</div>`)}
       ${cells.map((c,i) => { const ds=c.m?yr+"-"+String(mo+1).padStart(2,"0")+"-"+String(c.d).padStart(2,"0"):""; const dl=c.m?getLessons(c.d):[]; return h`<div key=${i} class=${"cal-c"+(c.m?"":" om")+(ds===ts?" today":"")}>
         <div class="cal-d">${c.d}</div>
         ${dl.map(l=>{const st=data.students.find(s=>s.id===l.studentId);return h`<div key=${l.id} class=${"cal-e "+l.status.toLowerCase()} onClick=${()=>{setForm({...l});setShow(true);}}>${l.time} ${st?.name||"Grp"}</div>`;})}
       </div>`; })}
-    </div>
+    </div></div>
     ${show && h`<${Modal} title=${data.lessons.find(l=>l.id===form.id)?"EDIT LESSON":"ADD LESSON"} onClose=${()=>setShow(false)} footer=${h`
       ${data.lessons.find(l=>l.id===form.id) && h`<button class="btn btn-d btn-sm" onClick=${()=>doDel(form.id)}>Delete</button>`}
       <button class="btn" onClick=${()=>setShow(false)}>Cancel</button><button class="btn btn-p" onClick=${doSave}>Save</button>
@@ -3029,29 +3072,29 @@ function Settings({data, setData}) {
 
         return h`<div>
           <!-- Lesson duration setting -->
-          <div style=${{display:"flex",alignItems:"center",gap:12,marginBottom:20,padding:"10px 14px",background:"var(--g50)",border:"1.5px solid var(--g200)",borderRadius:8}}>
-            <span style=${{fontSize:12,fontWeight:700}}>⏱ Default lesson duration:</span>
-            <select value=${dur} onChange=${e=>u("lessonDuration",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 10px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6,fontWeight:600}}>
-              <option value=${30}>30 minutes</option>
-              <option value=${45}>45 minutes</option>
-              <option value=${60}>60 minutes (1 hour)</option>
-              <option value=${90}>90 minutes</option>
+          <div style=${{display:"flex",alignItems:"center",gap:10,marginBottom:20,padding:"12px 14px",background:"var(--g50)",border:"1.5px solid var(--g200)",borderRadius:8,flexWrap:"wrap"}}>
+            <span style=${{fontSize:12,fontWeight:700,whiteSpace:"nowrap"}}>⏱ Lesson duration:</span>
+            <select value=${dur} onChange=${e=>u("lessonDuration",+e.target.value)} style=${{border:"2px solid var(--bk)",padding:"7px 10px",fontFamily:"var(--fb)",fontSize:13,borderRadius:7,fontWeight:700}}>
+              <option value=${30}>30 min</option>
+              <option value=${45}>45 min</option>
+              <option value=${60}>60 min (1 hour)</option>
+              <option value=${90}>90 min</option>
               <option value=${120}>2 hours</option>
             </select>
-            <span style=${{fontSize:11,color:"var(--g400)"}}>Students can book in these blocks</span>
+            <span style=${{fontSize:11,color:"var(--g400)"}}>Students book in these blocks</span>
           </div>
 
           <!-- Day toggles -->
-          <div style=${{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+          <div style=${{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:16}}>
             ${[0,1,2,3,4,5,6].map(i => {
               const day = avail[i] || {enabled:false,ranges:[]};
               return h`<button key=${i} onClick=${()=>setDay(i,{enabled:!day.enabled})} style=${{
-                padding:"8px 14px",borderRadius:20,fontWeight:800,fontSize:12,cursor:"pointer",
+                padding:"10px 4px",borderRadius:8,fontWeight:800,fontSize:11,cursor:"pointer",
                 border:day.enabled?"2px solid var(--bk)":"2px solid var(--g200)",
                 background:day.enabled?"var(--bk)":"var(--wh)",
                 color:day.enabled?"var(--wh)":"var(--g400)",
-                transition:"all .15s"
-              }}>${dayShort[i]}</button>`;
+                transition:"all .15s",textAlign:"center",lineHeight:1.3
+              }}>${dayShort[i]}${day.enabled?h`<br/><span style=${{fontSize:8,letterSpacing:.3}}>ON</span>`:""}</button>`;
             })}
           </div>
 
@@ -3065,12 +3108,14 @@ function Settings({data, setData}) {
                 <button class="btn btn-sm" onClick=${()=>addRange(i)}>+ Add Range</button>
               </div>
               ${(day.ranges||[]).length===0 && h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic",padding:"6px 0"}}>No time ranges yet — click "Add Range" to set your hours.</div>`}
-              ${(day.ranges||[]).map((r,ri)=>h`<div key=${ri} style=${{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"8px 10px",background:"var(--g50)",borderRadius:7}}>
-                <span style=${{fontSize:11,fontWeight:700,color:"var(--g600)",minWidth:30}}>From</span>
-                <input type="time" value=${r.start} step="1800" onChange=${e=>updRange(i,ri,"start",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:13,borderRadius:6,fontWeight:600}}/>
-                <span style=${{fontSize:11,fontWeight:700,color:"var(--g600)"}}>to</span>
-                <input type="time" value=${r.end} step="1800" onChange=${e=>updRange(i,ri,"end",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:13,borderRadius:6,fontWeight:600}}/>
-                <button class="bi" onClick=${()=>rmRange(i,ri)} style=${{marginLeft:"auto",color:"var(--bd)",flexShrink:0}}>${ic('x')}</button>
+              ${(day.ranges||[]).map((r,ri)=>h`<div key=${ri} class="avail-range-row" style=${{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"10px 12px",background:"var(--g50)",borderRadius:8,border:"1.5px solid var(--g200)"}}>
+                <div style=${{display:"flex",alignItems:"center",gap:6,flex:1,flexWrap:"wrap"}}>
+                  <span style=${{fontSize:11,fontWeight:800,color:"var(--g600)",minWidth:34,textTransform:"uppercase",letterSpacing:.5}}>From</span>
+                  <input type="time" value=${r.start} step="1800" onInput=${e=>updRange(i,ri,"start",e.target.value)} style=${{border:"2px solid var(--g200)",padding:"7px 10px",fontFamily:"var(--fb)",fontSize:15,borderRadius:7,fontWeight:700,flex:1,minWidth:120}}/>
+                  <span style=${{fontSize:11,fontWeight:800,color:"var(--g600)",minWidth:16,textAlign:"center"}}>to</span>
+                  <input type="time" value=${r.end} step="1800" onInput=${e=>updRange(i,ri,"end",e.target.value)} style=${{border:"2px solid var(--g200)",padding:"7px 10px",fontFamily:"var(--fb)",fontSize:15,borderRadius:7,fontWeight:700,flex:1,minWidth:120}}/>
+                </div>
+                <button onClick=${()=>rmRange(i,ri)} style=${{background:"rgba(200,0,0,0.07)",border:"1.5px solid rgba(200,0,0,0.2)",color:"var(--bd)",borderRadius:7,padding:"6px 10px",cursor:"pointer",fontWeight:800,fontSize:13,flexShrink:0}}>✕</button>
               </div>`)}
             </div>`;
           })}
@@ -3081,7 +3126,7 @@ function Settings({data, setData}) {
             <div style=${{fontSize:11,marginTop:4}}>Students will see available booking slots for the next 4 weeks</div>
           </div>`}
 
-          ${enabledCount>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)"}}>💡 Repeats every week. Each time range generates one slot per lesson duration.</div>`}
+          ${enabledCount>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>💡 Repeats every week. For example: Monday 9:00–17:00 with 60-min lessons = 8 bookable slots. Students pick a slot and you confirm it.</div>`}
         </div>`;
       })()}
     </div>
