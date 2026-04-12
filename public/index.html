@@ -165,8 +165,8 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .free-left-stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--ok);margin-top:4px}
 .free-left-stepper .st-btn{background:var(--ok)}.free-left-stepper .st-btn:hover{background:#008844}
 /* Auth screens */
-.auth-wrap{display:flex;align-items:center;justify-content:center;height:100vh;background:var(--bk);font-family:var(--fb)}
-.auth-box{background:var(--wh);border:2px solid var(--bk);padding:40px;width:92%;max-width:420px}
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bk);font-family:var(--fb);padding:16px;box-sizing:border-box;overflow-y:auto}
+.auth-box{background:var(--wh);border:2px solid var(--bk);padding:40px;width:100%;max-width:420px}
 .auth-box h1{font-family:var(--fh);font-size:36px;letter-spacing:4px;margin-bottom:4px}
 .auth-box .sub{font-size:12px;color:var(--g500);margin-bottom:28px}
 .auth-box .fg input{padding:12px 14px;font-size:14px}
@@ -191,8 +191,51 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .ai-msg-user{padding:8px 12px;font-size:12px;line-height:1.6;background:var(--g100);align-self:flex-end;max-width:90%;border-radius:16px 16px 4px 16px}
 .ai-msg-ai{padding:8px 12px;font-size:12px;line-height:1.6;background:#f0fff4;align-self:flex-start;max-width:90%;white-space:pre-wrap;border-radius:16px 16px 16px 4px}
 @media(max-width:900px){.portal-grid{grid-template-columns:1fr}}
-/* Responsive */
-@media(max-width:768px){.app{flex-direction:column}.sb{width:100%;min-width:100%;flex-direction:row;overflow-x:auto;border-bottom:2px solid var(--bk)}.sb-hd{display:none}.sb-nav{display:flex;padding:0;-webkit-overflow-scrolling:touch}.sb-it{padding:10px 14px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:11px;gap:6px}.sb-it.on{border-bottom-color:var(--wh);border-left-color:transparent}.sb-it span{display:none}.sb-ft{display:none}.page{padding:14px}.fr,.fr3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.prof-hd{flex-direction:column;align-items:center;text-align:center}.stu-grid{grid-template-columns:1fr}}
+
+/* ── Mobile — admin panel ── */
+@media(max-width:768px){
+  .app{flex-direction:column}
+  .sb{width:100%;min-width:100%;flex-direction:column;border-bottom:2px solid var(--bk);flex-shrink:0}
+  .sb-hd{display:none}
+  .sb-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .sb-nav::-webkit-scrollbar{display:none}
+  .sb-it{padding:8px 12px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;font-size:10px;font-weight:700;gap:4px;flex-shrink:0;flex-direction:column;align-items:center;min-width:60px;text-align:center}
+  .sb-it svg{width:18px;height:18px}
+  .sb-it span{display:block;font-size:9px;margin-top:2px;letter-spacing:.3px}
+  .sb-it.on{border-bottom-color:var(--wh);border-left-color:transparent;background:rgba(255,255,255,0.12)}
+  .sb-ft{display:none}
+  .main{flex:1;overflow:hidden}
+  .topbar{padding:10px 14px;gap:8px}
+  .topbar h2{font-size:18px;letter-spacing:1px}
+  .page{padding:10px 12px;padding-bottom:20px}
+  .fr,.fr3{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr}
+  .prof-hd{flex-direction:column;align-items:center;text-align:center}
+  .stu-grid{grid-template-columns:1fr}
+  .card{padding:14px}
+  .mo{width:96%;max-height:90vh}
+  .mo-bd{padding:14px}
+  .auth-box{padding:24px 18px}
+  table{font-size:12px}
+  td,th{padding:6px 8px}
+  /* Make tables scroll horizontally */
+  .card > div > table, .card > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
+
+/* ── Student portal mobile ── */
+@media(max-width:600px){
+  /* Compact sticky header */
+  .sp-hd{padding:8px 12px !important;gap:8px !important}
+  .sp-hd-brand{padding:8px 12px !important;gap:8px !important}
+  .sp-hd-brand img{width:36px !important;height:36px !important}
+  .sp-hd-brand .sp-brand-text{font-size:14px !important;letter-spacing:1.5px !important}
+  .sp-hd-brand .sp-brand-sub{display:none !important}
+  .sp-hd-greeting{padding:8px 10px !important}
+  .sp-hd-greeting .sp-greet-main{font-size:15px !important}
+  .sp-hd-greeting .sp-greet-sub{display:none !important}
+  .sp-stats{grid-template-columns:repeat(2,1fr) !important}
+  .sp-content{padding:10px 10px !important}
+}
 </style>
 </head>
 <body>
@@ -1435,7 +1478,7 @@ function StudentPortal({data, setData, user, onLogout}) {
   return h`<div class="student-root" style=${{fontFamily:"var(--fb)",minHeight:"100vh",overflowY:"auto",height:"auto",background:"#f2f2f2"}}>
 
     <!-- TOP HEADER BAR (3D) -->
-    <div style=${{
+    <div class="sp-hd" style=${{
       background:"linear-gradient(180deg,#f4f4f4 0%,#e8e8e8 100%)",
       padding:"10px 16px",display:"flex",alignItems:"stretch",gap:12,
       position:"sticky",top:0,zIndex:10,
@@ -1444,7 +1487,7 @@ function StudentPortal({data, setData, user, onLogout}) {
     }}>
 
       <!-- LEFT: Persian-tiled brand plaque (independent raised element) -->
-      <div style=${{
+      <div class="sp-hd-brand" style=${{
         display:"flex",alignItems:"center",gap:12,
         padding:"10px 16px",borderRadius:12,flexShrink:0,
         background:"#111",
@@ -1462,12 +1505,12 @@ function StudentPortal({data, setData, user, onLogout}) {
         </div>
         <!-- Brand text -->
         <div>
-          <div style=${{
+          <div class="sp-brand-text" style=${{
             fontSize:20,fontWeight:900,fontFamily:"var(--fh)",letterSpacing:3,
             color:"#c9922a",
             textShadow:"0 1px 0 #000,0 0 12px rgba(201,146,42,0.6),0 2px 4px rgba(0,0,0,0.8)"
           }}>ARABIC ENTHUSIAST</div>
-          <div style=${{
+          <div class="sp-brand-sub" style=${{
             fontSize:10,letterSpacing:"2px",marginTop:2,fontWeight:600,
             color:"rgba(201,146,42,0.65)",
             textShadow:"0 1px 2px rgba(0,0,0,0.8)"
@@ -1476,7 +1519,7 @@ function StudentPortal({data, setData, user, onLogout}) {
       </div>
 
       <!-- CENTRE: greeting on 3D raised card -->
-      <div style=${{
+      <div class="sp-hd-greeting" style=${{
         flex:1,display:"flex",alignItems:"center",justifyContent:"center",
         background:"linear-gradient(180deg,#ffffff 0%,#f5f5f5 100%)",
         borderRadius:12,padding:"10px 20px",
@@ -1484,31 +1527,31 @@ function StudentPortal({data, setData, user, onLogout}) {
         border:"1px solid #ddd"
       }}>
         <div style=${{textAlign:"center"}}>
-          <div style=${{fontSize:22,fontWeight:900,fontFamily:"var(--fh)",letterSpacing:1.5,color:"#1a1a1a",textShadow:"0 1px 0 rgba(255,255,255,0.8),0 2px 4px rgba(0,0,0,0.1)"}}>${greeting}, ${firstName}! ${streakEmoji}</div>
-          <div style=${{fontSize:12,color:"#888",marginTop:3,fontWeight:600,letterSpacing:"0.5px"}}>
+          <div class="sp-greet-main" style=${{fontSize:22,fontWeight:900,fontFamily:"var(--fh)",letterSpacing:1.5,color:"#1a1a1a",textShadow:"0 1px 0 rgba(255,255,255,0.8),0 2px 4px rgba(0,0,0,0.1)"}}>${greeting}, ${firstName}! ${streakEmoji}</div>
+          <div class="sp-greet-sub" style=${{fontSize:12,color:"#888",marginTop:3,fontWeight:600,letterSpacing:"0.5px"}}>
             ${att.streak >= 2 ? "🔥 "+att.streak+"-lesson streak — keep going!" : s.lessonsTaken === 0 ? "Your Arabic journey starts here" : "Ready for your next lesson?"}
           </div>
         </div>
       </div>
 
       <!-- RIGHT: log out -->
-      <div style=${{display:"flex",alignItems:"center"}}>
+      <div style=${{display:"flex",alignItems:"center",flexShrink:0}}>
         <button style=${{
           background:"linear-gradient(180deg,#f0f0f0,#d8d8d8)",
           border:"1px solid #bbb",color:"#444",borderRadius:8,
           padding:"8px 14px",cursor:"pointer",fontSize:11,fontWeight:700,
-          fontFamily:"var(--fb)",
+          fontFamily:"var(--fb)",whiteSpace:"nowrap",
           boxShadow:"0 2px 4px rgba(0,0,0,0.15),inset 0 1px 0 rgba(255,255,255,0.8)"
         }} onClick=${onLogout}>Log Out</button>
       </div>
     </div>
 
-    <div style=${{padding:"14px 12px",maxWidth:1400,margin:"0 auto"}}>
+    <div class="sp-content" style=${{padding:"14px 12px",maxWidth:1400,margin:"0 auto"}}>
     <div class="portal-grid">
     <div>
 
       <!-- Stats row -->
-      <div style=${{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
+      <div class="sp-stats" style=${{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
         ${[
           ["📚","Lessons Done",s.lessonsTaken,"#1976d2"],
           ["📅","Attendance",att.rate+"%",att.rate>=80?"var(--ok)":att.rate>=60?"var(--wn)":"var(--bd)"],
