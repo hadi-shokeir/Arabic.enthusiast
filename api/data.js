@@ -69,6 +69,23 @@ export default async function handler(req, res) {
       return res.json({ savedAt });
     }
 
+    // Store background images separately (they're too large for the main data blob)
+    if (action === 'backupImages') {
+      const { images } = req.body;
+      const json = JSON.stringify(images || {});
+      if (json.length > 950000) {
+        return res.json({ ok: false, error: 'Images too large for cloud. Try using smaller images.' });
+      }
+      await kv(['SET', 'img_data', json]);
+      return res.json({ ok: true });
+    }
+
+    if (action === 'restoreImages') {
+      const raw = await kv(['GET', 'img_data']);
+      if (!raw) return res.json({ images: {} });
+      return res.json({ images: JSON.parse(raw) });
+    }
+
     return res.status(400).json({ error: 'Unknown action' });
   } catch (err) {
     return res.status(500).json({ error: err.message });

@@ -258,9 +258,18 @@ async function apiPost(endpoint, body) {
   return r.json();
 }
 
+const IMG_KEYS = ["themeBackgroundImage","themeSidebarImage","themeSidebarHeaderImage","themeCardImage","tutorAvatar"];
+async function pushImages(settings) {
+  const auth = getAuth();
+  if (!auth?.token) return;
+  const images = {};
+  IMG_KEYS.forEach(k => { if (settings[k]) images[k] = settings[k]; });
+  try { await apiPost("/api/data", {token: auth.token, action:"backupImages", images}); } catch {}
+}
+
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 10;
+const DATA_VERSION = 11;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
@@ -336,7 +345,16 @@ const DEFS = {
   themeCardImageX:50,
   themeCardImageY:50,
   tutorAvatar:"",
-  availability:[] // [{id, day:0-6, time:"HH:MM", duration:60}]
+  lessonDuration:60, // default lesson duration in minutes
+  availability:{
+    0:{enabled:false,ranges:[]},
+    1:{enabled:false,ranges:[]},
+    2:{enabled:false,ranges:[]},
+    3:{enabled:false,ranges:[]},
+    4:{enabled:false,ranges:[]},
+    5:{enabled:false,ranges:[]},
+    6:{enabled:false,ranges:[]}
+  }
 };
 const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],settings:{...DEFS},_version:DATA_VERSION};
 
@@ -428,7 +446,22 @@ function migrateData(data) {
     d._version = DATA_VERSION;
   }
   if (v < 10) {
-    if (!d.settings.availability) d.settings.availability = [];
+    if (!d.settings.availability) d.settings.availability = {};
+    d._version = DATA_VERSION;
+  }
+  if (v < 11) {
+    // Convert old array-style availability to new object-by-day format
+    const defaultAvail = {0:{enabled:false,ranges:[]},1:{enabled:false,ranges:[]},2:{enabled:false,ranges:[]},3:{enabled:false,ranges:[]},4:{enabled:false,ranges:[]},5:{enabled:false,ranges:[]},6:{enabled:false,ranges:[]}};
+    if (!d.settings.availability || Array.isArray(d.settings.availability)) {
+      // Old format was an array of slots — reset to empty (user sets again)
+      d.settings.availability = defaultAvail;
+    } else {
+      // Fill missing days
+      for (let i = 0; i <= 6; i++) {
+        if (!d.settings.availability[i]) d.settings.availability[i] = {enabled:false,ranges:[]};
+      }
+    }
+    if (!d.settings.lessonDuration) d.settings.lessonDuration = 60;
     d._version = DATA_VERSION;
   }
   return d;
@@ -1267,11 +1300,13 @@ function StudentLessonRequest({student, data, setData}) {
   const [sent, setSent] = useState(false);
   const [view, setView] = useState("slots"); // slots | confirm
   const existing = (data.lessonRequests||[]).filter(r=>r.studentId===student.id&&r.status==="pending");
-  const slots = (data.settings.availability||[]);
+  const avail = (data.settings.availability&&!Array.isArray(data.settings.availability)) ? data.settings.availability : {};
+  const lessonDuration = data.settings.lessonDuration||60;
+  const anyDayEnabled = Object.values(avail).some(d=>d&&d.enabled);
 
   // Build available date slots for next 4 weeks from today
   const buildSlots = () => {
-    if (!slots.length) return [];
+    if (!anyDayEnabled) return [];
     const result = [];
     const now = new Date();
     const confirmed = (data.lessonRequests||[]).filter(r=>r.status==="confirmed"||r.status==="pending");
@@ -1280,13 +1315,21 @@ function StudentLessonRequest({student, data, setData}) {
       dt.setDate(now.getDate() + d + 1); // start from tomorrow
       const dayOfWeek = dt.getDay();
       const dateStr = dt.toISOString().split("T")[0];
-      slots.filter(s=>s.day===dayOfWeek).forEach(s=>{
-        // Check if this slot is already booked
-        const alreadyBooked = confirmed.some(r=>r.preferredDate===dateStr&&r.preferredTime===s.time);
-        // Check if lesson already exists at this slot
-        const lessonBooked = (data.lessons||[]).some(l=>l.date===dateStr&&l.time===s.time&&l.status!=="Cancelled");
-        if (!alreadyBooked && !lessonBooked) {
-          result.push({date:dateStr, time:s.time, duration:s.duration, slotId:s.id});
+      const dayAvail = avail[dayOfWeek];
+      if (!dayAvail||!dayAvail.enabled||!dayAvail.ranges||dayAvail.ranges.length===0) continue;
+      dayAvail.ranges.forEach(range=>{
+        const [sh,sm] = (range.start||"00:00").split(":").map(Number);
+        const [eh,em] = (range.end||"00:00").split(":").map(Number);
+        let cur = sh*60+(sm||0);
+        const endMin = eh*60+(em||0);
+        while (cur+lessonDuration <= endMin) {
+          const timeStr = String(Math.floor(cur/60)).padStart(2,"0")+":"+String(cur%60).padStart(2,"0");
+          const alreadyBooked = confirmed.some(r=>r.preferredDate===dateStr&&r.preferredTime===timeStr);
+          const lessonBooked = (data.lessons||[]).some(l=>l.date===dateStr&&l.time===timeStr&&l.status!=="Cancelled");
+          if (!alreadyBooked&&!lessonBooked) {
+            result.push({date:dateStr, time:timeStr, duration:lessonDuration});
+          }
+          cur += lessonDuration;
         }
       });
     }
@@ -1360,7 +1403,7 @@ function StudentLessonRequest({student, data, setData}) {
     })()}
 
     ${view==="slots"&&h`<div>
-      ${slots.length===0
+      ${!anyDayEnabled
         ? h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>No available slots yet — check back soon!</div>`
         : available.length===0
           ? h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>All slots for the next 4 weeks are taken. Check back soon!</div>`
@@ -2819,7 +2862,7 @@ function Settings({data, setData}) {
             <input type="file" accept="image/*" style=${{display:"none"}} onInput=${e=>{
               const f=e.target.files[0]; if(!f) return;
               const canvas=document.createElement("canvas"); const img=new Image(); const url=URL.createObjectURL(f);
-              img.onload=()=>{const sz=300;const s=Math.min(sz/img.width,sz/img.height,1);canvas.width=img.width*s;canvas.height=img.height*s;canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);u("tutorAvatar",canvas.toDataURL("image/jpeg",0.85));URL.revokeObjectURL(url);};
+              img.onload=()=>{const sz=300;const s=Math.min(sz/img.width,sz/img.height,1);canvas.width=img.width*s;canvas.height=img.height*s;canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);const av=canvas.toDataURL("image/jpeg",0.85);u("tutorAvatar",av);pushImages({...S,tutorAvatar:av});URL.revokeObjectURL(url);};
               img.src=url;
             }}/>
           </label>
@@ -2957,42 +3000,88 @@ function Settings({data, setData}) {
     </div>
 
     <div class="card"><h3>📅 MY AVAILABILITY</h3>
-      <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Set your weekly recurring available time slots. Students will see these and can pick one to schedule their lesson.</p>
+      <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Toggle each day on/off, then add time ranges for when you're available. Students will see open slots and book directly.</p>
       ${(()=>{
-        const slots = S.availability || [];
-        const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-        const addSlot = () => {
-          const ns = {id:uid(), day:1, time:"10:00", duration:60};
-          u("availability", [...slots, ns]);
+        const avail = S.availability || {};
+        const dur = S.lessonDuration || 60;
+        const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        const dayShort = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+        const setDay = (dayIdx, patch) => {
+          const cur = avail[dayIdx] || {enabled:false,ranges:[]};
+          u("availability", {...avail, [dayIdx]: {...cur, ...patch}});
         };
-        const rmSlot = id => u("availability", slots.filter(s=>s.id!==id));
-        const updSlot = (id, key, val) => u("availability", slots.map(s=>s.id===id?{...s,[key]:val}:s));
-        const sorted = [...slots].sort((a,b)=>a.day-b.day||a.time.localeCompare(b.time));
+        const addRange = (dayIdx) => {
+          const cur = avail[dayIdx] || {enabled:true,ranges:[]};
+          u("availability", {...avail, [dayIdx]: {...cur, ranges:[...(cur.ranges||[]),{start:"09:00",end:"17:00"}]}});
+        };
+        const rmRange = (dayIdx, ri) => {
+          const cur = avail[dayIdx];
+          u("availability", {...avail, [dayIdx]: {...cur, ranges:cur.ranges.filter((_,i)=>i!==ri)}});
+        };
+        const updRange = (dayIdx, ri, key, val) => {
+          const cur = avail[dayIdx];
+          const ranges = cur.ranges.map((r,i)=>i===ri?{...r,[key]:val}:r);
+          u("availability", {...avail, [dayIdx]: {...cur, ranges}});
+        };
+
+        const enabledCount = [0,1,2,3,4,5,6].filter(i=>(avail[i]||{}).enabled).length;
+
         return h`<div>
-          ${sorted.length===0 && h`<div style=${{padding:"20px",textAlign:"center",color:"var(--g400)",border:"2px dashed var(--g200)",borderRadius:8,marginBottom:14}}>
-            <div style=${{fontSize:28,marginBottom:6}}>📅</div>
-            <div style=${{fontSize:13,fontWeight:600}}>No availability set yet</div>
-            <div style=${{fontSize:11,marginTop:4}}>Add your weekly time slots so students can book lessons</div>
-          </div>`}
-          ${sorted.map(sl => h`<div key=${sl.id} style=${{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",border:"1.5px solid var(--g200)",borderRadius:8,marginBottom:8,background:"var(--wh)"}}>
-            <div style=${{fontSize:18,flexShrink:0}}>🗓</div>
-            <select value=${sl.day} onChange=${e=>updSlot(sl.id,"day",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6,fontWeight:600}}>
-              ${days.map((d,i)=>h`<option key=${i} value=${i}>${d}</option>`)}
-            </select>
-            <span style=${{fontSize:11,color:"var(--g400)"}}>at</span>
-            <input type="time" value=${sl.time} step="1800" onChange=${e=>updSlot(sl.id,"time",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6}}/>
-            <span style=${{fontSize:11,color:"var(--g400)"}}>for</span>
-            <select value=${sl.duration} onChange=${e=>updSlot(sl.id,"duration",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6}}>
-              <option value=${30}>30 min</option>
-              <option value=${45}>45 min</option>
-              <option value=${60}>60 min</option>
-              <option value=${90}>90 min</option>
+          <!-- Lesson duration setting -->
+          <div style=${{display:"flex",alignItems:"center",gap:12,marginBottom:20,padding:"10px 14px",background:"var(--g50)",border:"1.5px solid var(--g200)",borderRadius:8}}>
+            <span style=${{fontSize:12,fontWeight:700}}>⏱ Default lesson duration:</span>
+            <select value=${dur} onChange=${e=>u("lessonDuration",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 10px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6,fontWeight:600}}>
+              <option value=${30}>30 minutes</option>
+              <option value=${45}>45 minutes</option>
+              <option value=${60}>60 minutes (1 hour)</option>
+              <option value=${90}>90 minutes</option>
               <option value=${120}>2 hours</option>
             </select>
-            <button class="bi" onClick=${()=>rmSlot(sl.id)} title="Remove" style=${{marginLeft:"auto",flexShrink:0,color:"var(--bd)"}}>${ic('x')}</button>
-          </div>`)}
-          <button class="btn btn-sm" onClick=${addSlot} style=${{marginTop:4}}>+ Add Time Slot</button>
-          ${slots.length>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)"}}>💡 These repeat every week. Students will see available dates for the next 4 weeks.</div>`}
+            <span style=${{fontSize:11,color:"var(--g400)"}}>Students can book in these blocks</span>
+          </div>
+
+          <!-- Day toggles -->
+          <div style=${{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+            ${[0,1,2,3,4,5,6].map(i => {
+              const day = avail[i] || {enabled:false,ranges:[]};
+              return h`<button key=${i} onClick=${()=>setDay(i,{enabled:!day.enabled})} style=${{
+                padding:"8px 14px",borderRadius:20,fontWeight:800,fontSize:12,cursor:"pointer",
+                border:day.enabled?"2px solid var(--bk)":"2px solid var(--g200)",
+                background:day.enabled?"var(--bk)":"var(--wh)",
+                color:day.enabled?"var(--wh)":"var(--g400)",
+                transition:"all .15s"
+              }}>${dayShort[i]}</button>`;
+            })}
+          </div>
+
+          <!-- Per-day time ranges -->
+          ${[0,1,2,3,4,5,6].map(i => {
+            const day = avail[i] || {enabled:false,ranges:[]};
+            if (!day.enabled) return null;
+            return h`<div key=${i} style=${{marginBottom:12,padding:"12px 14px",border:"2px solid var(--bk)",borderRadius:10,background:"var(--wh)"}}>
+              <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <div style=${{fontWeight:800,fontSize:13}}>${dayNames[i]}</div>
+                <button class="btn btn-sm" onClick=${()=>addRange(i)}>+ Add Range</button>
+              </div>
+              ${(day.ranges||[]).length===0 && h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic",padding:"6px 0"}}>No time ranges yet — click "Add Range" to set your hours.</div>`}
+              ${(day.ranges||[]).map((r,ri)=>h`<div key=${ri} style=${{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"8px 10px",background:"var(--g50)",borderRadius:7}}>
+                <span style=${{fontSize:11,fontWeight:700,color:"var(--g600)",minWidth:30}}>From</span>
+                <input type="time" value=${r.start} step="1800" onChange=${e=>updRange(i,ri,"start",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:13,borderRadius:6,fontWeight:600}}/>
+                <span style=${{fontSize:11,fontWeight:700,color:"var(--g600)"}}>to</span>
+                <input type="time" value=${r.end} step="1800" onChange=${e=>updRange(i,ri,"end",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:13,borderRadius:6,fontWeight:600}}/>
+                <button class="bi" onClick=${()=>rmRange(i,ri)} style=${{marginLeft:"auto",color:"var(--bd)",flexShrink:0}}>${ic('x')}</button>
+              </div>`)}
+            </div>`;
+          })}
+
+          ${enabledCount===0&&h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",border:"2px dashed var(--g200)",borderRadius:8,marginTop:8}}>
+            <div style=${{fontSize:24,marginBottom:6}}>📅</div>
+            <div style=${{fontSize:13,fontWeight:600}}>Toggle a day above to set your hours</div>
+            <div style=${{fontSize:11,marginTop:4}}>Students will see available booking slots for the next 4 weeks</div>
+          </div>`}
+
+          ${enabledCount>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)"}}>💡 Repeats every week. Each time range generates one slot per lesson duration.</div>`}
         </div>`;
       })()}
     </div>
@@ -3050,7 +3139,7 @@ function Settings({data, setData}) {
             <div style=${{padding:"12px 14px",background:"linear-gradient(to top,#f0f1f3,#fff)"}}>
               <label style=${{cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6,padding:"7px 14px",border:"1.5px solid var(--bk)",borderBottom:"3px solid var(--bk)",borderRadius:7,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".8px",background:"linear-gradient(to bottom,#fff,#f3f3f3)",color:"var(--bk)",boxShadow:"0 2px 4px rgba(0,0,0,0.08)"}}>
                 📷 ${val?"Replace":"Upload"}
-                <input type="file" accept="image/*" style=${{display:"none"}} onInput=${e=>{const f=e.target.files[0];if(f) compress(f,imgData=>u(key,imgData));}}/>
+                <input type="file" accept="image/*" style=${{display:"none"}} onInput=${e=>{const f=e.target.files[0];if(f) compress(f,imgData=>{u(key,imgData);const merged={...S,[key]:imgData};pushImages(merged);});}}/>
               </label>
               ${val && h`<${ImageCropEditor}
                 src=${val}
@@ -3078,7 +3167,7 @@ function Settings({data, setData}) {
           </div>`;
         })}
       </div>
-      <div style=${{marginTop:12,fontSize:11,color:"var(--g400)",lineHeight:1.6}}>Images are compressed and stored on this device only — they are not included in cloud backups. If you switch devices, re-upload your images.</div>
+      <div style=${{marginTop:12,fontSize:11,color:"var(--g400)",lineHeight:1.6}}>☁ Images are compressed and synced to the cloud automatically. They will appear on any device you log into.</div>
     </div>
     <div class="card"><h3>REGIONAL</h3>
       <div class="fr3">
@@ -3549,13 +3638,25 @@ function App() {
   useEffect(() => {
     if (!auth) return;
     const action = auth.role === 'student' ? 'studentRead' : 'restore';
+    const mergeImages = async (d) => {
+      // Load background images from their separate cloud key and merge into settings
+      if (auth.role !== 'tutor') return d;
+      try {
+        const ir = await apiPost('/api/data', {token: auth.token, action:'restoreImages'});
+        if (ir.images && Object.keys(ir.images).length > 0) {
+          return {...d, settings:{...d.settings, ...ir.images}};
+        }
+      } catch {}
+      return d;
+    };
     apiPost('/api/data', {token: auth.token, action})
       .then(async d => {
         if (d.data) {
           // Cloud has data — use it, also save locally
           const migrated = migrateData(d.data);
-          setData(migrated);
-          save(migrated);
+          const withImages = await mergeImages(migrated);
+          setData(withImages);
+          save(withImages);
         } else {
           // Cloud empty — fall back to local (tutor's own device)
           const local = await loadData();
