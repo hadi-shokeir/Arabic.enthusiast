@@ -217,7 +217,7 @@ async function apiPost(endpoint, body) {
 
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 9;
+const DATA_VERSION = 10;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
@@ -292,7 +292,8 @@ const DEFS = {
   themeCardImage:"",
   themeCardImageX:50,
   themeCardImageY:50,
-  tutorAvatar:""
+  tutorAvatar:"",
+  availability:[] // [{id, day:0-6, time:"HH:MM", duration:60}]
 };
 const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],settings:{...DEFS},_version:DATA_VERSION};
 
@@ -381,6 +382,10 @@ function migrateData(data) {
     if (!d.settings.sub || d.settings.sub.toLowerCase().includes("tutor")) {
       d.settings.sub = "Student Management";
     }
+    d._version = DATA_VERSION;
+  }
+  if (v < 10) {
+    if (!d.settings.availability) d.settings.availability = [];
     d._version = DATA_VERSION;
   }
   return d;
@@ -1108,6 +1113,8 @@ function AuthScreen({onAuth}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [learnType, setLearnType] = useState("Levantine");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1135,13 +1142,13 @@ function AuthScreen({onAuth}) {
   };
 
   const doRequest = async () => {
-    if (!name || !email || !password) return setError("Name, email and password are all required");
+    if (!name || !phone || !email || !password) return setError("Name, phone, email and password are all required");
     if (password.length < 6) return setError("Password must be at least 6 characters");
     setLoading(true); reset();
-    const d = await apiPost("/api/auth", {action:"request", name, email, password, message});
+    const d = await apiPost("/api/auth", {action:"request", name, phone, email, password, learnType, message});
     setLoading(false);
     if (d.error) return setError(d.error);
-    setSuccess("Request sent! Your teacher will confirm your access and let you know.");
+    setSuccess("Request sent! Hadi will review your request and get back to you soon.");
     setMode("login");
   };
 
@@ -1174,12 +1181,22 @@ function AuthScreen({onAuth}) {
       </div>`}
 
       ${mode==="request" && h`<div>
-        <div class="fg"><label>Your Name</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="Full name"/></div>
-        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/></div>
-        <div class="fg"><label>Choose a Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
-        <div class="fg"><label>Message to teacher (optional)</label><textarea value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm your student from Monday classes..." style=${{minHeight:60}}/></div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request"}</button>
-        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Your teacher will review your request and confirm your access.</div>
+        <div class="fg"><label>Your Full Name *</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="e.g. Sarah Johnson"/></div>
+        <div class="fg"><label>Phone / WhatsApp (with country code) *</label><input value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="e.g. +1 555 123 4567"/></div>
+        <div class="fg"><label>Email *</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/></div>
+        <div class="fg"><label>Choose a Password *</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
+        <div class="fg"><label>What would you like to learn? *</label>
+          <select value=${learnType} onChange=${e=>setLearnType(e.target.value)}>
+            <option value="Levantine">🗣 Levantine Arabic (Lebanese / Syrian dialect)</option>
+            <option value="Classical">📜 Classical / Modern Standard Arabic (MSA)</option>
+            <option value="Quranic">🕌 Quranic Arabic</option>
+            <option value="General Dialect">💬 General Arabic Dialect</option>
+            <option value="Quranic + Dialect">🕌💬 Quranic + Dialect (combined)</option>
+          </select>
+        </div>
+        <div class="fg"><label>Notes to Hadi (optional)</label><textarea value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm a complete beginner... or I want to improve my reading for travel..." style=${{minHeight:70}}/></div>
+        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request to Hadi"}</button>
+        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Hadi will review your info and confirm your access shortly.</div>
       </div>`}
 
       ${mode==="setup" && h`<div>
@@ -1198,40 +1215,137 @@ function AuthScreen({onAuth}) {
 }
 
 // ════════════════════════════════════════
-// ════════════════════════════════════════
-// STUDENT LESSON REQUEST
+// STUDENT LESSON SCHEDULER
+// Shows Hadi's available slots for the next 4 weeks
 // ════════════════════════════════════════
 function StudentLessonRequest({student, data, setData}) {
-  const [show, setShow] = useState(false);
-  const [form, setForm] = useState({preferredDate:"",preferredTime:"",message:""});
+  const [selectedSlot, setSelectedSlot] = useState(null); // {date, time, duration}
+  const [note, setNote] = useState("");
   const [sent, setSent] = useState(false);
+  const [view, setView] = useState("slots"); // slots | confirm
   const existing = (data.lessonRequests||[]).filter(r=>r.studentId===student.id&&r.status==="pending");
+  const slots = (data.settings.availability||[]);
+
+  // Build available date slots for next 4 weeks from today
+  const buildSlots = () => {
+    if (!slots.length) return [];
+    const result = [];
+    const now = new Date();
+    const confirmed = (data.lessonRequests||[]).filter(r=>r.status==="confirmed"||r.status==="pending");
+    for (let d = 0; d < 28; d++) {
+      const dt = new Date(now);
+      dt.setDate(now.getDate() + d + 1); // start from tomorrow
+      const dayOfWeek = dt.getDay();
+      const dateStr = dt.toISOString().split("T")[0];
+      slots.filter(s=>s.day===dayOfWeek).forEach(s=>{
+        // Check if this slot is already booked
+        const alreadyBooked = confirmed.some(r=>r.preferredDate===dateStr&&r.preferredTime===s.time);
+        // Check if lesson already exists at this slot
+        const lessonBooked = (data.lessons||[]).some(l=>l.date===dateStr&&l.time===s.time&&l.status!=="Cancelled");
+        if (!alreadyBooked && !lessonBooked) {
+          result.push({date:dateStr, time:s.time, duration:s.duration, slotId:s.id});
+        }
+      });
+    }
+    return result.sort((a,b)=>a.date+a.time < b.date+b.time ? -1 : 1);
+  };
+
+  const available = buildSlots();
+
+  // Format display for student's timezone
+  const tz = student.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const fmtSlot = (dateStr, timeStr) => {
+    try {
+      const dt = new Date(dateStr + "T" + timeStr + ":00");
+      return {
+        dayName: dt.toLocaleDateString("en-GB",{weekday:"long",timeZone:tz}),
+        dateDisp: dt.toLocaleDateString("en-GB",{day:"numeric",month:"long",timeZone:tz}),
+        timeDisp: dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:tz})
+      };
+    } catch { return {dayName:"",dateDisp:dateStr,timeDisp:timeStr}; }
+  };
 
   const send = () => {
-    if (!form.preferredDate) return;
-    const req = {id:uid(),studentId:student.id,preferredDate:form.preferredDate,preferredTime:form.preferredTime,message:form.message,status:"pending",requestedAt:new Date().toISOString()};
+    if (!selectedSlot) return;
+    const req = {id:uid(),studentId:student.id,preferredDate:selectedSlot.date,preferredTime:selectedSlot.time,duration:selectedSlot.duration,message:note,status:"pending",requestedAt:new Date().toISOString()};
     setData({...data,lessonRequests:[...(data.lessonRequests||[]),req]});
-    setSent(true); setShow(false);
+    setSent(true); setView("slots"); setSelectedSlot(null); setNote("");
     // Notify Hadi via WhatsApp
-    const msg = "📅 New lesson request from " + student.name + "!\n📆 " + form.preferredDate + (form.preferredTime?" at "+form.preferredTime:"") + (form.message?"\n💬 "+form.message:"") + "\n\nOpen the app to confirm: arabic-enthusiast.vercel.app";
+    const {dayName,dateDisp,timeDisp} = fmtSlot(selectedSlot.date, selectedSlot.time);
+    const msg = "📅 New lesson request from " + student.name + "!\n📆 " + dayName + ", " + dateDisp + " at " + timeDisp + (note?"\n💬 "+note:"") + "\n\nOpen the app to confirm: arabic-enthusiast.vercel.app";
     waMsg("96176957495", msg);
   };
 
-  return h`<div class="card" style=${{marginTop:14}}>
-    <h3>📅 REQUEST A LESSON</h3>
-    ${existing.length>0&&h`<div style=${{fontSize:13,color:"var(--wn)",marginBottom:8}}>⏳ You have a pending request — your teacher will confirm soon.</div>`}
-    ${sent&&h`<div style=${{fontSize:13,color:"var(--ok)",marginBottom:8}}>✓ Request sent! Your teacher will confirm shortly.</div>`}
-    ${!show && existing.length===0 && h`<button class="btn btn-p btn-sm" onClick=${()=>{setSent(false);setShow(true);}}>+ Request a Lesson</button>`}
-    ${show&&h`<div>
-      <div class="fr">
-        <div class="fg"><label>Preferred Date</label><input type="date" value=${form.preferredDate} onInput=${e=>setForm({...form,preferredDate:e.target.value})} min=${today()}/></div>
-        <div class="fg"><label>Preferred Time</label><input type="time" step="1800" value=${form.preferredTime} onInput=${e=>setForm({...form,preferredTime:e.target.value})}/></div>
-      </div>
-      <div class="fg"><label>Message (optional)</label><textarea value=${form.message} onInput=${e=>setForm({...form,message:e.target.value})} placeholder="Any preferences or notes for your teacher..." style=${{minHeight:50}}/></div>
-      <div style=${{display:"flex",gap:6}}>
-        <button class="btn btn-p btn-sm" onClick=${send}>Send Request</button>
-        <button class="btn btn-sm" onClick=${()=>setShow(false)}>Cancel</button>
-      </div>
+  // Group available slots by week
+  const weeks = [];
+  available.forEach(sl => {
+    const wk = sl.date.slice(0,7); // YYYY-MM
+    let w = weeks.find(x=>x.key===wk);
+    if (!w) { w={key:wk,label:"",slots:[]}; weeks.push(w); }
+    w.slots.push(sl);
+  });
+
+  return h`<div style=${{background:"#fff",borderRadius:12,padding:"18px 20px",marginBottom:16,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:"1px solid #eee"}}>
+    <div style=${{fontSize:14,fontWeight:800,fontFamily:"var(--fh)",letterSpacing:1,marginBottom:4}}>📅 SCHEDULE A LESSON</div>
+
+    ${existing.length>0&&h`<div style=${{fontSize:13,background:"#fff8e1",border:"1px solid #ff9800",borderRadius:8,padding:"10px 14px",marginBottom:12,color:"#b26a00"}}>
+      ⏳ You have ${existing.length} pending request${existing.length>1?"s":""} — waiting for Hadi to confirm.
+    </div>`}
+
+    ${sent&&h`<div style=${{fontSize:13,background:"#f0fff4",border:"1px solid var(--ok)",borderRadius:8,padding:"10px 14px",marginBottom:12,color:"var(--ok)"}}>
+      ✅ Request sent! Hadi will confirm your lesson shortly.
+    </div>`}
+
+    ${view==="confirm"&&selectedSlot&&(()=>{
+      const {dayName,dateDisp,timeDisp} = fmtSlot(selectedSlot.date, selectedSlot.time);
+      return h`<div>
+        <div style=${{background:"linear-gradient(135deg,#e3f2fd,#f0f8ff)",border:"2px solid #1976d2",borderRadius:12,padding:"18px 20px",marginBottom:14}}>
+          <div style=${{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"#1976d2",marginBottom:8}}>Confirm your booking</div>
+          <div style=${{fontSize:22,fontWeight:800,fontFamily:"var(--fh)",letterSpacing:1,marginBottom:2}}>${dayName}</div>
+          <div style=${{fontSize:16,fontWeight:600,color:"#333",marginBottom:2}}>${dateDisp}</div>
+          <div style=${{fontSize:15,color:"#1976d2",fontWeight:700}}>${timeDisp} · ${selectedSlot.duration} min</div>
+          ${tz !== "Asia/Beirut" && h`<div style=${{fontSize:11,color:"#888",marginTop:4}}>Shown in your timezone (${tz})</div>`}
+        </div>
+        <div class="fg"><label>Note to Hadi (optional)</label>
+          <textarea value=${note} onInput=${e=>setNote(e.target.value)} placeholder="e.g. I want to focus on conversational practice..." style=${{width:"100%",minHeight:60,padding:"8px 10px",border:"2px solid var(--g200)",fontFamily:"var(--fa),var(--fb)",fontSize:13,resize:"vertical",boxSizing:"border-box"}}/>
+        </div>
+        <div style=${{display:"flex",gap:8}}>
+          <button style=${{flex:1,padding:"12px",background:"#1976d2",color:"#fff",border:"none",borderRadius:8,fontWeight:800,fontSize:13,cursor:"pointer",fontFamily:"var(--fb)"}} onClick=${send}>✅ Confirm Booking</button>
+          <button style=${{padding:"12px 16px",background:"#fff",border:"2px solid var(--g200)",borderRadius:8,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"var(--fb)"}} onClick=${()=>{setView("slots");setSelectedSlot(null);}}>← Back</button>
+        </div>
+      </div>`;
+    })()}
+
+    ${view==="slots"&&h`<div>
+      ${slots.length===0
+        ? h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>No available slots yet — check back soon!</div>`
+        : available.length===0
+          ? h`<div style=${{textAlign:"center",padding:"20px",color:"var(--g400)",fontSize:13}}>All slots for the next 4 weeks are taken. Check back soon!</div>`
+          : h`<div>
+              <div style=${{fontSize:11,color:"var(--g500)",marginBottom:14}}>Pick a time that works for you (shown in your local time):</div>
+              <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:8}}>
+                ${available.slice(0,12).map(sl=>{
+                  const {dayName,dateDisp,timeDisp} = fmtSlot(sl.date, sl.time);
+                  return h`<button key=${sl.date+sl.time}
+                    onClick=${()=>{setSelectedSlot(sl);setView("confirm");setSent(false);}}
+                    style=${{
+                      background:"#fff",border:"2px solid #e0e0e0",borderRadius:10,
+                      padding:"12px 10px",cursor:"pointer",textAlign:"center",
+                      transition:"all .15s",fontFamily:"var(--fb)",
+                    }}
+                    onMouseEnter=${e=>{e.currentTarget.style.borderColor="#1976d2";e.currentTarget.style.background="#e3f2fd";}}
+                    onMouseLeave=${e=>{e.currentTarget.style.borderColor="#e0e0e0";e.currentTarget.style.background="#fff";}}
+                  >
+                    <div style=${{fontSize:11,fontWeight:800,color:"#1976d2",textTransform:"uppercase",letterSpacing:.5,marginBottom:3}}>${dayName}</div>
+                    <div style=${{fontSize:12,fontWeight:700,color:"#222",marginBottom:2}}>${dateDisp}</div>
+                    <div style=${{fontSize:13,fontWeight:800,color:"#1976d2"}}>${timeDisp}</div>
+                    <div style=${{fontSize:10,color:"#888",marginTop:2}}>${sl.duration} min</div>
+                  </button>`;
+                })}
+              </div>
+              ${available.length>12&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g400)",textAlign:"center"}}>Showing next 12 available slots</div>`}
+            </div>`
+      }
     </div>`}
   </div>`;
 }
@@ -1494,18 +1608,32 @@ function StudentPortal({data, setData, user, onLogout}) {
         </div>`;})}
       </div>`}
 
-      <!-- Recent lessons with local time -->
+      <!-- Recent lessons with local time + cancel option -->
       <div style=${{background:"#fff",borderRadius:12,padding:"18px 20px",marginBottom:16,boxShadow:"0 1px 4px rgba(0,0,0,0.06)",border:"1px solid #eee"}}>
-        <div style=${{fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"var(--g500)",marginBottom:14}}>📅 Recent Lessons <span style=${{fontSize:10,fontWeight:400,color:"var(--g400)"}}>(your local time)</span></div>
+        <div style=${{fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:1.5,color:"var(--g500)",marginBottom:14}}>📅 My Lessons <span style=${{fontSize:10,fontWeight:400,color:"var(--g400)"}}>(your local time)</span></div>
         ${sLessons.length===0?h`<p style=${{color:"var(--g400)",fontSize:13}}>No lessons yet — your journey is about to begin!</p>`:
-        h`<div>${sLessons.slice(0,8).map(l=>{const {date:ld,time:lt}=fmtLocal(l.date,l.time); return h`<div key=${l.id} style=${{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #f5f5f5"}}>
-          <div style=${{width:42,height:42,borderRadius:10,background:l.status==="Completed"?"#e8f5e9":l.status==="Scheduled"?"#e3f2fd":"#fce4ec",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>${l.status==="Completed"?"✅":l.status==="Scheduled"?"📅":"❌"}</div>
-          <div style=${{flex:1}}>
-            <div style=${{fontWeight:600,fontSize:13}}>${ld}</div>
-            <div style=${{fontSize:11,color:"var(--g500)",marginTop:2}}>${lt} · ${l.type}</div>
-          </div>
-          <span class=${"bg "+(l.status==="Completed"?"bg-ok":l.status==="Scheduled"?"bg-wn":"bg-n")} style=${{fontSize:10}}>${l.status}</span>
-        </div>`;})}
+        h`<div>${sLessons.slice(0,10).map(l=>{
+          const {date:ld,time:lt}=fmtLocal(l.date,l.time);
+          // Can cancel if Scheduled AND > 24h away
+          const lessonDt = new Date(l.date+"T"+(l.time||"10:00")+":00");
+          const canCancel = l.status==="Scheduled" && (lessonDt - new Date()) > 86400000;
+          const tooLateToCancel = l.status==="Scheduled" && !canCancel;
+          const doCancel = () => {
+            if (!confirm("Cancel this lesson on "+ld+"? This cannot be undone.")) return;
+            setData({...data, lessons: data.lessons.map(x=>x.id===l.id?{...x,status:"Cancelled"}:x)});
+          };
+          return h`<div key=${l.id} style=${{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #f5f5f5"}}>
+            <div style=${{width:42,height:42,borderRadius:10,background:l.status==="Completed"?"#e8f5e9":l.status==="Scheduled"?"#e3f2fd":l.status==="Cancelled"?"#fce4ec":"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>${l.status==="Completed"?"✅":l.status==="Scheduled"?"📅":l.status==="Cancelled"?"❌":"—"}</div>
+            <div style=${{flex:1}}>
+              <div style=${{fontWeight:600,fontSize:13}}>${ld}</div>
+              <div style=${{fontSize:11,color:"var(--g500)",marginTop:2}}>${lt} · ${l.type}${l.duration?" · "+l.duration+" min":""}</div>
+            </div>
+            <div style=${{display:"flex",alignItems:"center",gap:6}}>
+              <span class=${"bg "+(l.status==="Completed"?"bg-ok":l.status==="Scheduled"?"bg-wn":l.status==="Cancelled"?"bg-bd":"bg-n")} style=${{fontSize:10}}>${l.status}</span>
+              ${canCancel&&h`<button onClick=${doCancel} style=${{padding:"3px 8px",fontSize:10,fontWeight:700,background:"#fff",border:"1.5px solid #f44336",borderRadius:6,color:"#f44336",cursor:"pointer",fontFamily:"var(--fb)"}}>Cancel</button>`}
+              ${tooLateToCancel&&h`<span style=${{fontSize:9,color:"#aaa",fontStyle:"italic"}}>< 24h</span>`}
+            </div>
+          </div>`;})}
         </div>`}
       </div>
 
@@ -2280,7 +2408,7 @@ function Students({data, setData, onProfile}) {
           <input type="file" accept="image/*" style=${{display:"none"}} onInput=${e=>{const f=e.target.files[0];if(!f)return;if(f.size>5e6){alert("Max 5MB for photos");return;}const canvas=document.createElement("canvas");const img=new Image();const url=URL.createObjectURL(f);img.onload=()=>{const max=400;const s=Math.min(max/img.width,max/img.height,1);canvas.width=img.width*s;canvas.height=img.height*s;canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);setForm({...form,avatar:canvas.toDataURL("image/jpeg",0.7)});URL.revokeObjectURL(url);};img.src=url;}}/>
         </label>
       </div>
-      <div class="fr3"><div class="fg"><label>Email</label><input type="email" value=${form.email} onInput=${e=>setForm({...form,email:e.target.value})}/></div><div class="fg"><label>Phone</label><input value=${form.phone} onInput=${e=>setForm({...form,phone:e.target.value})}/></div><div class="fg"><label>WhatsApp (+code)</label><input value=${form.whatsapp} onInput=${e=>setForm({...form,whatsapp:e.target.value})} placeholder="+961..."/></div></div>
+      <div class="fr"><div class="fg"><label>Email</label><input type="email" value=${form.email} onInput=${e=>setForm({...form,email:e.target.value})}/></div><div class="fg"><label>WhatsApp (+country code)</label><input value=${form.whatsapp} onInput=${e=>setForm({...form,whatsapp:e.target.value})} placeholder="+961..."/></div></div>
       <div class="fg"><label>Student Timezone</label><select value=${form.timezone||""} onChange=${e=>setForm({...form,timezone:e.target.value})}>
         <option value="">— Not set —</option>
         <optgroup label="🌎 USA">
@@ -2660,20 +2788,8 @@ function Settings({data, setData}) {
       </div>
     </div>
     <div class="card"><h3>🎨 THEME COLORS</h3>
-      <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Every color updates instantly. Click a swatch or type a hex code.</p>
+      <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Pick a preset — one click applies all colors at once.</p>
       ${(()=>{
-        const section = (title, pairs) => h`<div style=${{marginBottom:18}}>
-          <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:2,color:"var(--g400)",marginBottom:10,paddingBottom:5,borderBottom:"1px solid var(--g200)"}}>${title}</div>
-          <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(165px,1fr))",gap:10}}>
-            ${pairs.map(([k,label,def])=>h`<div key=${k}>
-              <div style=${{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:4,color:"var(--g600)"}}>${label}</div>
-              <div style=${{display:"flex",alignItems:"center",gap:6}}>
-                <input type="color" value=${S[k]||def} onInput=${e=>u(k,e.target.value)} style=${{width:34,height:30,border:"2px solid var(--g200)",borderRadius:4,cursor:"pointer",padding:1,flexShrink:0}}/>
-                <input value=${S[k]||def} onInput=${e=>u(k,e.target.value)} style=${{flex:1,fontFamily:"monospace",fontSize:11,padding:"4px 6px",border:"1.5px solid var(--g200)"}}/>
-              </div>
-            </div>`)}
-          </div>
-        </div>`;
         const presets = [
           ["⚫ Default",{themeAccent:"#c9922a",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}],
           ["🌙 Dark Mode",{themeAccent:"#7c3aed",themeSidebar:"#0f0f1a",themeSidebarText:"#a0a0c0",themeBackground:"#1a1a2e",themeTopbar:"#0f0f1a",themeTopbarBorder:"#7c3aed",themeCardBg:"#16213e",themeCardBorder:"#7c3aed",themeStatBg:"#16213e",themeStatBorder:"#7c3aed",themeTableHeader:"#7c3aed",themeTableHeaderText:"#ffffff",themeCalHeader:"#7c3aed",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#7c3aed",themePrimaryBtnText:"#ffffff",themeTextMain:"#e0e0f0"}],
@@ -2684,23 +2800,25 @@ function Settings({data, setData}) {
           ["🌹 Rose",{themeAccent:"#e11d48",themeSidebar:"#1a0010",themeSidebarText:"#fda4af",themeBackground:"#fff1f2",themeTopbar:"#ffffff",themeTopbarBorder:"#e11d48",themeCardBg:"#ffffff",themeCardBorder:"#fecdd3",themeStatBg:"#fff1f2",themeStatBorder:"#e11d48",themeTableHeader:"#1a0010",themeTableHeaderText:"#ffffff",themeCalHeader:"#1a0010",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#e11d48",themePrimaryBtnText:"#ffffff",themeTextMain:"#1a0010"}],
           ["🌤 Soft",{themeAccent:"#f59e0b",themeSidebar:"#f8f6f0",themeSidebarText:"#6b5a3e",themeBackground:"#fdfbf7",themeTopbar:"#ffffff",themeTopbarBorder:"#f59e0b",themeCardBg:"#ffffff",themeCardBorder:"#fde68a",themeStatBg:"#fdfbf7",themeStatBorder:"#f59e0b",themeTableHeader:"#6b5a3e",themeTableHeaderText:"#ffffff",themeCalHeader:"#6b5a3e",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#f59e0b",themePrimaryBtnText:"#ffffff",themeTextMain:"#3a2d1e"}],
         ];
+        const currentAccent = S.themeAccent||"#c9922a";
         return h`<div>
-          <div style=${{marginBottom:20,paddingBottom:16,borderBottom:"2px solid var(--g200)"}}>
-            <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:2,color:"var(--g400)",marginBottom:10}}>⚡ Quick Presets — one click to apply all colors</div>
-            <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
-              ${presets.map(([name,cols])=>h`<button key=${name} onClick=${()=>setData({...data,settings:{...S,...cols}})} style=${{padding:"8px 16px",border:"1.5px solid var(--g200)",borderRadius:20,cursor:"pointer",fontSize:12,fontWeight:700,background:"var(--wh)",color:"var(--bk)",transition:"all .15s"}}>${name}</button>`)}
-            </div>
+          <div style=${{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
+            ${presets.map(([name,cols])=>{
+              const isActive = S.themeAccent===cols.themeAccent && S.themeSidebar===cols.themeSidebar;
+              return h`<button key=${name} onClick=${()=>setData({...data,settings:{...S,...cols}})} style=${{
+                padding:"10px 18px",border:isActive?"2px solid var(--bk)":"1.5px solid var(--g200)",
+                borderRadius:20,cursor:"pointer",fontSize:12,fontWeight:700,
+                background:isActive?"var(--bk)":"var(--wh)",color:isActive?"var(--wh)":"var(--bk)",
+                transition:"all .15s",boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.15)":"none"
+              }}>${name}</button>`;
+            })}
           </div>
-          ${section("🏗 Layout",[["themeSidebar","Sidebar BG","#000000"],["themeSidebarText","Sidebar Text","#cccccc"],["themeTopbar","Topbar BG","#ffffff"],["themeTopbarBorder","Topbar Border","#000000"],["themeBackground","Page BG","#fafafa"],["themeTextMain","Main Text","#000000"],["themeAccent","Accent / Highlight","#c9922a"]])}
-          ${section("🃏 Cards & Panels",[["themeCardBg","Card BG","#ffffff"],["themeCardBorder","Card Border","#000000"],["themeStatBg","Stat Box BG","#ffffff"],["themeStatBorder","Stat Border","#000000"]])}
-          ${section("📋 Tables & Calendar",[["themeTableHeader","Table Header BG","#000000"],["themeTableHeaderText","Table Header Text","#ffffff"],["themeCalHeader","Calendar Header BG","#000000"],["themeCalHeaderText","Calendar Header Text","#ffffff"]])}
-          ${section("🔘 Buttons",[["themePrimaryBtn","Primary Btn BG","#000000"],["themePrimaryBtnText","Primary Btn Text","#ffffff"]])}
+          <div style=${{display:"flex",alignItems:"center",gap:10}}>
+            <button class="btn btn-sm" onClick=${()=>setData({...data,settings:{...S,themeAccent:"#c9922a",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}})}>Reset to Default</button>
+            <div style=${{fontSize:11,color:"var(--g400)"}}>Changes apply instantly.</div>
+          </div>
         </div>`;
       })()}
-      <div style=${{marginTop:6,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-        <button class="btn btn-sm" onClick=${()=>setData({...data,settings:{...S,themeAccent:"#c9922a",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}})}>Reset all colors</button>
-        <div style=${{fontSize:11,color:"var(--g400)"}}>Changes apply instantly.</div>
-      </div>
     </div>
     <div class="card"><h3>🔤 FONTS</h3>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:14}}>Pick fonts for headings and body text across the whole dashboard.</p>
@@ -2794,6 +2912,48 @@ function Settings({data, setData}) {
       </div>
       <button class="btn btn-sm" style=${{marginTop:6}} onClick=${()=>setData({...data,settings:{...S,themeFontHeading:"Bebas Neue",themeFontBody:"DM Sans",themeFontBrand:"Bebas Neue",themeFontSizeHeading:28,themeFontSizeBody:14,themeFontSizeBrand:24}})}>Reset fonts</button>
     </div>
+
+    <div class="card"><h3>📅 MY AVAILABILITY</h3>
+      <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Set your weekly recurring available time slots. Students will see these and can pick one to schedule their lesson.</p>
+      ${(()=>{
+        const slots = S.availability || [];
+        const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        const addSlot = () => {
+          const ns = {id:uid(), day:1, time:"10:00", duration:60};
+          u("availability", [...slots, ns]);
+        };
+        const rmSlot = id => u("availability", slots.filter(s=>s.id!==id));
+        const updSlot = (id, key, val) => u("availability", slots.map(s=>s.id===id?{...s,[key]:val}:s));
+        const sorted = [...slots].sort((a,b)=>a.day-b.day||a.time.localeCompare(b.time));
+        return h`<div>
+          ${sorted.length===0 && h`<div style=${{padding:"20px",textAlign:"center",color:"var(--g400)",border:"2px dashed var(--g200)",borderRadius:8,marginBottom:14}}>
+            <div style=${{fontSize:28,marginBottom:6}}>📅</div>
+            <div style=${{fontSize:13,fontWeight:600}}>No availability set yet</div>
+            <div style=${{fontSize:11,marginTop:4}}>Add your weekly time slots so students can book lessons</div>
+          </div>`}
+          ${sorted.map(sl => h`<div key=${sl.id} style=${{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",border:"1.5px solid var(--g200)",borderRadius:8,marginBottom:8,background:"var(--wh)"}}>
+            <div style=${{fontSize:18,flexShrink:0}}>🗓</div>
+            <select value=${sl.day} onChange=${e=>updSlot(sl.id,"day",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6,fontWeight:600}}>
+              ${days.map((d,i)=>h`<option key=${i} value=${i}>${d}</option>`)}
+            </select>
+            <span style=${{fontSize:11,color:"var(--g400)"}}>at</span>
+            <input type="time" value=${sl.time} step="1800" onChange=${e=>updSlot(sl.id,"time",e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6}}/>
+            <span style=${{fontSize:11,color:"var(--g400)"}}>for</span>
+            <select value=${sl.duration} onChange=${e=>updSlot(sl.id,"duration",+e.target.value)} style=${{border:"1.5px solid var(--g200)",padding:"5px 8px",fontFamily:"var(--fb)",fontSize:12,borderRadius:6}}>
+              <option value=${30}>30 min</option>
+              <option value=${45}>45 min</option>
+              <option value=${60}>60 min</option>
+              <option value=${90}>90 min</option>
+              <option value=${120}>2 hours</option>
+            </select>
+            <button class="bi" onClick=${()=>rmSlot(sl.id)} title="Remove" style=${{marginLeft:"auto",flexShrink:0,color:"var(--bd)"}}>${ic('x')}</button>
+          </div>`)}
+          <button class="btn btn-sm" onClick=${addSlot} style=${{marginTop:4}}>+ Add Time Slot</button>
+          ${slots.length>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)"}}>💡 These repeat every week. Students will see available dates for the next 4 weeks.</div>`}
+        </div>`;
+      })()}
+    </div>
+
     <div class="card"><h3>🖼 BACKGROUND IMAGES</h3>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:18}}>Upload images for each area. They overlay the color settings above.</p>
       <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
@@ -3165,9 +3325,18 @@ function RequestsInbox({auth, data, setData, onProfile}) {
   const confirmReq = req => {
     const st = (data.students||[]).find(s=>s.id===req.studentId);
     const S = data.settings;
-    const newLesson = {id:uid(),studentId:req.studentId,groupId:"",date:req.preferredDate||today(),time:req.preferredTime||"10:00",duration:60,type:st?.type||(S.types||[])[0]||"Levantine",status:"Scheduled",notes:"Requested by student"};
+    const newLesson = {id:uid(),studentId:req.studentId,groupId:"",date:req.preferredDate||today(),time:req.preferredTime||"10:00",duration:req.duration||60,type:st?.type||(S.types||[])[0]||"Levantine",status:"Scheduled",notes:"Requested by student"};
     const updated = (data.lessonRequests||[]).map(r=>r.id===req.id?{...r,status:"confirmed"}:r);
-    setData({...data, lessons:[...data.lessons,newLesson], lessonRequests:updated});
+    // Auto-increment lesson count when confirmed
+    const updatedStudents = data.students.map(s=>s.id===req.studentId
+      ? {...s, lessonsTaken: Math.max(0, (s.lessonsTaken||0))} // lessonsTaken only increments on Completed; just add lesson
+      : s);
+    setData({...data, lessons:[...data.lessons,newLesson], lessonRequests:updated, students:updatedStudents});
+    // Open Google Calendar for Hadi
+    window.open(gcalUrl(newLesson, st?.name||"Student"), "_blank");
+    if (st?.whatsapp) {
+      waMsg(st.whatsapp, "✅ Hi " + (st.name.split(" ")[0]) + "! Your Arabic lesson is confirmed for " + (req.preferredDate||today()) + " at " + (req.preferredTime||"10:00") + ". See you then! 🎓");
+    }
   };
   const declineReq = req => { setData({...data, lessonRequests:(data.lessonRequests||[]).map(r=>r.id===req.id?{...r,status:"declined"}:r)}); };
   const clearNote = sid => setData({...data, students:data.students.map(s=>s.id===sid?{...s,studentNote:""}:s)});
@@ -3191,15 +3360,17 @@ function RequestsInbox({auth, data, setData, onProfile}) {
 
       ${pending.length>0 && h`<div class="card" style=${{borderLeftColor:"#ff9800",borderLeftWidth:4}}>
         <h3 style=${{color:"#ff9800",marginBottom:12}}>🔔 New Sign-up Requests (${pending.length})</h3>
-        ${pending.map(u=>h`<div key=${u.email} style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,padding:"8px 0",borderBottom:"1px solid var(--g100)"}}>
-          <div>
-            <div style=${{fontWeight:700}}>${u.name}</div>
-            <div style=${{fontSize:12,color:"var(--g500)"}}>${u.email}</div>
-            ${u.message&&h`<div style=${{fontSize:12,color:"var(--g600)",marginTop:4,fontStyle:"italic"}}>"${u.message}"</div>`}
+        ${pending.map(u=>h`<div key=${u.email} style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,padding:"10px 0",borderBottom:"1px solid var(--g100)"}}>
+          <div style=${{flex:1}}>
+            <div style=${{fontWeight:700,fontSize:14}}>${u.name}</div>
+            <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${u.email}${u.phone?" · 📱 "+u.phone:""}</div>
+            ${u.learnType&&h`<div style=${{marginTop:4,fontSize:11,background:"#e8f4fd",color:"#1565c0",padding:"3px 8px",borderRadius:4,display:"inline-block",fontWeight:700}}>Wants to learn: ${u.learnType}</div>`}
+            ${u.message&&h`<div style=${{fontSize:12,color:"var(--g600)",marginTop:5,fontStyle:"italic",background:"#fffde7",padding:"6px 10px",borderRadius:6,lineHeight:1.5}}>"${u.message}"</div>`}
           </div>
-          <div style=${{display:"flex",gap:6,flexShrink:0}}>
+          <div style=${{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"flex-end"}}>
             <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name)}>✓ Approve</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
+            ${u.phone&&h`<a href=${"https://wa.me/"+u.phone.replace(/[^0-9+]/g,"")} target="_blank" class="btn btn-sm btn-wa" style=${{marginTop:2}}>WhatsApp</a>`}
           </div>
         </div>`)}
       </div>`}
@@ -3253,14 +3424,16 @@ function RequestsInbox({auth, data, setData, onProfile}) {
       ${pending.length===0 ? h`<div class="empty"><h3>NO PENDING REQUESTS</h3></div>` :
       h`<div>${pending.map(u=>h`<div key=${u.email} class="assess-card" style=${{borderLeftColor:"var(--wn)"}}>
         <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
-          <div>
+          <div style=${{flex:1}}>
             <div style=${{fontWeight:700,fontSize:15}}>${u.name}</div>
-            <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${u.email}</div>
+            <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${u.email}${u.phone?" · "+u.phone:""}</div>
+            ${u.learnType&&h`<div style=${{marginTop:5,fontSize:11,background:"#e8f4fd",color:"#1565c0",padding:"3px 8px",borderRadius:4,display:"inline-block",fontWeight:700}}>Wants to learn: ${u.learnType}</div>`}
             ${u.message&&h`<div style=${{marginTop:6,fontSize:13,color:"var(--g600)",fontStyle:"italic",lineHeight:1.5}}>"${u.message}"</div>`}
           </div>
-          <div style=${{display:"flex",gap:6,flexShrink:0}}>
+          <div style=${{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"flex-end"}}>
             <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name)}>✓ Approve</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
+            ${u.phone&&h`<a href=${"https://wa.me/"+u.phone.replace(/[^0-9+]/g,"")} target="_blank" class="btn btn-sm btn-wa">WhatsApp</a>`}
           </div>
         </div>
       </div>`)}</div>`}
@@ -3408,8 +3581,14 @@ function App() {
   const submittedHw = data ? (data.homework||[]).filter(hw=>hw.status==="submitted").length : 0;
   const pendingLessonReqs = data ? (data.lessonRequests||[]).filter(r=>r.status==="pending").length : 0;
   const studentNoteCount = data ? data.students.filter(s=>s.studentNote&&s.studentNote.trim()).length : 0;
-  const totalRequestsBadge = pendingUsers + pendingLessonReqs + submittedHw + studentNoteCount;
-  const badges = {requests: totalRequestsBadge, homework: submittedHw};
+  const newStudents = data ? data.students.filter(s=>s.active && s.lessonsTaken===0 && !s.lessonsTotal).length : 0;
+  const totalRequestsBadge = pendingUsers + pendingLessonReqs + studentNoteCount;
+  const badges = {
+    students: newStudents,
+    homework: submittedHw,
+    requests: totalRequestsBadge,
+    messages: studentNoteCount,
+  };
 
   const nav = [["dashboard","Dashboard","dash"],["students","Students","stu"],["calendar","Calendar","cal"],["payments","Payments","pay"],["curriculum","Curriculum","cur"],["homework","Homework","hw"],["requests","Requests","stu"],["settings","Settings","set"]];
   const activeNav = view === "profile" ? "students" : view;
