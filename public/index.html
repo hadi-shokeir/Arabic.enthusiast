@@ -282,9 +282,18 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 /* Student portal tab nav */
 .sp-tab-nav{display:flex;background:#fff;border-bottom:2px solid #e8e8e8;overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:9}
 .sp-tab-nav::-webkit-scrollbar{display:none}
-.sp-tab{display:flex;align-items:center;gap:6px;padding:12px 18px;font-size:12px;font-weight:700;color:#888;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--fb)}
+.sp-tab{display:flex;align-items:center;gap:6px;padding:12px 18px;font-size:12px;font-weight:700;color:#888;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--fb);position:relative}
 .sp-tab:hover{color:#333;background:#f9f9f9}
 .sp-tab.on{color:#111;border-bottom-color:#111}
+.tab-badge{position:absolute;top:6px;right:4px;background:#e53935;color:#fff;border-radius:20px;min-width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;font-family:var(--fb);line-height:1;padding:0 4px;box-shadow:0 1px 4px rgba(0,0,0,0.35);pointer-events:none;animation:badge-pop .3s ease}
+@keyframes badge-pop{from{transform:scale(0)}to{transform:scale(1)}}
+/* Preferences selection cards */
+.pref-opt{padding:12px 14px;border-radius:10px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;text-align:left;font-family:var(--fb);transition:all .15s;width:100%}
+.pref-opt:hover{border-color:#999}
+.pref-opt.on{border-color:#111;background:#111;color:#fff}
+.pref-pill{padding:6px 14px;border-radius:20px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--fb);transition:all .15s;white-space:nowrap}
+.pref-pill:hover{border-color:#999}
+.pref-pill.on{border-color:#111;background:#111;color:#fff}
 /* Quiz option buttons */
 .qz-opt{padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;background:#fff;font-family:var(--fb);font-size:14px;font-weight:700;cursor:pointer;text-align:left;transition:all .15s;width:100%;line-height:1.5}
 .qz-opt:hover{border-color:#999;background:#fafafa}
@@ -1896,11 +1905,15 @@ function StudentQuizTab({student: s, data}) {
   const generate = async () => {
     setLoading(true); setQuestions(null); setAnswers({}); setSubmitted(false); setError("");
     try {
+      const lp = s.learningProfile||{};
       const d = await apiPost("/api/ai", {type:"student_quiz", context:{
         name:s.name, level:s.level||"beginner", type:s.type||"Classical Arabic",
         skillReading:s.skillReading||3, skillWriting:s.skillWriting||3,
         skillListening:s.skillListening||3, skillSpeaking:s.skillSpeaking||3,
-        topics: topics||"General Arabic", goals:s.goals||""
+        topics: topics||"General Arabic", goals:s.goals||"",
+        learningWhy: lp.why||"", learningStyle: lp.style||"",
+        interests: (lp.topics||[]).join(", ")||"",
+        challenge: lp.challenge||"", personalGoal: lp.personalGoal||""
       }});
       if (d.result) {
         const raw = d.result.replace(/```json|```/g,"").trim();
@@ -2101,6 +2114,128 @@ const FEMALE_PALETTES = [
 ];
 
 // ════════════════════════════════════════
+// STUDENT PORTAL — PREFERENCES / LEARNING PROFILE
+// ════════════════════════════════════════
+function StudentPreferencesTab({student: s, data, setData}) {
+  const p = s.learningProfile || {};
+  const upd = patch => setData({...data, students: data.students.map(x=>x.id===s.id?{...x,learningProfile:{...(x.learningProfile||{}),...patch}}:x)});
+  const toggleTopic = t => {
+    const arr = p.topics||[];
+    upd({topics: arr.includes(t)?arr.filter(x=>x!==t):[...arr,t]});
+  };
+
+  const WHY = [
+    {v:"quran",e:"🕌",l:"Quran & Religion",d:"Understand Quranic Arabic and Islamic texts"},
+    {v:"travel",e:"✈️",l:"Travel",d:"Use Arabic when travelling to Arab countries"},
+    {v:"business",e:"💼",l:"Business / Work",d:"Need Arabic professionally or for clients"},
+    {v:"heritage",e:"🏡",l:"Heritage & Roots",d:"Reconnect with family language and culture"},
+    {v:"culture",e:"🎭",l:"Culture & Media",d:"Music, films, literature, and art"},
+    {v:"academic",e:"🎓",l:"Academic Study",d:"University, research, or formal study"},
+    {v:"challenge",e:"🧠",l:"Personal Challenge",d:"Arabic is the ultimate language challenge"},
+  ];
+  const STYLES = [
+    {v:"visual",e:"👁️",l:"Visual",d:"Charts, patterns, colour coding"},
+    {v:"auditory",e:"👂",l:"Listen & Repeat",d:"Hearing, mimicking, speaking out loud"},
+    {v:"reading",e:"📖",l:"Reading & Writing",d:"Texts, notes, grammar rules"},
+    {v:"mixed",e:"🔄",l:"Everything",d:"Mix of all methods"},
+  ];
+  const TIME = [
+    {v:"5",e:"⚡",l:"5 min / day",d:"Quick & consistent"},
+    {v:"15",e:"📅",l:"15 min / day",d:"Steady daily progress"},
+    {v:"30",e:"📚",l:"30 min / day",d:"Serious learner"},
+    {v:"60",e:"🎯",l:"1 hour+ / day",d:"Full commitment"},
+  ];
+  const CHALLENGES = ["Pronunciation","Vocabulary","Grammar","Reading Arabic script","Speaking confidence","Staying consistent","Understanding natives"];
+  const TOPICS = ["Greetings & Daily Life","Numbers & Time","Food & Restaurants","Travel & Directions","Family & Relationships","Religion & Quran","Business & Work","News & Politics","Emotions & Feelings","History & Culture","Technology","Sports"];
+
+  const Section = ({n,title,sub,children}) => h`<div class="card" style=${{marginBottom:14}}>
+    <div style=${{display:"flex",alignItems:"baseline",gap:8,marginBottom:4}}>
+      <span style=${{fontFamily:"var(--fh)",fontSize:13,color:"#aaa"}}>${n}</span>
+      <div style=${{fontWeight:800,fontSize:15}}>${title}</div>
+    </div>
+    ${sub?h`<div style=${{fontSize:12,color:"var(--g500)",marginBottom:14,lineHeight:1.6}}>${sub}</div>`:null}
+    ${children}
+  </div>`;
+
+  const total = 6;
+  const filled = [p.why,p.style,p.time,(p.topics||[]).length>0,p.challenge,p.personalGoal].filter(Boolean).length;
+  const pct = Math.round(filled/total*100);
+
+  return h`<div style=${{maxWidth:680,margin:"0 auto"}}>
+    <!-- Header -->
+    <div class="card" style=${{marginBottom:14,background:"#111",color:"#fff",border:"none"}}>
+      <div style=${{fontFamily:"var(--fh)",fontSize:18,letterSpacing:2,marginBottom:6}}>✨ MY LEARNING PROFILE</div>
+      <div style=${{fontSize:13,color:"rgba(255,255,255,0.7)",lineHeight:1.7,marginBottom:14}}>Your answers personalise your quizzes, AI tutor, and lesson direction. Hadi also uses this to tailor your lessons to you specifically.</div>
+      <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+        <div style=${{fontSize:12,color:"rgba(255,255,255,0.6)"}}>Profile ${pct}% complete</div>
+        <div style=${{fontSize:12,fontWeight:700,color:pct===100?"#4caf50":pct>=50?"#ff9800":"#f48fb1"}}>${filled}/${total} sections</div>
+      </div>
+      <div style=${{height:6,background:"rgba(255,255,255,0.15)",borderRadius:6,overflow:"hidden"}}>
+        <div style=${{height:"100%",width:pct+"%",background:pct===100?"#4caf50":"#f48fb1",borderRadius:6,transition:"width 0.5s"}}></div>
+      </div>
+    </div>
+
+    <!-- 1. Why -->
+    <${Section} n="1 / 6" title="Why are you learning Arabic?" sub="This shapes your vocabulary focus, topics, and the kind of Arabic Hadi teaches you.">
+      <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:8}}>
+        ${WHY.map(w=>h`<button key=${w.v} class=${"pref-opt"+(p.why===w.v?" on":"")} onClick=${()=>upd({why:w.v})}>
+          <div style=${{fontSize:18,marginBottom:4}}>${w.e}</div>
+          <div style=${{fontWeight:700,fontSize:13}}>${w.l}</div>
+          <div style=${{fontSize:11,opacity:0.65,marginTop:2,lineHeight:1.4}}>${w.d}</div>
+        </button>`)}
+      </div>
+    <//>
+
+    <!-- 2. Style -->
+    <${Section} n="2 / 6" title="How do you learn best?" sub="Your style changes how the AI tutor explains things and what kinds of exercises you get.">
+      <div style=${{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8}}>
+        ${STYLES.map(s=>h`<button key=${s.v} class=${"pref-opt"+(p.style===s.v?" on":"")} onClick=${()=>upd({style:s.v})}>
+          <div style=${{fontSize:20,marginBottom:4}}>${s.e}</div>
+          <div style=${{fontWeight:700,fontSize:13}}>${s.l}</div>
+          <div style=${{fontSize:11,opacity:0.65,marginTop:2}}>${s.d}</div>
+        </button>`)}
+      </div>
+    <//>
+
+    <!-- 3. Time -->
+    <${Section} n="3 / 6" title="How much time can you study each day?" sub="Honest answer only — Hadi sets your expectations and pace based on this.">
+      <div style=${{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8}}>
+        ${TIME.map(t=>h`<button key=${t.v} class=${"pref-opt"+(p.time===t.v?" on":"")} onClick=${()=>upd({time:t.v})}>
+          <div style=${{fontSize:18,marginBottom:4}}>${t.e}</div>
+          <div style=${{fontWeight:700,fontSize:13}}>${t.l}</div>
+          <div style=${{fontSize:11,opacity:0.65,marginTop:2}}>${t.d}</div>
+        </button>`)}
+      </div>
+    <//>
+
+    <!-- 4. Topics -->
+    <${Section} n="4 / 6" title="Which topics interest you most?" sub="Pick as many as you like. Quizzes and flashcards will prioritise these areas.">
+      <div style=${{display:"flex",flexWrap:"wrap",gap:8}}>
+        ${TOPICS.map(t=>h`<button key=${t} class=${"pref-pill"+((p.topics||[]).includes(t)?" on":"")} onClick=${()=>toggleTopic(t)}>${t}</button>`)}
+      </div>
+    <//>
+
+    <!-- 5. Challenge -->
+    <${Section} n="5 / 6" title="What's your biggest challenge in Arabic?" sub="Be honest — this is where Hadi and the AI will focus most of the attention.">
+      <div style=${{display:"flex",flexWrap:"wrap",gap:8}}>
+        ${CHALLENGES.map(c=>h`<button key=${c} class=${"pref-pill"+(p.challenge===c?" on":"")} onClick=${()=>upd({challenge:c})}>${c}</button>`)}
+      </div>
+    <//>
+
+    <!-- 6. Personal goal -->
+    <${Section} n="6 / 6" title="In your own words — what would make you feel like you've made it?" sub='e.g. "Read the Quran without help", "Order food in Beirut", "Watch Arabic news and understand it"'>
+      <textarea value=${p.personalGoal||""} onInput=${e=>upd({personalGoal:e.target.value})} placeholder="Write your goal here..." style=${{width:"100%",minHeight:80,padding:"10px 12px",border:"2px solid var(--g200)",fontFamily:"var(--fb)",fontSize:13,resize:"vertical",boxSizing:"border-box",borderRadius:8,outline:"none",lineHeight:1.7}}/>
+    <//>
+
+    ${pct===100?h`<div style=${{background:"#e8f5e9",border:"2px solid #4caf50",borderRadius:12,padding:"14px 18px",textAlign:"center",fontWeight:700,color:"#2e7d32",fontSize:14}}>
+      🎉 Profile complete! Your quizzes and AI tutor are now fully personalised to you.
+    </div>`:h`<div style=${{background:"#fff8e1",border:"1px solid #ffcc02",borderRadius:10,padding:"12px 16px",fontSize:13,color:"#7a6000"}}>
+      ⚡ ${total-filled} section${total-filled!==1?"s":""} left — the more you fill in, the better your learning experience.
+    </div>`}
+  </div>`;
+}
+
+// ════════════════════════════════════════
 // STUDENT PORTAL (read-only view for students)
 // ════════════════════════════════════════
 function StudentPortal({data, setData, user, onLogout}) {
@@ -2168,6 +2303,12 @@ function StudentPortal({data, setData, user, onLogout}) {
   // Daily Arabic fact
   const todayFact = ARABIC_FACTS[dayOfYear % ARABIC_FACTS.length];
 
+  // Badge counts — how many important things are missing per tab
+  const lp = s.learningProfile || {};
+  const prefFilled = [lp.why,lp.style,lp.time,(lp.topics||[]).length>0,lp.challenge,lp.personalGoal].filter(Boolean).length;
+  const prefBadge = 6 - prefFilled; // 0 when complete
+  const settingsBadge = [!s.timezone, !s.gender].filter(Boolean).length;
+
   // Overdue homework
   const now = new Date();
   const isOverdue = hw => hw.status === "assigned" && hw.dueDate && new Date(hw.dueDate) < now;
@@ -2233,8 +2374,8 @@ function StudentPortal({data, setData, user, onLogout}) {
           background:spTab==="settings"?"#111":"linear-gradient(180deg,#f0f0f0,#d8d8d8)",
           border:"1px solid #bbb",color:spTab==="settings"?"#fff":"#444",
           borderRadius:8,padding:"8px 12px",cursor:"pointer",fontSize:16,
-          boxShadow:"0 2px 4px rgba(0,0,0,0.15)"
-        }}>⚙</button>
+          boxShadow:"0 2px 4px rgba(0,0,0,0.15)",position:"relative"
+        }}>⚙${settingsBadge>0?h`<span class="tab-badge">${settingsBadge}</span>`:null}</button>
         <button style=${{
           background:"linear-gradient(180deg,#f0f0f0,#d8d8d8)",
           border:"1px solid #bbb",color:"#444",borderRadius:8,
@@ -2247,8 +2388,10 @@ function StudentPortal({data, setData, user, onLogout}) {
 
     <!-- TAB NAV -->
     <div class="sp-tab-nav">
-      ${[["home","🏠 Home"],["curriculum","📚 Curriculum"],["library","📎 Library"],["quiz","🧠 Quiz"]].map(([id,label])=>h`
-        <button key=${id} class=${"sp-tab"+(spTab===id?" on":"")} onClick=${()=>setSpTab(id)}>${label}</button>
+      ${[["home","🏠 Home",0],["curriculum","📚 Curriculum",0],["library","📎 Library",0],["quiz","🧠 Quiz",prefBadge>0?1:0],["preferences","✨ My Journey",prefBadge]].map(([id,label,badge])=>h`
+        <button key=${id} class=${"sp-tab"+(spTab===id?" on":"")} onClick=${()=>setSpTab(id)}>
+          ${label}${badge>0?h`<span class="tab-badge">${badge}</span>`:null}
+        </button>
       `)}
     </div>
 
@@ -2257,6 +2400,7 @@ function StudentPortal({data, setData, user, onLogout}) {
     ${spTab==="library"&&h`<${StudentLibraryTab} student=${s} data=${data} setData=${setData}/>`}
     ${spTab==="quiz"&&h`<${StudentQuizTab} student=${s} data=${data}/>`}
     ${spTab==="settings"&&h`<${StudentSettingsTab} student=${s} data=${data} setData=${setData}/>`}
+    ${spTab==="preferences"&&h`<${StudentPreferencesTab} student=${s} data=${data} setData=${setData}/>`}
     ${spTab==="home"&&h`<div class="portal-grid"><div>
 
       <!-- Daily Arabic Fact -->

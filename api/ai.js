@@ -102,7 +102,13 @@ Respond with ONLY a valid JSON array, no markdown, no explanation. Format: [{"q"
 Level: ${context.level} | Type: ${context.type}
 Skills (1-5): Reading ${context.skillReading}, Writing ${context.skillWriting}, Listening ${context.skillListening}, Speaking ${context.skillSpeaking}
 Completed topics: ${context.topics || 'General Arabic'}
-Goals: ${context.goals || 'general improvement'}`;
+Goals: ${context.goals || 'general improvement'}
+${context.learningWhy ? `Learning motivation: ${context.learningWhy}` : ''}
+${context.learningStyle ? `Learning style: ${context.learningStyle}` : ''}
+${context.interests ? `Topics of interest: ${context.interests}` : ''}
+${context.challenge ? `Biggest challenge: ${context.challenge}` : ''}
+${context.personalGoal ? `Personal goal: ${context.personalGoal}` : ''}
+IMPORTANT: Tailor ALL 5 questions to this student's motivation and interests. If they're learning for Quran, include a Quranic phrase. If for travel, use travel vocabulary. If their challenge is pronunciation, test words that highlight pronunciation patterns.`;
         break;
 
       case 'flashcard_generate':
