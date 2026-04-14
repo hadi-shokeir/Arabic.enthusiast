@@ -1007,6 +1007,53 @@ const IC = {
 const ic = name => mkSvg(IC[name]);
 const icb = name => mkSvg(IC[name], "2.5");
 
+function exportContactsPDF(students, brand) {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF();
+  const W = doc.internal.pageSize.getWidth();
+  const active = students.filter(s=>s.active).sort((a,b)=>a.name.localeCompare(b.name));
+  let y = 20;
+  const ln = (inc=7) => { y+=inc; if(y>275){doc.addPage();y=20;} };
+
+  // Header
+  doc.setFillColor(0,0,0); doc.rect(0,0,W,36,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20); doc.setFont("helvetica","bold");
+  doc.text(brand||"ARABIC ENTHUSIAST", 14, 18);
+  doc.setFontSize(10); doc.setFont("helvetica","normal");
+  doc.text("Student Contact List  —  "+new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"long",year:"numeric"}), 14, 28);
+  doc.setTextColor(0,0,0); y = 48;
+
+  // Table header
+  doc.setFillColor(240,240,240); doc.rect(10, y-5, W-20, 9, "F");
+  doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(80);
+  doc.text("#", 14, y); doc.text("Name", 22, y);
+  doc.text("Email", 90, y); doc.text("Phone / WhatsApp", 150, y);
+  doc.setDrawColor(200); doc.line(10, y+2, W-10, y+2);
+  ln(8);
+
+  active.forEach((s,i) => {
+    if (y > 272) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", i%2===0?"normal":"normal");
+    if (i%2===0) { doc.setFillColor(250,250,250); doc.rect(10, y-5, W-20, 8, "F"); }
+    doc.setFontSize(9); doc.setTextColor(30,30,30);
+    doc.setFont("helvetica","bold"); doc.text(String(i+1), 14, y);
+    doc.setFont("helvetica","normal");
+    doc.text(doc.splitTextToSize(s.name||"—", 62)[0], 22, y);
+    doc.text(doc.splitTextToSize(s.email||"—", 55)[0], 90, y);
+    const contact = s.whatsapp||s.phone||"—";
+    doc.text(doc.splitTextToSize(contact, 50)[0], 150, y);
+    ln(8);
+  });
+
+  // Footer
+  doc.setDrawColor(0); doc.line(10, y+2, W-10, y+2); ln(6);
+  doc.setFontSize(8); doc.setTextColor(150);
+  doc.text(active.length + " active students", 14, y);
+
+  doc.save("student-contacts-"+new Date().toISOString().split("T")[0]+".pdf");
+}
+
 // ─── Modal ───
 function Modal({title, onClose, children, footer}) {
   return h`<div class="mo-bg" onClick=${onClose}><div class="mo" onClick=${e=>e.stopPropagation()}><div class="mo-hd"><h3>${title}</h3><button class="bi" onClick=${onClose}>${icb('x')}</button></div><div class="mo-bd">${children}</div>${footer && h`<div class="mo-ft">${footer}</div>`}</div></div>`;
@@ -3180,6 +3227,7 @@ function Students({data, setData, onProfile}) {
       <div class="sb-x">${ic('srch')}<input placeholder="Search..." value=${search} onInput=${e=>setSearch(e.target.value)}/></div>
       <button class="btn btn-p" onClick=${()=>{setForm(mkStudent(S));setShow(true);}}>${ic('plus')} Add Student</button>
       <div style=${{marginLeft:"auto",display:"flex",gap:4}}>
+        <button class="btn btn-sm" onClick=${()=>exportContactsPDF(data.students, data.settings.brand)} title="Export emails & phone numbers to PDF">${ic('pdf')} Contacts</button>
         <button class=${"btn btn-sm "+(viewMode==="cards"?"btn-p":"")} onClick=${()=>setViewMode("cards")}>Cards</button>
         <button class=${"btn btn-sm "+(viewMode==="table"?"btn-p":"")} onClick=${()=>setViewMode("table")}>Table</button>
       </div>
@@ -3195,8 +3243,8 @@ function Students({data, setData, onProfile}) {
         const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
         const hasToday = data.lessons.some(l => l.studentId===s.id && l.date===today() && l.status==="Scheduled");
         const att = attendanceStats(s.id, data.lessons);
-        const needsSetup = s.enrollmentStatus === "pending";
-        return h`<div key=${s.id} class=${"stu-card"+(noL?" alert":"")+(s.active?"":" inactive")} style=${{borderLeft:needsSetup?"4px solid #ff9800":""}}>
+        const needsSetup = !s.whatsapp || !s.timezone || !s.email;
+        return h`<div key=${s.id} class=${"stu-card"+(noL?" alert":"")+(s.active?"":" inactive")} style=${{boxShadow:needsSetup?"inset 4px 0 0 #ff9800":""}}>
           <div class="sc-top">
             <div onClick=${()=>onProfile(s.id)} style=${{cursor:"pointer",flex:1,display:"flex",alignItems:"center",gap:10}}>
               ${s.avatar ? h`<img src=${s.avatar} style=${{width:40,height:40,borderRadius:8,objectFit:"cover",flexShrink:0,border:"1.5px solid var(--g200)"}}/>` : h`<div style=${{width:40,height:40,borderRadius:8,background:"var(--g100)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>👤</div>`}
@@ -3245,10 +3293,10 @@ function Students({data, setData, onProfile}) {
         const att = attendanceStats(s.id, data.lessons);
         const sPay = data.payments.filter(p=>p.studentId===s.id);
         const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
-        const needsSetup = s.enrollmentStatus === "pending";
-        return h`<tr key=${s.id} class=${"ck"+(s.active?"":" ri")} onClick=${()=>onProfile(s.id)} style=${{borderLeft:needsSetup?"4px solid #ff9800":""}}>
+        const needsSetup = !s.whatsapp || !s.timezone || !s.email;
+        return h`<tr key=${s.id} class=${"ck"+(s.active?"":" ri")} onClick=${()=>onProfile(s.id)} style=${{boxShadow:needsSetup?"inset 4px 0 0 #ff9800":""}}>
           <td class="nc">${i+1}</td>
-          <td style=${{fontWeight:600}}>${s.name}${needsSetup?h`<span style=${{marginLeft:6,fontSize:9,fontWeight:700,color:"#ff9800",textTransform:"uppercase",letterSpacing:.5,verticalAlign:"middle"}}>● needs setup</span>`:null}</td>
+          <td style=${{fontWeight:600}}>${s.name}${needsSetup?h`<span style=${{marginLeft:6,fontSize:9,fontWeight:700,color:"#ff9800",textTransform:"uppercase",letterSpacing:.5,verticalAlign:"middle"}}>⚠ setup</span>`:null}</td>
           <td><span class="tg">${s.type}</span></td>
           <td>${s.lessonsTaken}</td>
           <td><span class=${"ll "+(left<=0?"low":left<=2?"ok":"good")}>${left}</span></td>
@@ -4209,7 +4257,7 @@ function RequestsInbox({auth, data, setData, onProfile}) {
   const load = async () => { const d = await call({action:"list"}); setUsers(d.users||[]); };
   useEffect(() => { load(); }, []);
 
-  const approve = async (email, name, gender) => {
+  const approve = async (email, name, gender, phone) => {
     setErr("");
     try {
       const r = await call({action:"approve", email});
@@ -4225,6 +4273,8 @@ function RequestsInbox({auth, data, setData, onProfile}) {
         ...mkStudent(data.settings),
         name: name || email,
         email: email.toLowerCase(),
+        phone: phone || "",
+        whatsapp: phone || "",
         gender: gender || "",
         active: true,
         enrollmentStatus: "pending"
@@ -4310,7 +4360,7 @@ function RequestsInbox({auth, data, setData, onProfile}) {
             ${u.message&&h`<div style=${{fontSize:12,color:"var(--g600)",marginTop:5,fontStyle:"italic",background:"#fffde7",padding:"6px 10px",borderRadius:6,lineHeight:1.5}}>"${u.message}"</div>`}
           </div>
           <div style=${{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"flex-end"}}>
-            <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name,u.gender)}>✓ Approve</button>
+            <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name,u.gender,u.phone)}>✓ Approve</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
             ${u.phone&&h`<a href=${"https://wa.me/"+u.phone.replace(/[^0-9+]/g,"")} target="_blank" class="btn btn-sm btn-wa" style=${{marginTop:2}}>WhatsApp</a>`}
           </div>
@@ -4373,7 +4423,7 @@ function RequestsInbox({auth, data, setData, onProfile}) {
             ${u.message&&h`<div style=${{marginTop:6,fontSize:13,color:"var(--g600)",fontStyle:"italic",lineHeight:1.5}}>"${u.message}"</div>`}
           </div>
           <div style=${{display:"flex",gap:6,flexShrink:0,flexDirection:"column",alignItems:"flex-end"}}>
-            <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name,u.gender)}>✓ Approve</button>
+            <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email,u.name,u.gender,u.phone)}>✓ Approve</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
             ${u.phone&&h`<a href=${"https://wa.me/"+u.phone.replace(/[^0-9+]/g,"")} target="_blank" class="btn btn-sm btn-wa">WhatsApp</a>`}
           </div>
@@ -4384,12 +4434,16 @@ function RequestsInbox({auth, data, setData, onProfile}) {
     ${tab==="users" && h`<div>
       ${approved.length===0 ? h`<div class="empty"><h3>NO USERS</h3></div>` :
       h`<div class="card" style=${{padding:0}}>
-        <div style=${{overflowX:"auto"}}><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Reset Password</th></tr></thead><tbody>
+        <div style=${{overflowX:"auto"}}><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Since</th><th>Actions</th></tr></thead><tbody>
           ${approved.map(u=>h`<tr key=${u.email}>
             <td style=${{fontWeight:600}}>${u.name}</td>
             <td style=${{fontSize:12}}>${u.email}</td>
             <td><span class="tg">${u.role}</span></td>
-            <td><button class="btn btn-sm" onClick=${()=>setPwForm({email:u.email,password:""})}>Reset PW</button></td>
+            <td style=${{fontSize:11,color:"var(--g500)"}}>${u.createdAt?new Date(u.createdAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"—"}</td>
+            <td style=${{whiteSpace:"nowrap",display:"flex",gap:6}}>
+              <button class="btn btn-sm" onClick=${()=>setPwForm({email:u.email,password:""})}>🔑 Reset PW</button>
+              ${u.role!=="tutor"&&h`<button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>{if(confirm("Delete account for "+u.name+"? They will lose access immediately."))call({action:"delete",email:u.email}).then(()=>{setMsg("Deleted "+u.name);load();})}}>✕ Delete</button>`}
+            </td>
           </tr>`)}
         </tbody></table></div>
       </div>`}
