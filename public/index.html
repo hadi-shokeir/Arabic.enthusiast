@@ -5030,13 +5030,19 @@ function Resources({data, setData, auth}) {
   const openEdit = r => { setForm({...r}); setRType(r.type==="pdf"?"pdf":"link"); setShow(true); };
 
   const fetchPreview = async () => {
-    if (!form.url.trim()) return alert("Paste a URL first.");
+    let raw = form.url.trim();
+    if (!raw) return alert("Paste a URL first.");
+    // Auto-add https:// if missing
+    if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
+    // Update the form URL in case we fixed it
+    setForm(f => ({...f, url: raw}));
     setFetching(true);
     try {
-      const d = await apiPost("/api/og", { url: form.url.trim() });
-      if (!d.error) {
+      const d = await apiPost("/api/og", { url: raw });
+      if (d && !d.error) {
         setForm(f => ({
           ...f,
+          url: raw,
           title: f.title || d.title || "",
           ogTitle: d.title || "",
           ogImage: d.image || "",
@@ -5044,8 +5050,14 @@ function Resources({data, setData, auth}) {
           type: d.type || "link",
           videoId: d.videoId || f.videoId || "",
         }));
+      } else {
+        // Preview failed but URL is still valid — let user save manually
+        setForm(f => ({...f, url: raw}));
+        alert("Could not load a preview for this URL — you can still save it manually with your own title.");
       }
-    } catch {}
+    } catch(e) {
+      alert("Preview failed — check the URL and try again.");
+    }
     setFetching(false);
   };
 
