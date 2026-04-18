@@ -765,23 +765,32 @@ const DEFAULT_ACTIVE_AXES = {
 };
 
 function SpiderChart({axes, size, color}) {
-  size = size||220; color = color||"#2196f3";
+  size = size||240; color = color||"#2196f3";
   const n = axes.length;
   if (!n || n < 3) return h`<div style=${{textAlign:"center",color:"#bbb",fontSize:12,padding:"20px 0"}}>Enable at least 3 skills to see the chart</div>`;
   const cx = size/2, cy = size/2, r = size*0.33, lr = size*0.47;
   const ang = i => (Math.PI*2*i/n) - Math.PI/2;
-  const pt  = (i,v) => { const a=ang(i), d=(v/5)*r; return [cx+d*Math.cos(a), cy+d*Math.sin(a)]; };
-  return h`<svg width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} style=${{display:"block",margin:"auto",overflow:"visible"}}>
-    ${[1,2,3,4,5].map(ring=>h`<polygon key=${"r"+ring} points=${axes.map((_,i)=>pt(i,ring).join(",")).join(" ")} fill="none" stroke=${ring===5?"#c8d8f0":"#e8e8e8"} strokeWidth=${ring===5?"1.5":"1"}/>`)}
-    ${axes.map((_,i)=>{ const [x,y]=pt(i,5); return h`<line key=${"l"+i} x1=${cx} y1=${cy} x2=${x} y2=${y} stroke="#ddd" strokeWidth="1"/>`; })}
-    <polygon points=${axes.map((a,i)=>pt(i,a.value||0).join(",")).join(" ")} fill=${color+"33"} stroke=${color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-    ${axes.map((ax,i)=>{ const [dx,dy]=pt(i,ax.value||0); return h`<circle key=${"d"+i} cx=${dx} cy=${dy} r="4.5" fill=${color} stroke="#fff" strokeWidth="2"/>`; })}
-    ${axes.map((ax,i)=>{
-      const a=ang(i), lx=cx+lr*Math.cos(a), ly=cy+lr*Math.sin(a);
-      const ta=Math.cos(a)>0.15?"start":Math.cos(a)<-0.15?"end":"middle";
-      return h`<text key=${"t"+i} x=${lx} y=${ly} textAnchor=${ta} dominantBaseline="middle" fontSize="10" fill="#444" fontFamily="system-ui,sans-serif" fontWeight="600">${ax.short}</text>`;
-    })}
-  </svg>`;
+  const pt  = (i,v) => { const a=ang(i), d=(v/5)*r; return [+(cx+d*Math.cos(a)).toFixed(2), +(cy+d*Math.sin(a)).toFixed(2)]; };
+  // Build SVG as a string — more reliable than React SVG elements in HTM
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;margin:auto;overflow:visible">`;
+  for (let ring=1; ring<=5; ring++) {
+    const pts = axes.map((_,i)=>pt(i,ring).join(",")).join(" ");
+    svg += `<polygon points="${pts}" fill="none" stroke="${ring===5?"#b8d0f0":"#ebebeb"}" stroke-width="${ring===5?1.5:0.8}"/>`;
+  }
+  axes.forEach((_,i)=>{ const [x,y]=pt(i,5); svg += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#d8d8d8" stroke-width="1"/>`; });
+  const dataPts = axes.map((a,i)=>pt(i,a.value||0).join(",")).join(" ");
+  svg += `<polygon points="${dataPts}" fill="${color}40" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  axes.forEach((ax,i)=>{ const [dx,dy]=pt(i,ax.value||0); svg += `<circle cx="${dx}" cy="${dy}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2"/>`; });
+  axes.forEach((ax,i)=>{
+    const a=ang(i), lx=+(cx+lr*Math.cos(a)).toFixed(2), ly=+(cy+lr*Math.sin(a)).toFixed(2);
+    const ta=Math.cos(a)>0.15?"start":Math.cos(a)<-0.15?"end":"middle";
+    svg += `<text x="${lx}" y="${ly}" text-anchor="${ta}" dominant-baseline="middle" font-size="10.5" fill="#333" font-family="system-ui,sans-serif" font-weight="700">${ax.short}</text>`;
+    // value label on dot
+    const [dx,dy]=pt(i,ax.value||0);
+    if ((ax.value||0)>0) svg += `<text x="${dx}" y="${dy-8}" text-anchor="middle" font-size="9" fill="${color}" font-weight="700">${ax.value}</text>`;
+  });
+  svg += `</svg>`;
+  return h`<div dangerouslySetInnerHTML=${{__html:svg}}/>`;
 }
 
 function SkillCategoryCard({type, title, icon, color, s, upd, recordSnap}) {
