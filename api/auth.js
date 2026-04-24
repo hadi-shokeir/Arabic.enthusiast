@@ -1,5 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
-import bcrypt from 'bcryptjs';
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 
 const KV = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -29,17 +28,28 @@ async function getSessions() {
 }
 async function saveSessions(s) { await kv(['SET', 'sessions', JSON.stringify(s)]); }
 
-// Hash with bcrypt (new standard)
-async function hashPw(pw) {
-  const hash = await bcrypt.hash(pw, 10);
-  return { hash, salt: null, hashType: 'bcrypt' };
+// Hash with scrypt (Node.js built-in — no npm package needed)
+function hashPw(pw) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(pw, salt, 64).toString('hex');
+  return { hash: salt + ':' + hash, salt: null, hashType: 'scrypt' };
 }
 
-// Verify password — handles both old SHA-256 and new bcrypt hashes
-async function checkPw(pw, user) {
-  if (user.hashType === 'bcrypt') {
-    return bcrypt.compare(pw, user.passwordHash);
+// Verify password — handles SHA-256 (legacy), scrypt (current)
+function checkPw(pw, user) {
+  if (user.hashType === 'scrypt') {
+    const [salt, storedHash] = user.passwordHash.split(':');
+    const hash = scryptSync(pw, salt, 64).toString('hex');
+    // timing-safe comparison to prevent timing attacks
+    try {
+      return timingSafeEqual(Buffer.from(hash), Buffer.from(storedHash));
+    } catch {
+      return false;
+    }
   }
+  // bcrypt hashes (hashType === 'bcrypt'): bcryptjs was removed — treat as invalid,
+  // user will need to reset. This only affects accounts created during the broken period.
+  if (user.hashType === 'bcrypt') return false;
   // Legacy SHA-256 check
   const legacyHash = createHash('sha256').update(pw + user.passwordSalt).digest('hex');
   return legacyHash === user.passwordHash;
@@ -49,14 +59,12 @@ async function checkPw(pw, user) {
 function pruneSessions(sessions) {
   const now = Date.now();
   const keys = Object.keys(sessions);
-  // Remove expired sessions
   const expired = keys.filter(k => {
     const s = sessions[k];
     if (!s.createdAt) return false;
     return (now - new Date(s.createdAt).getTime()) > SESSION_MAX_AGE_MS;
   });
   expired.forEach(k => delete sessions[k]);
-  // If still too many (edge case: all sessions are recent), prune oldest 50
   const remaining = Object.keys(sessions);
   if (remaining.length > 200) {
     remaining
@@ -87,15 +95,15 @@ export default async function handler(req, res) {
       if (user.status === 'pending') return res.status(403).json({ error: 'pending' });
       if (user.status === 'rejected') return res.status(403).json({ error: 'rejected' });
 
-      const valid = await checkPw(password, user);
+      const valid = checkPw(password, user);
       if (!valid) return res.status(401).json({ error: 'Invalid email or password' });
 
-      // Upgrade SHA-256 → bcrypt on successful login (transparent migration)
-      if (user.hashType !== 'bcrypt') {
-        const { hash } = await hashPw(password);
+      // Upgrade legacy hashes to scrypt on successful login
+      if (user.hashType !== 'scrypt') {
+        const { hash } = hashPw(password);
         user.passwordHash = hash;
         user.passwordSalt = null;
-        user.hashType = 'bcrypt';
+        user.hashType = 'scrypt';
         await saveUsers(users);
       }
 
@@ -114,7 +122,6 @@ export default async function handler(req, res) {
       const sessions = await getSessions();
       const s = sessions[token];
       if (!s) return res.json({ valid: false });
-      // Reject sessions older than 30 days
       if (s.createdAt && (Date.now() - new Date(s.createdAt).getTime()) > SESSION_MAX_AGE_MS) {
         return res.json({ valid: false });
       }
@@ -140,7 +147,7 @@ export default async function handler(req, res) {
       if (users.find(u => u.email === email.toLowerCase().trim())) {
         return res.status(409).json({ error: 'An account with this email already exists or is awaiting approval' });
       }
-      const { hash } = await hashPw(password);
+      const { hash } = hashPw(password);
       users.push({
         id: randomBytes(8).toString('hex'),
         name: name.trim(),
@@ -148,7 +155,7 @@ export default async function handler(req, res) {
         phone: (phone || '').trim(),
         passwordHash: hash,
         passwordSalt: null,
-        hashType: 'bcrypt',
+        hashType: 'scrypt',
         role: 'student',
         status: 'pending',
         gender: gender || '',
@@ -165,18 +172,37 @@ export default async function handler(req, res) {
       const users = await getUsers();
       if (users.find(u => u.role === 'tutor')) return res.status(409).json({ error: 'Tutor account already exists. Log in instead.' });
       if (users.find(u => u.email === email.toLowerCase().trim())) return res.status(409).json({ error: 'Email already in use' });
-      const { hash } = await hashPw(password);
+      const { hash } = hashPw(password);
       users.push({
         id: randomBytes(8).toString('hex'),
         name: name.trim(),
         email: email.toLowerCase().trim(),
         passwordHash: hash,
         passwordSalt: null,
-        hashType: 'bcrypt',
+        hashType: 'scrypt',
         role: 'tutor',
         status: 'approved',
         createdAt: new Date().toISOString()
       });
+      await saveUsers(users);
+      return res.json({ ok: true });
+    }
+
+    // ── RESET PASSWORD (for accounts stuck with old bcrypt hash) ──
+    if (action === 'resetPassword') {
+      const { email, password, adminToken } = req.body;
+      if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+      // Only allow if caller is an authenticated tutor
+      const sessions = await getSessions();
+      const session = sessions[adminToken];
+      if (!session || session.role !== 'tutor') return res.status(403).json({ error: 'Unauthorized' });
+      const users = await getUsers();
+      const idx = users.findIndex(u => u.email === email.toLowerCase().trim());
+      if (idx === -1) return res.status(404).json({ error: 'User not found' });
+      const { hash } = hashPw(password);
+      users[idx].passwordHash = hash;
+      users[idx].passwordSalt = null;
+      users[idx].hashType = 'scrypt';
       await saveUsers(users);
       return res.json({ ok: true });
     }
