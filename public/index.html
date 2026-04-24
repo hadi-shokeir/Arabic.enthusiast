@@ -2512,7 +2512,7 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
             border:"2px solid "+(flipped?"#333":"#e0e0e0"),
             boxShadow:flipped?"0 4px 16px rgba(0,0,0,0.3)":"0 2px 8px rgba(0,0,0,0.08)",
             color:flipped?"#fff":"#111",
-            opacity:lastRating?.0.6:1,transition:"opacity 0.3s"
+            opacity:lastRating?0.6:1,transition:"opacity 0.3s"
           }}>
             ${flipped
               ? h`<div style=${{display:"flex",flexDirection:"column",alignItems:"center",gap:8,width:"100%"}}>
