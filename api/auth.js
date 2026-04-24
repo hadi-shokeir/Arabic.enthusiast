@@ -31,7 +31,7 @@ async function saveSessions(s) { await kv(['SET', 'sessions', JSON.stringify(s)]
 
 // Hash with bcrypt (new standard)
 async function hashPw(pw) {
-  const hash = await bcrypt.hash(pw, 12);
+  const hash = await bcrypt.hash(pw, 10);
   return { hash, salt: null, hashType: 'bcrypt' };
 }
 

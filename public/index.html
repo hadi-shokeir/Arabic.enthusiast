@@ -409,8 +409,15 @@ async function apiPost(endpoint, body) {
     const stored = getAuth();
     if (stored?.token) body = {...body, token: stored.token};
   }
-  const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return r.json();
+  try {
+    const r = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok && r.status !== 400 && r.status !== 401 && r.status !== 403 && r.status !== 409) {
+      return { error: "Server error (" + r.status + "). Please try again." };
+    }
+    return r.json();
+  } catch (e) {
+    return { error: "Connection failed. Check your internet and try again." };
+  }
 }
 
 // Push notification helpers — fire-and-forget, never throw
@@ -1702,17 +1709,21 @@ function AuthScreen({onAuth}) {
   const doLogin = async () => {
     if (!email || !password) return setError("Email and password required");
     setLoading(true); reset();
-    const d = await apiPost("/api/auth", {action:"login", email, password});
-    setLoading(false);
-    if (d.error === "pending") return setError("Your request is pending. Your teacher hasn't confirmed it yet.");
-    if (d.error === "rejected") return setError("Access denied. Contact your teacher.");
-    if (d.error) return setError(d.error);
-    if (d.error === "kv_not_configured") return setError("Storage not connected yet. Go to vercel.com → your project → Storage tab → Create KV database → Connect to project → redeploy.");
-    setAuthStore(d);
-    onAuth({token: d.token, role: d.role, name: d.name, email: d.email, user: {email: d.email, id: d.email}});
-    // If notification permission was already granted on a previous visit, silently refresh the subscription
-    if ('Notification' in window && Notification.permission === 'granted') {
-      window.registerPushNotifications?.(d.token);
+    try {
+      const d = await apiPost("/api/auth", {action:"login", email, password});
+      if (d.error === "kv_not_configured") return setError("Storage not connected yet. Contact Hadi.");
+      if (d.error === "pending") return setError("Your request is pending. Hadi hasn't confirmed it yet.");
+      if (d.error === "rejected") return setError("Access denied. Contact your teacher.");
+      if (d.error) return setError(d.error);
+      setAuthStore(d);
+      onAuth({token: d.token, role: d.role, name: d.name, email: d.email, user: {email: d.email, id: d.email}});
+      if ('Notification' in window && Notification.permission === 'granted') {
+        window.registerPushNotifications?.(d.token);
+      }
+    } catch (e) {
+      setError("Login failed. Check your internet connection and try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1720,21 +1731,31 @@ function AuthScreen({onAuth}) {
     if (!name || !phone || !email || !password) return setError("Name, phone, email and password are all required");
     if (password.length < 6) return setError("Password must be at least 6 characters");
     setLoading(true); reset();
-    const d = await apiPost("/api/auth", {action:"request", name, phone, email, password, learnType, gender, message});
-    setLoading(false);
-    if (d.error) return setError(d.error);
-    setSuccess("Request sent! Hadi will review your request and get back to you soon.");
-    setMode("login");
+    try {
+      const d = await apiPost("/api/auth", {action:"request", name, phone, email, password, learnType, gender, message});
+      if (d.error) return setError(d.error);
+      setSuccess("Request sent! Hadi will review your request and get back to you soon.");
+      setMode("login");
+    } catch (e) {
+      setError("Request failed. Check your internet and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const doSetup = async () => {
     if (!name || !email || !password) return setError("All fields required");
     setLoading(true); reset();
-    const d = await apiPost("/api/auth", {action:"setup", name, email, password});
-    setLoading(false);
-    if (d.error) return setError(d.error);
-    setSuccess("Tutor account created! You can now log in.");
-    setMode("login");
+    try {
+      const d = await apiPost("/api/auth", {action:"setup", name, email, password});
+      if (d.error) return setError(d.error);
+      setSuccess("Tutor account created! You can now log in.");
+      setMode("login");
+    } catch (e) {
+      setError("Setup failed. Check your internet and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return h`<div class="auth-wrap">
