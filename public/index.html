@@ -1692,7 +1692,7 @@ function StudentWeeklyTasks({student, data, setData, auth}) {
 // AUTH SCREEN — login + request access + first setup
 // ════════════════════════════════════════
 function AuthScreen({onAuth}) {
-  const [mode, setMode] = useState("login"); // login | request | setup
+  const [mode, setMode] = useState("login"); // login | request | verify | setup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -1703,6 +1703,9 @@ function AuthScreen({onAuth}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyPhone, setVerifyPhone] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
 
   const reset = () => { setError(""); setSuccess(""); };
 
@@ -1728,16 +1731,32 @@ function AuthScreen({onAuth}) {
   };
 
   const doRequest = async () => {
-    if (!name || !phone || !email || !password) return setError("Name, phone, email and password are all required");
+    if (!name || !phone || !email || !password) return setError("Name, WhatsApp number, email and password are all required");
     if (password.length < 6) return setError("Password must be at least 6 characters");
     setLoading(true); reset();
     try {
       const d = await apiPost("/api/auth", {action:"request", name, phone, email, password, learnType, gender, message});
       if (d.error) return setError(d.error);
-      setSuccess("Request sent! Hadi will review your request and get back to you soon.");
-      setMode("login");
+      setVerifyEmail(email);
+      setVerifyPhone(phone);
+      setMode("verify");
     } catch (e) {
       setError("Request failed. Check your internet and try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const doVerify = async () => {
+    if (!verifyCode || verifyCode.trim().length !== 6) return setError("Enter the 6-digit code from WhatsApp");
+    setLoading(true); reset();
+    try {
+      const d = await apiPost("/api/auth", {action:"verifyPhone", email:verifyEmail, code:verifyCode.trim()});
+      if (d.error) return setError(d.error);
+      setSuccess("WhatsApp verified! Hadi will review your request and confirm your access shortly.");
+      setMode("login");
+    } catch (e) {
+      setError("Verification failed. Check your internet and try again.");
     } finally {
       setLoading(false);
     }
@@ -1786,7 +1805,7 @@ function AuthScreen({onAuth}) {
             </label>`)}
           </div>
         </div>
-        <div class="fg"><label>Phone / WhatsApp (with country code) *</label><input value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="e.g. +1 555 123 4567"/></div>
+        <div class="fg"><label>WhatsApp Number * (with country code)</label><input value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="e.g. +961 70 123 456" type="tel"/></div>
         <div class="fg"><label>Email *</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/></div>
         <div class="fg"><label>Choose a Password *</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
         <div class="fg"><label>What would you like to learn? *</label>
@@ -1801,6 +1820,34 @@ function AuthScreen({onAuth}) {
         <div class="fg"><label>Notes to Hadi (optional)</label><textarea value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm a complete beginner... or I want to improve my reading for travel..." style=${{minHeight:70}}/></div>
         <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request to Hadi"}</button>
         <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Hadi will review your info and confirm your access shortly.</div>
+      </div>`}
+
+      ${mode==="verify" && h`<div>
+        <div style=${{textAlign:"center",marginBottom:20}}>
+          <div style=${{fontSize:40,marginBottom:10}}>📱</div>
+          <div style=${{fontWeight:700,fontSize:16,marginBottom:8}}>Check your WhatsApp</div>
+          <div style=${{fontSize:13,color:"var(--g500)",lineHeight:1.7}}>
+            Hadi will send a 6-digit code to<br/>
+            <strong style=${{color:"var(--g800)"}}>${verifyPhone}</strong><br/>
+            Enter it below once you receive it.
+          </div>
+        </div>
+        <div class="fg">
+          <label>6-Digit Code</label>
+          <input
+            value=${verifyCode}
+            onInput=${e=>setVerifyCode(e.target.value.replace(/\D/g,"").slice(0,6))}
+            placeholder="e.g. 482910"
+            style=${{letterSpacing:6,fontSize:22,textAlign:"center",fontWeight:700}}
+            maxlength="6"
+            onKeyDown=${e=>e.key==="Enter"&&doVerify()}
+          />
+        </div>
+        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doVerify} disabled=${loading}>${loading?"Verifying...":"Verify WhatsApp"}</button>
+        <div style=${{marginTop:12,fontSize:11,color:"var(--g400)",textAlign:"center",lineHeight:1.7}}>
+          Didn't receive a code? Make sure your WhatsApp number is correct.<br/>
+          <span style=${{cursor:"pointer",textDecoration:"underline"}} onClick=${()=>{setMode("request");reset();}}>← Go back and change number</span>
+        </div>
       </div>`}
 
       ${mode==="setup" && h`<div>
@@ -7234,14 +7281,35 @@ function UserManagement({auth, data, setData}) {
       ${pending.length===0 ? h`<div class="empty"><h3>NO PENDING REQUESTS</h3><p>When a student requests access, they'll appear here.</p></div>` :
       h`<div>${pending.map(u=>h`<div key=${u.email} class="assess-card" style=${{borderLeftColor:"var(--wn)"}}>
         <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
-          <div>
+          <div style=${{flex:1,minWidth:0}}>
             <div style=${{fontWeight:700,fontSize:15}}>${u.name}</div>
             <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${u.email}</div>
             <div style=${{fontSize:11,color:"var(--g400)",marginTop:2}}>Requested: ${fmt2(u.createdAt)}${u.gender?" · "+(u.gender==="female"?"👩 Female":"👨 Male"):""}</div>
-            ${u.learnType&&h`<div style=${{fontSize:11,color:"#1976d2",marginTop:2}}>Wants to learn: ${u.learnType}</div>`}
+            ${u.phone&&h`<div style=${{fontSize:12,color:"var(--g600)",marginTop:4,display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span>📱 ${u.phone}</span>
+              ${u.phoneVerified
+                ? h`<span style=${{background:"#e8f5e9",color:"#2e7d32",fontWeight:700,fontSize:11,padding:"2px 8px",borderRadius:10}}>✓ WhatsApp verified</span>`
+                : h`<span style=${{background:"#fff3e0",color:"#e65100",fontWeight:700,fontSize:11,padding:"2px 8px",borderRadius:10}}>⏳ Awaiting verification</span>`
+              }
+            </div>`}
+            ${u.verifyCode&&!u.phoneVerified&&h`<div style=${{marginTop:8,padding:"10px 12px",background:"#f3e5f5",border:"2px dashed #9c27b0",borderRadius:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+              <div>
+                <div style=${{fontSize:10,fontWeight:700,color:"#7b1fa2",letterSpacing:1,marginBottom:2}}>VERIFICATION CODE TO SEND</div>
+                <div style=${{fontSize:28,fontWeight:900,letterSpacing:8,color:"#4a148c",fontFamily:"monospace"}}>${u.verifyCode}</div>
+              </div>
+              <div style=${{display:"flex",flexDirection:"column",gap:6}}>
+                <button class="btn btn-sm" style=${{background:"#25D366",color:"#fff",border:"none",fontSize:11}} onClick=${()=>{
+                  const num = (u.phone||"").replace(/[\s+\-()]/g,"");
+                  const msg = encodeURIComponent("Hi "+u.name.split(" ")[0]+"! Your Arabic Enthusiast verification code is: "+u.verifyCode+" — enter it on the website to verify your WhatsApp.");
+                  window.open("https://wa.me/"+num+"?text="+msg,"_blank");
+                }}>Send via WhatsApp</button>
+                <button class="btn btn-sm" style=${{fontSize:11}} onClick=${()=>{navigator.clipboard?.writeText(u.verifyCode);setMsg("Code copied!");}}>📋 Copy code</button>
+              </div>
+            </div>`}
+            ${u.learnType&&h`<div style=${{fontSize:11,color:"#1976d2",marginTop:4}}>Wants to learn: ${u.learnType}</div>`}
             ${u.message&&h`<div style=${{marginTop:8,padding:"8px 10px",background:"var(--g50)",fontSize:12,lineHeight:1.6,borderLeft:"2px solid var(--g300)"}}>"${u.message}"</div>`}
           </div>
-          <div style=${{display:"flex",gap:6,flexShrink:0}}>
+          <div style=${{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
             <button class="btn btn-p btn-sm" onClick=${()=>approve(u.email, u.name, u.gender)}>✓ Approve</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>reject(u.email)}>✗ Reject</button>
           </div>
