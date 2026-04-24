@@ -172,13 +172,20 @@ export default async function handler(req, res) {
     // ─────────────────────────────────────────────────────────────────────────
     if (action === 'addSlot') {
       if (!isTutor) return res.status(403).json({ error: 'Unauthorized' });
-      const { date, time, duration = 60 } = req.body;
+      const { date, time, duration = 60, studentId: preBookStudentId } = req.body;
       if (!date || !time) return res.status(400).json({ error: 'date and time required' });
       let slots = await getSlots();
       if (hasConflict(slots, date, time, duration)) {
         return res.status(409).json({ error: 'conflict', message: `A slot already exists at ${time} on ${date}` });
       }
-      const slot = { id: uid(), date, time, duration, status: 'open', studentId: null, studentName: null, bookedAt: null, gcEventId: null, createdAt: new Date().toISOString() };
+      // Optionally pre-book for a specific student
+      let bookedStudentId = null, bookedStudentName = null, bookedStatus = 'open';
+      if (preBookStudentId) {
+        const studentData = await getStudentData();
+        const stu = (studentData?.students || []).find(s => s.id === preBookStudentId);
+        if (stu) { bookedStudentId = stu.id; bookedStudentName = stu.name; bookedStatus = 'booked'; }
+      }
+      const slot = { id: uid(), date, time, duration, status: bookedStatus, studentId: bookedStudentId, studentName: bookedStudentName, bookedAt: bookedStudentId ? new Date().toISOString() : null, gcEventId: null, createdAt: new Date().toISOString() };
       await saveSlots([...slots, slot]);
       return res.json({ ok: true, slot });
     }

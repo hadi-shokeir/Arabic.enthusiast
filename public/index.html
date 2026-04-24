@@ -5899,7 +5899,7 @@ function Scheduling({data, setData, auth}) {
 
   // Add slot form
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({date:"", time:"10:00", duration:60});
+  const [addForm, setAddForm] = useState({date:"", time:"10:00", duration:60, studentId:""});
   const [addErr, setAddErr] = useState("");
 
   // Copy day form (slots section)
@@ -5947,9 +5947,9 @@ function Scheduling({data, setData, auth}) {
     if (!addForm.date || !addForm.time) { setAddErr("Date and time are required."); return; }
     setBusy(true);
     try {
-      const r = await apiPost("/api/schedule", {token: auth.token, action:"addSlot", date:addForm.date, time:addForm.time, duration:+addForm.duration});
+      const r = await apiPost("/api/schedule", {token: auth.token, action:"addSlot", date:addForm.date, time:addForm.time, duration:+addForm.duration, studentId:addForm.studentId||null});
       if (r.error) { setAddErr(r.message || r.error); }
-      else { setSlots([...(slots||[]), r.slot]); setShowAdd(false); setAddForm({date:"",time:"10:00",duration:60}); flash("Slot added!"); }
+      else { setSlots([...(slots||[]), r.slot]); setShowAdd(false); setAddForm({date:"",time:"10:00",duration:60,studentId:""}); flash(addForm.studentId ? "Slot added & booked!" : "Slot added!"); }
     } catch(e) { setAddErr(e.message); }
     setBusy(false);
   };
@@ -6249,9 +6249,16 @@ function Scheduling({data, setData, auth}) {
             ${[30,45,60,75,90,120].map(d => h`<option key=${d} value=${d}>${d} min</option>`)}
           </select></div>
         </div>
-        <div style=${{display:"flex",gap:8,marginTop:4}}>
-          <button class="btn btn-p btn-sm" onClick=${doAddSlot} disabled=${busy}>Save Slot</button>
-          <button class="btn btn-sm" onClick=${()=>{setShowAdd(false);setAddErr("");}}>Cancel</button>
+        <div class="fg">
+          <label>Student <span style=${{fontWeight:400,color:"var(--g400)"}}}>(optional — leave blank for open slot)</span></label>
+          <select value=${addForm.studentId} onChange=${e=>setAddForm({...addForm,studentId:e.target.value})} style=${{border:"2px solid var(--g200)",padding:"9px 11px",fontFamily:"var(--fb)",fontSize:13,borderRadius:7,width:"100%"}}>
+            <option value="">— Open slot (any student can book) —</option>
+            ${(data.students||[]).filter(s=>s.active).sort((a,b)=>a.name.localeCompare(b.name)).map(s=>h`<option key=${s.id} value=${s.id}>${s.name}</option>`)}
+          </select>
+        </div>
+        <div style=${{display:"flex",gap:8,marginTop:8}}>
+          <button class="btn btn-p btn-sm" onClick=${doAddSlot} disabled=${busy}>${addForm.studentId?"Save & Book for Student":"Save Slot"}</button>
+          <button class="btn btn-sm" onClick=${()=>{setShowAdd(false);setAddErr("");setAddForm({date:"",time:"10:00",duration:60,studentId:""});}}>Cancel</button>
         </div>
       </div>`}
 
