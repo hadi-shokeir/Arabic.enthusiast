@@ -5902,10 +5902,12 @@ function Scheduling({data, setData, auth}) {
   const [addForm, setAddForm] = useState({date:"", time:"10:00", duration:60});
   const [addErr, setAddErr] = useState("");
 
-  // Copy day form
+  // Copy day form (slots section)
   const [showCopy, setShowCopy] = useState(false);
   const [copyFrom, setCopyFrom] = useState("");
   const [copyTo, setCopyTo] = useState("");
+  // Copy availability day (weekly schedule section)
+  const [availCopyFrom, setAvailCopyFrom] = useState(null);
 
   // Filter
   const [filter, setFilter] = useState("upcoming"); // upcoming | all | open | booked | completed
@@ -6092,13 +6094,12 @@ function Scheduling({data, setData, auth}) {
       const addRange = (i) => { const cur=avail[i]||{enabled:true,ranges:[]}; uAvail({...avail,[i]:{...cur,ranges:[...(cur.ranges||[]),{start:"09:00",end:"17:00"}]}}); };
       const rmRange = (i,ri) => { const cur=avail[i]; uAvail({...avail,[i]:{...cur,ranges:cur.ranges.filter((_,x)=>x!==ri)}}); };
       const updRange = (i,ri,k,v) => { const cur=avail[i]; uAvail({...avail,[i]:{...cur,ranges:cur.ranges.map((r,x)=>x===ri?{...r,[k]:v}:r)}}); };
-      const [copyFrom, setCopyFrom] = useState(null); // day index being copied
-      const copyTo = (fromDay, toDay) => {
+      const copyAvailTo = (fromDay, toDay) => {
         if (fromDay === toDay) return;
         const src = avail[fromDay]||{enabled:false,ranges:[]};
         const ranges = JSON.parse(JSON.stringify(src.ranges||[])); // deep copy
         uAvail({...avail,[toDay]:{enabled:true,ranges}});
-        setCopyFrom(null);
+        setAvailCopyFrom(null);
       };
       const toggleBlocked = (dateStr) => {
         const next = blocked.includes(dateStr) ? blocked.filter(d=>d!==dateStr) : [...blocked, dateStr];
@@ -6160,12 +6161,12 @@ function Scheduling({data, setData, auth}) {
                 <div style=${{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
                   <button class="btn btn-sm" onClick=${()=>addRange(i)}>+ Add Time Range</button>
                   <div style=${{position:"relative"}}>
-                    <button class="btn btn-sm" style=${{background:copyFrom===i?"#e3f2fd":"",borderColor:copyFrom===i?"#1976d2":""}} onClick=${()=>setCopyFrom(copyFrom===i?null:i)}>
+                    <button class="btn btn-sm" style=${{background:availCopyFrom===i?"#e3f2fd":"",borderColor:availCopyFrom===i?"#1976d2":""}} onClick=${()=>setAvailCopyFrom(availCopyFrom===i?null:i)}>
                       📋 Copy to...
                     </button>
-                    ${copyFrom===i&&h`<div style=${{position:"absolute",right:0,top:"calc(100% + 4px)",background:"#fff",border:"2px solid #1976d2",borderRadius:10,padding:"10px 12px",zIndex:100,minWidth:180,boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
+                    ${availCopyFrom===i&&h`<div style=${{position:"absolute",right:0,top:"calc(100% + 4px)",background:"#fff",border:"2px solid #1976d2",borderRadius:10,padding:"10px 12px",zIndex:100,minWidth:180,boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
                       <div style=${{fontSize:11,fontWeight:700,color:"#1976d2",marginBottom:8,letterSpacing:1}}>COPY TO WHICH DAYS?</div>
-                      ${[0,1,2,3,4,5,6].filter(d=>d!==i).map(d=>h`<button key=${d} onClick=${()=>copyTo(i,d)} style=${{
+                      ${[0,1,2,3,4,5,6].filter(d=>d!==i).map(d=>h`<button key=${d} onClick=${()=>copyAvailTo(i,d)} style=${{
                         display:"block",width:"100%",textAlign:"left",padding:"7px 10px",marginBottom:4,
                         background:(avail[d]||{}).enabled?"#f0f4ff":"#fafafa",
                         border:"1.5px solid "+((avail[d]||{}).enabled?"#1976d2":"var(--g200)"),
@@ -6174,7 +6175,7 @@ function Scheduling({data, setData, auth}) {
                       }}>
                         ${DAY_NAMES[d]} ${(avail[d]||{}).enabled?"(will overwrite)":"(will enable)"}
                       </button>`)}
-                      <button onClick=${()=>setCopyFrom(null)} style=${{fontSize:11,color:"var(--g400)",background:"none",border:"none",cursor:"pointer",marginTop:4,width:"100%",textAlign:"center"}}>Cancel</button>
+                      <button onClick=${()=>setAvailCopyFrom(null)} style=${{fontSize:11,color:"var(--g400)",background:"none",border:"none",cursor:"pointer",marginTop:4,width:"100%",textAlign:"center"}}>Cancel</button>
                     </div>`}
                   </div>
                 </div>
