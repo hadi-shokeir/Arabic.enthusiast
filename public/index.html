@@ -6092,6 +6092,14 @@ function Scheduling({data, setData, auth}) {
       const addRange = (i) => { const cur=avail[i]||{enabled:true,ranges:[]}; uAvail({...avail,[i]:{...cur,ranges:[...(cur.ranges||[]),{start:"09:00",end:"17:00"}]}}); };
       const rmRange = (i,ri) => { const cur=avail[i]; uAvail({...avail,[i]:{...cur,ranges:cur.ranges.filter((_,x)=>x!==ri)}}); };
       const updRange = (i,ri,k,v) => { const cur=avail[i]; uAvail({...avail,[i]:{...cur,ranges:cur.ranges.map((r,x)=>x===ri?{...r,[k]:v}:r)}}); };
+      const [copyFrom, setCopyFrom] = useState(null); // day index being copied
+      const copyTo = (fromDay, toDay) => {
+        if (fromDay === toDay) return;
+        const src = avail[fromDay]||{enabled:false,ranges:[]};
+        const ranges = JSON.parse(JSON.stringify(src.ranges||[])); // deep copy
+        uAvail({...avail,[toDay]:{enabled:true,ranges}});
+        setCopyFrom(null);
+      };
       const toggleBlocked = (dateStr) => {
         const next = blocked.includes(dateStr) ? blocked.filter(d=>d!==dateStr) : [...blocked, dateStr];
         setData({...data, settings:{...S, blockedDates:next}});
@@ -6147,9 +6155,29 @@ function Scheduling({data, setData, auth}) {
             const day = avail[i]||{enabled:false,ranges:[]};
             if (!day.enabled) return null;
             return h`<div key=${i} style=${{marginBottom:12,padding:"14px 16px",border:"2px solid #111",borderRadius:10,background:"#fff"}}>
-              <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
                 <div style=${{fontWeight:800,fontSize:14}}>${DAY_NAMES[i]}</div>
-                <button class="btn btn-sm" onClick=${()=>addRange(i)}>+ Add Time Range</button>
+                <div style=${{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                  <button class="btn btn-sm" onClick=${()=>addRange(i)}>+ Add Time Range</button>
+                  <div style=${{position:"relative"}}>
+                    <button class="btn btn-sm" style=${{background:copyFrom===i?"#e3f2fd":"",borderColor:copyFrom===i?"#1976d2":""}} onClick=${()=>setCopyFrom(copyFrom===i?null:i)}>
+                      📋 Copy to...
+                    </button>
+                    ${copyFrom===i&&h`<div style=${{position:"absolute",right:0,top:"calc(100% + 4px)",background:"#fff",border:"2px solid #1976d2",borderRadius:10,padding:"10px 12px",zIndex:100,minWidth:180,boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
+                      <div style=${{fontSize:11,fontWeight:700,color:"#1976d2",marginBottom:8,letterSpacing:1}}>COPY TO WHICH DAYS?</div>
+                      ${[0,1,2,3,4,5,6].filter(d=>d!==i).map(d=>h`<button key=${d} onClick=${()=>copyTo(i,d)} style=${{
+                        display:"block",width:"100%",textAlign:"left",padding:"7px 10px",marginBottom:4,
+                        background:(avail[d]||{}).enabled?"#f0f4ff":"#fafafa",
+                        border:"1.5px solid "+((avail[d]||{}).enabled?"#1976d2":"var(--g200)"),
+                        borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:600,
+                        color:(avail[d]||{}).enabled?"#1565c0":"#333"
+                      }}>
+                        ${DAY_NAMES[d]} ${(avail[d]||{}).enabled?"(will overwrite)":"(will enable)"}
+                      </button>`)}
+                      <button onClick=${()=>setCopyFrom(null)} style=${{fontSize:11,color:"var(--g400)",background:"none",border:"none",cursor:"pointer",marginTop:4,width:"100%",textAlign:"center"}}>Cancel</button>
+                    </div>`}
+                  </div>
+                </div>
               </div>
               ${(day.ranges||[]).length===0 && h`<div style=${{fontSize:12,color:"var(--g400)",fontStyle:"italic"}}>No hours set — click "Add Time Range".</div>`}
               ${(day.ranges||[]).map((r,ri)=>h`<div key=${ri} style=${{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"1.5px solid var(--g200)",flexWrap:"wrap"}}>
