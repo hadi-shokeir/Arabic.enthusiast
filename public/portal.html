@@ -4163,7 +4163,6 @@ const SP_NAV = [
   {id:'foundation',icon:'🌿',label:'Foundation',group:'LEARN'},
   {id:'script',icon:'ب',label:'Script',group:'LEARN'},
   {id:'culture',icon:'🕌',label:'Culture',group:'EXPLORE'},
-  {id:'shop',icon:'🛒',label:'Shop',group:'EXPLORE'},
   {id:'library',icon:'📚',label:'Library',group:'MY LESSONS'},
   {id:'book',icon:'📅',label:'Book a Lesson',group:'MY LESSONS'},
   {id:'curriculum',icon:'📋',label:'Curriculum',group:'MY LESSONS'},
@@ -4303,9 +4302,6 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
   const [scriptLetter, setScriptLetter] = useState(null);
 
   // Shop
-  const [cart, setCart] = useState([]);
-  const [shopFilter, setShopFilter] = useState("all");
-  const [cartMsg, setCartMsg] = useState("");
 
   useEffect(() => {
     if (auth?.token && 'Notification' in window && Notification.permission==='granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
@@ -4772,28 +4768,6 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
     </div>`;
 
     // ── SHOP ──
-    if(spTab==='shop') return h`<div>
-      <div style=${{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:700,marginBottom:6,color:"var(--sp-txt)"}}>Shop</div>
-      <div style=${{fontSize:13,color:"var(--sp-txt2)",marginBottom:18}}>Books, materials, and digital resources to accelerate your Arabic learning.</div>
-      <div style=${{display:"flex",gap:8,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
-        ${[["all","All"],["physical","📦 Physical"],["digital","💾 Digital"]].map(([f,l])=>h`<button key=${f} class="sp2-btn sp2-btn-g sp2-btn-sm" style=${shopFilter===f?{background:"var(--sp-glow)",borderColor:"var(--sp-border-h)",color:"var(--sp-amber)"}:{}} onClick=${()=>setShopFilter(f)}>${l}</button>`)}
-        ${cart.length>0?h`<span class="sp2-badge sp2-badge-a" style=${{marginLeft:"auto"}}>🛒 ${cart.length} in cart</span>`:null}
-        ${cartMsg?h`<span style=${{fontSize:12,color:"var(--sp-green)",marginLeft:8}}>${cartMsg}</span>`:null}
-      </div>
-      <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
-        ${SP_SHOP.filter(item=>shopFilter==="all"||item.type===shopFilter).map(item=>h`<div key=${item.id} class="sp2-card sp2-card-h">
-          <div style=${{width:56,height:56,borderRadius:12,background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,marginBottom:12}}>${item.img}</div>
-          <div style=${{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,color:"var(--sp-txt)",marginBottom:4}}>${item.name}</div>
-          <div style=${{fontFamily:"'Amiri',serif",fontSize:13,color:"var(--sp-txt3)",direction:"rtl",marginBottom:10}}>${item.nameAr}</div>
-          <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-            <span style=${{fontSize:18,fontWeight:700,color:"var(--sp-amber)"}}>$${item.price}</span>
-            <span class=${"sp2-badge "+(item.type==="digital"?"sp2-badge-t":"sp2-badge-g")}>${item.type}</span>
-          </div>
-          <div style=${{fontSize:11,color:"var(--sp-txt3)",marginBottom:12}}>⭐ ${item.rating} (${item.reviews} reviews)</div>
-          <button class="sp2-btn sp2-btn-p" style=${{width:"100%",justifyContent:"center"}} onClick=${()=>{setCart([...cart,item]);setCartMsg("Added!");setTimeout(()=>setCartMsg(""),2000);}}>Add to Cart</button>
-        </div>`)}
-      </div>
-    </div>`;
 
     // ── LIBRARY ──
     if(spTab==='library') return h`<${StudentLibraryTab} student=${s} data=${data} setData=${setData} initialTopic=${jumpTopic}/>`;
