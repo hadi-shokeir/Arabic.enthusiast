@@ -175,16 +175,27 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .free-left-stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--ok);margin-top:4px}
 .free-left-stepper .st-btn{background:var(--ok)}.free-left-stepper .st-btn:hover{background:#008844}
 /* Auth screens */
-.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bk);font-family:var(--fb);padding:16px;box-sizing:border-box;overflow-y:auto}
-.auth-box{background:var(--wh);border:2px solid var(--bk);padding:40px;width:100%;max-width:420px}
-.auth-box h1{font-family:var(--fh);font-size:36px;letter-spacing:4px;margin-bottom:4px}
-.auth-box .sub{font-size:12px;color:var(--g500);margin-bottom:28px}
-.auth-box .fg input{padding:12px 14px;font-size:14px}
-.auth-box .error{color:var(--bd);font-size:12px;margin-top:8px;font-weight:600}
-.auth-box .success{color:var(--ok);font-size:12px;margin-top:8px;font-weight:600}
-.auth-tabs{display:flex;border-bottom:2px solid var(--bk);margin-bottom:20px}
-.auth-tab{flex:1;padding:10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--g400)}
-.auth-tab.on{color:var(--bk);border-bottom-color:var(--bk)}
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0805;font-family:'DM Sans',sans-serif;padding:24px;box-sizing:border-box;overflow-y:auto;position:relative}
+.auth-wrap::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(201,146,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,146,42,0.04) 1px,transparent 1px);background-size:80px 80px}
+.auth-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(201,146,42,0.06) 0%,transparent 70%)}
+.auth-box{position:relative;z-index:1;background:rgba(15,12,8,0.85);border:1px solid rgba(201,146,42,0.2);backdrop-filter:blur(20px);padding:48px 44px;width:100%;max-width:440px}
+.auth-inp{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;transition:border-color 0.2s;box-sizing:border-box}
+.auth-inp:focus{border-color:rgba(201,146,42,0.5)}
+.auth-inp::placeholder{color:rgba(245,240,232,0.2)}
+.auth-label{display:block;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(201,146,42,0.7);margin-bottom:8px;font-weight:600}
+.auth-btn{width:100%;padding:14px;background:#c9922a;color:#0a0805;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;transition:background 0.2s}
+.auth-btn:hover{background:#e5b04a}
+.auth-btn:disabled{opacity:0.5;cursor:not-allowed}
+.auth-btn-ghost{width:100%;padding:13px;background:transparent;color:rgba(245,240,232,0.6);border:1px solid rgba(201,146,42,0.2);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s}
+.auth-btn-ghost:hover{border-color:#c9922a;color:#c9922a}
+.auth-sel{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;box-sizing:border-box;color-scheme:dark}
+.auth-textarea{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;resize:vertical;min-height:80px;box-sizing:border-box;transition:border-color 0.2s}
+.auth-textarea:focus{border-color:rgba(201,146,42,0.5)}
+.auth-textarea::placeholder{color:rgba(245,240,232,0.2)}
+.auth-tabs{display:flex;border-bottom:1px solid rgba(201,146,42,0.2);margin-bottom:28px;gap:4px}
+.auth-tab{flex:1;padding:12px 8px;text-align:center;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:rgba(245,240,232,0.4);transition:color 0.2s;font-family:'DM Sans',sans-serif}
+.auth-tab:hover{color:rgba(245,240,232,0.7)}
+.auth-tab.on{color:#c9922a;border-bottom-color:#c9922a}
 .auth-role-sel{display:flex;gap:10px;margin-bottom:20px}
 .auth-role{flex:1;padding:14px;border:2px solid var(--g200);text-align:center;cursor:pointer;transition:all .1s}
 .auth-role.on{border-color:var(--bk);background:var(--bk);color:var(--wh)}
@@ -388,13 +399,13 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .cred-low{color:var(--bd)}.cred-ok{color:var(--ok)}.cred-warn{color:var(--wn)}
 
 /* student-portal-v2 */
-.sp2-root[data-theme="dark"]{--sp-bg:#0A0F1A;--sp-mid:#0F1726;--sp-card:#141D2E;--sp-surface:rgba(255,255,255,0.03);--sp-amber:#D4A853;--sp-amber-l:#E8C97A;--sp-amber-d:#B08A3A;--sp-glow:rgba(212,168,83,0.1);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#E8E4DD;--sp-txt2:#8B9BB4;--sp-txt3:#5A6A80;--sp-border:rgba(255,255,255,0.06);--sp-border-h:rgba(212,168,83,0.25)}
+.sp2-root[data-theme="dark"]{--sp-bg:#0A0F1A;--sp-mid:#0F1726;--sp-card:#141D2E;--sp-surface:rgba(255,255,255,0.03);--sp-amber:#c9922a;--sp-amber-l:#e5b04a;--sp-amber-d:#a87520;--sp-glow:rgba(201,146,42,0.1);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#E8E4DD;--sp-txt2:#8B9BB4;--sp-txt3:#5A6A80;--sp-border:rgba(255,255,255,0.06);--sp-border-h:rgba(201,146,42,0.25)}
 .sp2-root[data-theme="light"]{--sp-bg:#F5F3EE;--sp-mid:#ECEAE3;--sp-card:#FFFFFF;--sp-surface:rgba(0,0,0,0.02);--sp-amber:#B08030;--sp-amber-l:#D4A853;--sp-amber-d:#8A6010;--sp-glow:rgba(176,128,48,0.08);--sp-teal:#1F8A7F;--sp-green:#2E7D52;--sp-red:#C03030;--sp-rose:#C04060;--sp-txt:#1A1A1A;--sp-txt2:#555;--sp-txt3:#888;--sp-border:rgba(0,0,0,0.08);--sp-border-h:rgba(176,128,48,0.3)}
 body:has(.sp2-root){overflow:hidden}
 #root:has(.sp2-root){overflow:hidden;height:100dvh}
 .sp2-root{font-family:'Outfit',sans-serif;height:100dvh;background:var(--sp-bg);color:var(--sp-txt);display:flex;flex-direction:column;overflow:hidden}
 .sp2-hdr{position:sticky;top:0;z-index:100;background:var(--sp-mid);border-bottom:1px solid var(--sp-border);backdrop-filter:blur(20px);display:flex;align-items:center;gap:14px;padding:0 18px;height:58px;flex-shrink:0}
-.sp2-logo{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--sp-amber);letter-spacing:1.5px;text-transform:uppercase}
+.sp2-logo{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--sp-amber);letter-spacing:2px;text-transform:uppercase}
 .sp2-layout{display:flex;flex:1;min-height:0;overflow:hidden}
 .sp2-sidebar{width:218px;flex-shrink:0;background:var(--sp-mid);border-right:1px solid var(--sp-border);padding:10px 8px;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
 .sp2-nav-grp{font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:var(--sp-txt3);padding:12px 14px 3px;text-transform:uppercase}
@@ -1846,90 +1857,153 @@ function AuthScreen({onAuth}) {
     }
   };
 
+  const fgStyle = {marginBottom:20};
+  const radioLabelStyle = (active) => ({display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:"0.85rem",color:active?"#c9922a":"rgba(245,240,232,0.55)",transition:"color 0.2s"});
+
   return h`<div class="auth-wrap">
     <div class="auth-box">
-      <div style=${{textAlign:"center",marginBottom:8}}><img src="/logo.jpeg" style=${{width:110,height:110,objectFit:"contain",borderRadius:20}}/></div>
-      <h1 style=${{textAlign:"center"}}>ARABIC ENTHUSIAST</h1>
-      <div class="sub" style=${{textAlign:"center"}}>Student Management System</div>
 
-      <div class="auth-tabs" style=${{marginBottom:20}}>
-        <div class=${"auth-tab "+(mode==="login"?"on":"")} onClick=${()=>{setMode("login");reset();}}>Log In</div>
-        <div class=${"auth-tab "+(mode==="request"?"on":"")} onClick=${()=>{setMode("request");reset();}}>Request Access</div>
+      <!-- Logo + Title -->
+      <div style=${{textAlign:"center",marginBottom:32}}>
+        <div style=${{fontFamily:"'Amiri',serif",fontSize:"2rem",color:"rgba(201,146,42,0.35)",marginBottom:8,letterSpacing:2}}>بِسْمِ اللَّهِ</div>
+        <div style=${{fontFamily:"'Cinzel',serif",fontSize:"1.05rem",letterSpacing:"0.18em",color:"#c9922a",textTransform:"uppercase",marginBottom:6}}>Arabic Enthusiast</div>
+        <div style=${{fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,240,232,0.3)",fontFamily:"'DM Sans',sans-serif"}}>Student Portal</div>
       </div>
 
+      <!-- Tabs (only for login / request) -->
+      ${(mode==="login"||mode==="request") && h`
+        <div class="auth-tabs">
+          <div class=${"auth-tab "+(mode==="login"?"on":"")} onClick=${()=>{setMode("login");reset();}}>Log In</div>
+          <div class=${"auth-tab "+(mode==="request"?"on":"")} onClick=${()=>{setMode("request");reset();}}>Request Access</div>
+        </div>
+      `}
+
+      <!-- LOGIN -->
       ${mode==="login" && h`<div>
-        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/></div>
-        <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Your password" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/></div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doLogin} disabled=${loading}>${loading?"Please wait...":"Log In"}</button>
-        <div style=${{marginTop:12,fontSize:11,color:"var(--g500)",textAlign:"center",cursor:"pointer"}} onClick=${()=>{setMode("setup");reset();}}>First time setting up? →</div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Email Address</label>
+          <input class="auth-inp" type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Password</label>
+          <input class="auth-inp" type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Your password" onKeyDown=${e=>e.key==="Enter"&&doLogin()}/>
+        </div>
+        <button class="auth-btn" onClick=${doLogin} disabled=${loading}>${loading?"Please wait...":"Log In →"}</button>
+        <div style=${{marginTop:20,textAlign:"center"}}>
+          <span style=${{fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",letterSpacing:"0.05em",cursor:"pointer",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="rgba(201,146,42,0.6)"}
+            onMouseLeave=${e=>e.target.style.color="rgba(245,240,232,0.25)"}
+            onClick=${()=>{setMode("setup");reset();}}>First-time tutor setup →</span>
+        </div>
       </div>`}
 
+      <!-- REQUEST ACCESS -->
       ${mode==="request" && h`<div>
-        <div class="fg"><label>Your Full Name *</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="e.g. Sarah Johnson"/></div>
-        <div class="fg"><label>Gender *</label>
-          <div style=${{display:"flex",gap:16,marginTop:4}}>
-            ${[["female","👩 Female"],["male","👨 Male"]].map(([v,l])=>h`<label key=${v} style=${{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:14,fontWeight:gender===v?700:400}}>
-              <input type="radio" name="gender" value=${v} checked=${gender===v} onChange=${()=>setGender(v)} style=${{accentColor:"#111",width:16,height:16}}/>
+        <div style=${fgStyle}>
+          <label class="auth-label">Your Full Name *</label>
+          <input class="auth-inp" value=${name} onInput=${e=>setName(e.target.value)} placeholder="e.g. Sarah Johnson"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Gender *</label>
+          <div style=${{display:"flex",gap:20,marginTop:4}}>
+            ${[["female","Female"],["male","Male"]].map(([v,l])=>h`<label key=${v} style=${radioLabelStyle(gender===v)}>
+              <input type="radio" name="gender" value=${v} checked=${gender===v} onChange=${()=>setGender(v)} style=${{accentColor:"#c9922a",width:15,height:15}}/>
               ${l}
             </label>`)}
           </div>
         </div>
-        <div class="fg"><label>WhatsApp Number * (with country code)</label><input value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="e.g. +961 70 123 456" type="tel"/></div>
-        <div class="fg"><label>Email *</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/></div>
-        <div class="fg"><label>Choose a Password *</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
-        <div class="fg"><label>What would you like to learn? *</label>
-          <select value=${learnType} onChange=${e=>setLearnType(e.target.value)}>
-            <option value="Levantine">🗣 Levantine Arabic (Lebanese dialect)</option>
-            <option value="Classical">📜 Classical / Modern Standard Arabic (MSA)</option>
-            <option value="Quranic">🕌 Quranic Arabic</option>
-            <option value="General Dialect">💬 General Arabic Dialect</option>
-            <option value="Quranic + Dialect">🕌💬 Quranic + Dialect (combined)</option>
+        <div style=${fgStyle}>
+          <label class="auth-label">WhatsApp Number * (with country code)</label>
+          <input class="auth-inp" value=${phone} onInput=${e=>setPhone(e.target.value)} placeholder="e.g. +961 70 123 456" type="tel"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Email Address *</label>
+          <input class="auth-inp" type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Choose a Password *</label>
+          <input class="auth-inp" type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">What would you like to learn? *</label>
+          <select class="auth-sel" value=${learnType} onChange=${e=>setLearnType(e.target.value)}>
+            <option value="Levantine">Levantine Arabic (Lebanese dialect)</option>
+            <option value="Classical">Classical / Modern Standard Arabic (MSA)</option>
+            <option value="Quranic">Quranic Arabic</option>
+            <option value="General Dialect">General Arabic Dialect</option>
+            <option value="Quranic + Dialect">Quranic + Dialect (combined)</option>
           </select>
         </div>
-        <div class="fg"><label>Notes to Hadi (optional)</label><textarea value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm a complete beginner... or I want to improve my reading for travel..." style=${{minHeight:70}}/></div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request to Hadi"}</button>
-        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>Hadi will review your info and confirm your access shortly.</div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Notes to Hadi (optional)</label>
+          <textarea class="auth-textarea" value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm a complete beginner, or I want to improve my reading for travel..."/>
+        </div>
+        <button class="auth-btn" onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request →"}</button>
+        <div style=${{marginTop:12,fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",lineHeight:1.7,textAlign:"center"}}>Hadi will review your info and confirm your access shortly.</div>
       </div>`}
 
+      <!-- VERIFY WHATSAPP -->
       ${mode==="verify" && h`<div>
-        <div style=${{textAlign:"center",marginBottom:20}}>
-          <div style=${{fontSize:40,marginBottom:10}}>📱</div>
-          <div style=${{fontWeight:700,fontSize:16,marginBottom:8}}>Check your WhatsApp</div>
-          <div style=${{fontSize:13,color:"var(--g500)",lineHeight:1.7}}>
-            Hadi will send a 6-digit code to<br/>
-            <strong style=${{color:"var(--g800)"}}>${verifyPhone}</strong><br/>
+        <div style=${{textAlign:"center",marginBottom:28}}>
+          <div style=${{fontFamily:"'Amiri',serif",fontSize:"2.8rem",color:"rgba(201,146,42,0.4)",marginBottom:8}}>تحقق</div>
+          <div style=${{fontFamily:"'Playfair Display',serif",fontSize:"1.1rem",color:"#f5f0e8",marginBottom:10}}>Check your WhatsApp</div>
+          <div style=${{fontSize:"0.82rem",color:"rgba(245,240,232,0.4)",lineHeight:1.8}}>
+            A 6-digit code will be sent to<br/>
+            <span style=${{color:"#c9922a",fontWeight:600}}>${verifyPhone}</span><br/>
             Enter it below once you receive it.
           </div>
         </div>
-        <div class="fg">
-          <label>6-Digit Code</label>
+        <div style=${fgStyle}>
+          <label class="auth-label">6-Digit Code</label>
           <input
+            class="auth-inp"
             value=${verifyCode}
             onInput=${e=>setVerifyCode(e.target.value.replace(/\D/g,"").slice(0,6))}
-            placeholder="e.g. 482910"
-            style=${{letterSpacing:6,fontSize:22,textAlign:"center",fontWeight:700}}
+            placeholder="• • • • • •"
+            style=${{letterSpacing:"0.4em",fontSize:"1.4rem",textAlign:"center",fontWeight:700}}
             maxlength="6"
             onKeyDown=${e=>e.key==="Enter"&&doVerify()}
           />
         </div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doVerify} disabled=${loading}>${loading?"Verifying...":"Verify WhatsApp"}</button>
-        <div style=${{marginTop:12,fontSize:11,color:"var(--g400)",textAlign:"center",lineHeight:1.7}}>
-          Didn't receive a code? Make sure your WhatsApp number is correct.<br/>
-          <span style=${{cursor:"pointer",textDecoration:"underline"}} onClick=${()=>{setMode("request");reset();}}>← Go back and change number</span>
+        <button class="auth-btn" onClick=${doVerify} disabled=${loading}>${loading?"Verifying...":"Verify WhatsApp →"}</button>
+        <div style=${{marginTop:16,fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",textAlign:"center",lineHeight:1.8}}>
+          Didn't receive a code? Make sure your number is correct.<br/>
+          <span style=${{cursor:"pointer",color:"rgba(201,146,42,0.5)",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="#c9922a"}
+            onMouseLeave=${e=>e.target.style.color="rgba(201,146,42,0.5)"}
+            onClick=${()=>{setMode("request");reset();}}>← Go back and change number</span>
         </div>
       </div>`}
 
+      <!-- FIRST-TIME TUTOR SETUP -->
       ${mode==="setup" && h`<div>
-        <div style=${{marginBottom:16,padding:"10px 12px",background:"#fff8f0",border:"2px solid var(--wn)",fontSize:12,lineHeight:1.6}}>First-time setup. Create your tutor account.</div>
-        <div class="fg"><label>Your Name</label><input value=${name} onInput=${e=>setName(e.target.value)} placeholder="Your name"/></div>
-        <div class="fg"><label>Email</label><input type="email" value=${email} onInput=${e=>setEmail(e.target.value)}/></div>
-        <div class="fg"><label>Password</label><input type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/></div>
-        <button class="btn btn-p" style=${{width:"100%",justifyContent:"center",padding:"12px"}} onClick=${doSetup} disabled=${loading}>${loading?"Creating...":"Create Tutor Account"}</button>
-        <div style=${{marginTop:10,fontSize:11,color:"var(--g500)",cursor:"pointer"}} onClick=${()=>{setMode("login");reset();}}>← Back to login</div>
+        <div style=${{marginBottom:24,padding:"12px 16px",background:"rgba(201,146,42,0.06)",border:"1px solid rgba(201,146,42,0.2)",fontSize:"0.78rem",color:"rgba(245,240,232,0.5)",lineHeight:1.7}}>
+          First-time setup — create your tutor account. This only needs to be done once.
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Your Name</label>
+          <input class="auth-inp" value=${name} onInput=${e=>setName(e.target.value)} placeholder="Your name"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Email</label>
+          <input class="auth-inp" type="email" value=${email} onInput=${e=>setEmail(e.target.value)} placeholder="your@email.com"/>
+        </div>
+        <div style=${fgStyle}>
+          <label class="auth-label">Password</label>
+          <input class="auth-inp" type="password" value=${password} onInput=${e=>setPassword(e.target.value)} placeholder="Min 6 characters"/>
+        </div>
+        <button class="auth-btn" onClick=${doSetup} disabled=${loading}>${loading?"Creating...":"Create Tutor Account →"}</button>
+        <div style=${{marginTop:16,textAlign:"center"}}>
+          <span style=${{fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",cursor:"pointer",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="rgba(201,146,42,0.6)"}
+            onMouseLeave=${e=>e.target.style.color="rgba(245,240,232,0.25)"}
+            onClick=${()=>{setMode("login");reset();}}>← Back to login</span>
+        </div>
       </div>`}
 
-      ${error && h`<div class="error" style=${{marginTop:12}}>${error}</div>`}
-      ${success && h`<div class="success" style=${{marginTop:12}}>${success}</div>`}
+      <!-- Error / Success messages -->
+      ${error && h`<div style=${{marginTop:16,padding:"12px 14px",background:"rgba(180,60,60,0.1)",border:"1px solid rgba(180,60,60,0.3)",color:"#e88",fontSize:"0.8rem",lineHeight:1.6}}>${error}</div>`}
+      ${success && h`<div style=${{marginTop:16,padding:"12px 14px",background:"rgba(60,130,80,0.1)",border:"1px solid rgba(60,130,80,0.3)",color:"#6c9",fontSize:"0.8rem",lineHeight:1.6}}>${success}</div>`}
     </div>
   </div>`;
 }
