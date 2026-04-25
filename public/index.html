@@ -66,7 +66,6 @@ body::before {
 <script type="text/babel" src="/components.jsx"></script>
 <script type="text/babel" src="/pages/Home.jsx"></script>
 <script type="text/babel" src="/pages/Courses.jsx"></script>
-<script type="text/babel" src="/pages/Dashboard.jsx"></script>
 <script type="text/babel" src="/pages/Pricing.jsx"></script>
 <script type="text/babel" src="/pages/About.jsx"></script>
 
@@ -81,11 +80,14 @@ function App() {
   useEffect(() => {
     const saved = sessionStorage.getItem('ae_page');
     const savedLesson = sessionStorage.getItem('ae_lesson');
-    if (saved) setPage(saved);
+    // Never restore 'dashboard' — always redirect to portal
+    if (saved && saved !== 'dashboard') setPage(saved);
     if (savedLesson) setLesson(savedLesson);
   }, []);
 
   function navigateTo(newPage) {
+    // 'dashboard' clicks → go to the real student portal
+    if (newPage === 'dashboard') { window.location.href = '/portal'; return; }
     setPage(newPage);
     setKey(k => k + 1);
     sessionStorage.setItem('ae_page', newPage);
@@ -101,14 +103,13 @@ function App() {
     <div>
       <Nav page={page} setPage={navigateTo} />
       <main key={key} className="page-enter">
-        {page === 'home'      && <HomePage      setPage={navigateTo} />}
-        {page === 'courses'   && <CoursesPage   setPage={navigateTo} setLesson={navigateLesson} />}
-        {page === 'lesson'    && <LessonPage    courseId={lesson}    setPage={navigateTo} />}
-        {page === 'dashboard' && <DashboardPage setPage={navigateTo} />}
-        {page === 'pricing'   && <PricingPage   setPage={navigateTo} />}
-        {page === 'about'     && <AboutPage     setPage={navigateTo} />}
+        {page === 'home'    && <HomePage    setPage={navigateTo} />}
+        {page === 'courses' && <CoursesPage setPage={navigateTo} setLesson={navigateLesson} />}
+        {page === 'lesson'  && <LessonPage  courseId={lesson}    setPage={navigateTo} />}
+        {page === 'pricing' && <PricingPage setPage={navigateTo} />}
+        {page === 'about'   && <AboutPage   setPage={navigateTo} />}
       </main>
-      {page !== 'lesson' && page !== 'dashboard' && <Footer setPage={navigateTo} />}
+      {page !== 'lesson' && <Footer setPage={navigateTo} />}
     </div>
   );
 }

@@ -153,7 +153,7 @@ function Footer({ setPage }) {
         {[
           { title: 'Learn', links: [['home','Home'],['courses','Courses'],['pricing','Pricing']] },
           { title: 'About', links: [['about','Instructor'],['about','Teaching Method'],['about','Contact']] },
-          { title: 'Student', links: [['dashboard','Dashboard'],['courses','My Courses'],['courses','Progress']] },
+          { title: 'Student', links: [['courses','Enrol Now'],['pricing','Pricing'],['about','Contact Hadi']] },
         ].map(col => (
           <div key={col.title}>
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#c9922a', marginBottom: 16 }}>{col.title}</div>
