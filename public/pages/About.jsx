@@ -26,7 +26,7 @@ function AboutPage({ setPage }) {
             <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2.6rem, 4vw, 4rem)', color: '#f5f0e8', fontWeight: 600, lineHeight: 1.1, marginBottom: 24 }}>
               {instructor.name}
             </h1>
-            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: 'rgba(201,146,42,0.6)', marginBottom: 20, direction: 'rtl', textAlign: 'right' }}>مدرّس اللغة العربية</div>
+            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: '#c9922a', marginBottom: 20, direction: 'rtl', textAlign: 'right', textShadow: '0 0 30px rgba(201,146,42,0.5)' }}>مدرّس اللغة العربية</div>
             <p style={{ color: 'rgba(245,240,232,0.55)', fontSize: '1rem', lineHeight: 1.8, marginBottom: 32, maxWidth: 480 }}>
               {instructor.bio}
             </p>
@@ -37,20 +37,32 @@ function AboutPage({ setPage }) {
             </div>
           </Reveal>
 
-          {/* Avatar placeholder with decorative frame */}
+          {/* Instructor photo */}
           <Reveal delay={0.15}>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div style={{ position: 'relative', width: 340, height: 400 }}>
-                <div style={{ position: 'absolute', inset: 0, border: '1px solid rgba(201,146,42,0.2)' }} />
+                <div style={{ position: 'absolute', inset: 0, border: '1px solid rgba(201,146,42,0.25)' }} />
                 <div style={{ position: 'absolute', inset: 12, border: '1px solid rgba(201,146,42,0.1)' }} />
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'rgba(16,12,8,0.9)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <div style={{ fontFamily: 'Amiri, serif', fontSize: '5rem', color: 'rgba(201,146,42,0.2)', lineHeight: 1, marginBottom: 12 }}>هـ</div>
-                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.4rem', color: 'rgba(245,240,232,0.4)' }}>Hadi</div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(245,240,232,0.2)', letterSpacing: '0.12em', marginTop: 4, textTransform: 'uppercase' }}>Arabic Instructor</div>
+                {/* Photo */}
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+                  <img src="/logo.jpeg" alt="Hadi — Arabic Instructor" style={{
+                    width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top',
+                    display: 'block',
+                    filter: 'brightness(0.92) contrast(1.05)',
+                  }} />
+                  {/* Subtle gold gradient overlay at bottom */}
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0, right: 0, height: '35%',
+                    background: 'linear-gradient(transparent, rgba(10,8,5,0.7))',
+                    pointerEvents: 'none',
+                  }} />
+                  <div style={{
+                    position: 'absolute', bottom: 20, left: 0, right: 0,
+                    textAlign: 'center',
+                  }}>
+                    <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.2em', color: '#c9922a', textTransform: 'uppercase', marginBottom: 4 }}>Hadi Shokeir</div>
+                    <div style={{ fontSize: '0.62rem', color: 'rgba(245,240,232,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Arabic Instructor</div>
+                  </div>
                 </div>
                 {/* Corner accents */}
                 {['top:0;left:0', 'top:0;right:0', 'bottom:0;left:0', 'bottom:0;right:0'].map((pos, i) => (
@@ -76,7 +88,7 @@ function AboutPage({ setPage }) {
             ].map((p, i) => (
               <Reveal key={p.title} delay={i * 0.1}>
                 <div style={{ background: 'rgba(16,12,8,0.8)', border: '1px solid rgba(201,146,42,0.1)', padding: '36px 32px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(201,146,42,0.4)', marginBottom: 12 }}>{p.arabic}</div>
+                  <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(201,146,42,0.75)', marginBottom: 12, textShadow: '0 0 20px rgba(201,146,42,0.3)' }}>{p.arabic}</div>
                   <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.2rem', color: '#f5f0e8', marginBottom: 14 }}>{p.title}</div>
                   <div style={{ fontSize: '0.85rem', color: 'rgba(245,240,232,0.45)', lineHeight: 1.7 }}>{p.desc}</div>
                 </div>
@@ -98,7 +110,7 @@ function AboutPage({ setPage }) {
               Whether you have questions about courses, want a free intro lesson, or are ready to enrol — send a message and Hadi will get back to you within 24 hours.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {[['📧', 'Email', 'hadi@arabic-enthusiast.com'], ['🕌', 'Response time', 'Within 24 hours'], ['🌍', 'Location', 'Online — worldwide']].map(([icon, label, val]) => (
+              {[['📧', 'Email', 'hadishokeir@gmail.com'], ['🕌', 'Response time', 'Within 24 hours'], ['🌍', 'Location', 'Online — worldwide']].map(([icon, label, val]) => (
                 <div key={label} style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                   <span style={{ fontSize: '1.2rem' }}>{icon}</span>
                   <div>

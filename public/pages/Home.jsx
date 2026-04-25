@@ -74,13 +74,24 @@ function HeroSection({ setPage }) {
             </button>
           </div>
           {/* Trust strip */}
-          <div style={{ display: 'flex', gap: 32, marginTop: 56, paddingTop: 32, borderTop: '1px solid rgba(201,146,42,0.15)' }}>
-            {[['200+','Students taught'],['5','Course tracks'],['10+','Years experience']].map(([n,l]) => (
-              <div key={l}>
-                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.8rem', color: '#c9922a', fontWeight: 600 }}>{n}</div>
-                <div style={{ fontSize: '0.72rem', color: 'rgba(245,240,232,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>{l}</div>
-              </div>
-            ))}
+          <div style={{ marginTop: 56, paddingTop: 32, borderTop: '1px solid rgba(201,146,42,0.15)' }}>
+            <div style={{ display: 'flex', gap: 32, marginBottom: 20 }}>
+              {[['7+','Years of teaching'],['200+','Students taught'],['3','Specialisations']].map(([n,l]) => (
+                <div key={l}>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.8rem', color: '#c9922a', fontWeight: 600 }}>{n}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'rgba(245,240,232,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
+                <span key={s} style={{
+                  fontFamily: 'DM Sans, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em',
+                  textTransform: 'uppercase', padding: '4px 12px',
+                  border: '1px solid rgba(201,146,42,0.25)', color: 'rgba(201,146,42,0.7)',
+                }}>{s}</span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -102,10 +113,10 @@ function HeroSection({ setPage }) {
             {/* Letter display */}
             <div key={tick} style={{
               fontFamily: 'Amiri, serif',
-              fontSize: '10rem', color: '#c9922a',
+              fontSize: '10rem', color: '#e5b04a',
               lineHeight: 1, userSelect: 'none',
               animation: 'letterFade 2.2s ease',
-              textShadow: '0 0 80px rgba(201,146,42,0.4)',
+              textShadow: '0 0 60px rgba(201,146,42,0.7), 0 0 120px rgba(201,146,42,0.3)',
             }}>{letters[tick % letters.length]}</div>
             {/* Orbit dots */}
             {[0,72,144,216,288].map((deg,i) => {

@@ -148,7 +148,7 @@ function Footer({ setPage }) {
           <p style={{ color: 'rgba(245,240,232,0.45)', fontSize: '0.85rem', lineHeight: 1.7, maxWidth: 280 }}>
             Professional Arabic instruction — from first letters to fluent reading. Taught with passion and precision.
           </p>
-          <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(201,146,42,0.3)', marginTop: 16, direction: 'rtl' }}>بِسْمِ اللَّهِ</div>
+          <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(201,146,42,0.65)', marginTop: 16, direction: 'rtl', textShadow: '0 0 25px rgba(201,146,42,0.4)' }}>بِسْمِ اللَّهِ</div>
         </div>
         {[
           { title: 'Learn', links: [['home','Home'],['courses','Courses'],['pricing','Pricing']] },
