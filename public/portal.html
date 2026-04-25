@@ -4501,11 +4501,19 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
             <div style=${{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"var(--sp-txt)",marginBottom:4}}>${greeting}, ${firstName}!</div>
             <div style=${{fontSize:13,color:"var(--sp-txt2)"}}>${att.streak>=2?"🔥 "+att.streak+"-lesson streak — keep going!":s.lessonsTaken===0?"Your Arabic journey begins here ✨":"Ready to practice today?"}</div>
           </div>
-          ${nextLesson?h`<div style=${{textAlign:"center",background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)",borderRadius:12,padding:"10px 16px",flexShrink:0}}>
-            <div style=${{fontSize:10,fontWeight:700,color:"var(--sp-amber)",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Next Lesson</div>
-            <div style=${{fontSize:13,fontWeight:700,color:"var(--sp-txt)"}}>${fmt(nextLesson.date)}</div>
-            <div style=${{fontSize:12,color:"var(--sp-txt2)"}}>${nextLesson.time||""}</div>
-          </div>`:null}
+          <div style=${{display:"flex",gap:8,flexShrink:0}}>
+            ${(()=>{const credColor=left<=2?"var(--sp-red)":left<=4?"#f59e0b":"var(--sp-green)";const credBorder=left<=2?"rgba(207,71,68,0.3)":left<=4?"rgba(245,158,11,0.3)":"rgba(76,175,125,0.3)";return h`<div style=${{textAlign:"center",background:"var(--sp-glow)",border:"1px solid "+credBorder,borderRadius:12,padding:"10px 14px"}}>
+              <div style=${{fontSize:9,fontWeight:700,color:credColor,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Lessons Left</div>
+              <div style=${{fontSize:22,fontWeight:900,fontFamily:"'Playfair Display',serif",color:credColor,lineHeight:1}}>${left<=0?"0":left}</div>
+              <div style=${{fontSize:9,color:"var(--sp-txt3)",marginTop:2}}>of ${s.lessonsTotal||0}</div>
+              ${left<=2?h`<div style=${{fontSize:9,color:credColor,marginTop:4,fontWeight:700}}>${left===0?"⚠️ Refill needed":"⚠️ Running low"}</div>`:null}
+            </div>`})()}
+            ${nextLesson?h`<div style=${{textAlign:"center",background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)",borderRadius:12,padding:"10px 14px"}}>
+              <div style=${{fontSize:9,fontWeight:700,color:"var(--sp-amber)",textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Next Lesson</div>
+              <div style=${{fontSize:12,fontWeight:700,color:"var(--sp-txt)"}}>${fmt(nextLesson.date)}</div>
+              <div style=${{fontSize:11,color:"var(--sp-txt2)"}}>${nextLesson.time||""}</div>
+            </div>`:null}
+          </div>
         </div>
       </div>
 
