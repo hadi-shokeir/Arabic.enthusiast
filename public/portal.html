@@ -399,17 +399,17 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .cred-low{color:var(--bd)}.cred-ok{color:var(--ok)}.cred-warn{color:var(--wn)}
 
 /* student-portal-v2 */
-.sp2-root[data-theme="dark"]{--sp-bg:#0A0F1A;--sp-mid:#0F1726;--sp-card:#141D2E;--sp-surface:rgba(255,255,255,0.03);--sp-amber:#c9922a;--sp-amber-l:#e5b04a;--sp-amber-d:#a87520;--sp-glow:rgba(201,146,42,0.1);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#E8E4DD;--sp-txt2:#8B9BB4;--sp-txt3:#5A6A80;--sp-border:rgba(255,255,255,0.06);--sp-border-h:rgba(201,146,42,0.25)}
+.sp2-root[data-theme="dark"]{--sp-bg:#080604;--sp-mid:#100e0a;--sp-card:#16120c;--sp-surface:rgba(201,146,42,0.03);--sp-amber:#c9922a;--sp-amber-l:#e5b04a;--sp-amber-d:#a87520;--sp-glow:rgba(201,146,42,0.08);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#f5f0e8;--sp-txt2:#a09880;--sp-txt3:#6a5f50;--sp-border:rgba(201,146,42,0.08);--sp-border-h:rgba(201,146,42,0.25)}
 .sp2-root[data-theme="light"]{--sp-bg:#F5F3EE;--sp-mid:#ECEAE3;--sp-card:#FFFFFF;--sp-surface:rgba(0,0,0,0.02);--sp-amber:#B08030;--sp-amber-l:#D4A853;--sp-amber-d:#8A6010;--sp-glow:rgba(176,128,48,0.08);--sp-teal:#1F8A7F;--sp-green:#2E7D52;--sp-red:#C03030;--sp-rose:#C04060;--sp-txt:#1A1A1A;--sp-txt2:#555;--sp-txt3:#888;--sp-border:rgba(0,0,0,0.08);--sp-border-h:rgba(176,128,48,0.3)}
 body:has(.sp2-root){overflow:hidden}
 #root:has(.sp2-root){overflow:hidden;height:100dvh}
-.sp2-root{font-family:'Outfit',sans-serif;height:100dvh;background:var(--sp-bg);color:var(--sp-txt);display:flex;flex-direction:column;overflow:hidden}
+.sp2-root{font-family:'DM Sans',sans-serif;height:100dvh;background:var(--sp-bg);color:var(--sp-txt);display:flex;flex-direction:column;overflow:hidden}
 .sp2-hdr{position:sticky;top:0;z-index:100;background:var(--sp-mid);border-bottom:1px solid var(--sp-border);backdrop-filter:blur(20px);display:flex;align-items:center;gap:14px;padding:0 18px;height:58px;flex-shrink:0}
 .sp2-logo{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--sp-amber);letter-spacing:2px;text-transform:uppercase}
 .sp2-layout{display:flex;flex:1;min-height:0;overflow:hidden}
 .sp2-sidebar{width:218px;flex-shrink:0;background:var(--sp-mid);border-right:1px solid var(--sp-border);padding:10px 8px;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
 .sp2-nav-grp{font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:var(--sp-txt3);padding:12px 14px 3px;text-transform:uppercase}
-.sp2-nav-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:9px;border:none;background:transparent;color:var(--sp-txt2);font-family:'Outfit',sans-serif;font-weight:500;font-size:13px;cursor:pointer;transition:all 0.18s;width:100%;text-align:left}
+.sp2-nav-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:9px;border:none;background:transparent;color:var(--sp-txt2);font-family:'DM Sans',sans-serif;font-weight:500;font-size:13px;cursor:pointer;transition:all 0.18s;width:100%;text-align:left}
 .sp2-nav-item:hover{background:var(--sp-surface);color:var(--sp-txt)}
 .sp2-nav-item.on{background:var(--sp-glow);color:var(--sp-amber);font-weight:700}
 .sp2-content{flex:1;min-height:0;overflow-y:auto;padding:24px}
@@ -447,6 +447,12 @@ body:has(.sp2-root){overflow:hidden}
 .sp2-mob-it{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;border:none;background:none;color:var(--sp-txt3);font-size:10px;font-family:'Outfit',sans-serif;cursor:pointer;border-radius:8px;min-width:48px}
 .sp2-mob-it.on{color:var(--sp-amber)}
 @keyframes sp2Up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ae-draw-arc{from{stroke-dashoffset:352}to{stroke-dashoffset:0}}
+@keyframes ae-fade-letter{0%,50%{opacity:0;transform:scale(0.7) translateY(4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes ae-fade-title{from{opacity:0;letter-spacing:0.4em}to{opacity:1;letter-spacing:0.2em}}
+.ae-load-arc{animation:ae-draw-arc 1.8s cubic-bezier(0.4,0,0.2,1) forwards;transform-origin:70px 70px;transform:rotate(-90deg)}
+.ae-load-letter{animation:ae-fade-letter 1.8s ease forwards;transform-origin:70px 70px;display:inline-block}
+.ae-load-title{animation:ae-fade-title 1.2s ease 0.6s both}
 @media(max-width:640px){
   .sp2-sidebar{display:none}
   .sp2-mob-nav{display:flex}
@@ -1865,9 +1871,13 @@ function AuthScreen({onAuth}) {
 
       <!-- Logo + Title -->
       <div style=${{textAlign:"center",marginBottom:32}}>
-        <div style=${{fontFamily:"'Amiri',serif",fontSize:"2rem",color:"rgba(201,146,42,0.35)",marginBottom:8,letterSpacing:2}}>بِسْمِ اللَّهِ</div>
-        <div style=${{fontFamily:"'Cinzel',serif",fontSize:"1.05rem",letterSpacing:"0.18em",color:"#c9922a",textTransform:"uppercase",marginBottom:6}}>Arabic Enthusiast</div>
-        <div style=${{fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,240,232,0.3)",fontFamily:"'DM Sans',sans-serif"}}>Student Portal</div>
+        <div style=${{display:"flex",justifyContent:"center",marginBottom:14}}>
+          <div style=${{width:64,height:64,borderRadius:12,overflow:"hidden",border:"1px solid rgba(201,146,42,0.3)",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <img src="/logo.jpeg" style=${{width:64,height:64,objectFit:"contain",display:"block"}}/>
+          </div>
+        </div>
+        <div style=${{fontFamily:"'Cinzel',serif",fontSize:"1.05rem",letterSpacing:"0.18em",color:"#c9922a",textTransform:"uppercase",marginBottom:4}}>Arabic Enthusiast</div>
+        <div style=${{fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,240,232,0.25)",fontFamily:"'DM Sans',sans-serif"}}>Student Portal</div>
       </div>
 
       <!-- Tabs (only for login / request) -->
@@ -7889,10 +7899,22 @@ function App() {
     setAuth(null); setData(null);
   };
 
-  if (checkingAuth) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
+  const LoadingScreen = () => h`<div style=${{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0a0805",gap:24,overflow:"hidden",position:"relative"}}>
+    <div style=${{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(201,146,42,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,146,42,0.03) 1px,transparent 1px)",backgroundSize:"80px 80px",pointerEvents:"none"}}></div>
+    <div style=${{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+      <svg width="140" height="140" viewBox="0 0 140 140" style=${{overflow:"visible"}}>
+        <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(201,146,42,0.08)" stroke-width="1.5"/>
+        <circle class="ae-load-arc" cx="70" cy="70" r="56" fill="none" stroke="#c9922a" stroke-width="2" stroke-dasharray="352" stroke-dashoffset="352" stroke-linecap="round"/>
+        <text class="ae-load-letter" x="70" y="93" text-anchor="middle" font-family="Amiri,serif" font-size="62" fill="#c9922a">ع</text>
+      </svg>
+      <div class="ae-load-title" style=${{fontFamily:"'Cinzel',serif",fontSize:"0.8rem",letterSpacing:"0.2em",color:"rgba(201,146,42,0.55)",textTransform:"uppercase"}}>Arabic Enthusiast</div>
+    </div>
+  </div>`;
+
+  if (checkingAuth) return h`<${LoadingScreen}/>`;
   if (!auth) return h`<${AuthScreen} onAuth=${a=>setAuth({...a, user:{email:a.email||a.user?.email,id:a.email||a.user?.email}})}/>`;
 
-  if (!data) return h`<div style=${{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"var(--fh)",fontSize:28,letterSpacing:3}}>LOADING...</div>`;
+  if (!data) return h`<${LoadingScreen}/>`;
 
   // Student role → student portal
   if (auth.role === "student") return h`<${StudentPortal} data=${data} setData=${update} user=${auth.user} auth=${auth} onLogout=${handleLogout}/>`;
