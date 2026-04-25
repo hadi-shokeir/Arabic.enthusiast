@@ -26,13 +26,10 @@ function AboutPage({ setPage }) {
             <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2.6rem, 4vw, 4rem)', color: '#f5f0e8', fontWeight: 600, lineHeight: 1.1, marginBottom: 24 }}>
               {instructor.name}
             </h1>
-            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: '#c9922a', marginBottom: 20, direction: 'rtl', textAlign: 'right', textShadow: '0 0 30px rgba(201,146,42,0.5)' }}>مدرّس اللغة العربية</div>
-            <p style={{ color: 'rgba(245,240,232,0.55)', fontSize: '1rem', lineHeight: 1.8, marginBottom: 32, maxWidth: 480 }}>
-              {instructor.bio}
-            </p>
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {instructor.credentials.map(c => (
-                <div key={c} style={{ padding: '8px 16px', border: '1px solid rgba(201,146,42,0.25)', fontSize: '0.72rem', color: '#c9922a', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{c}</div>
+            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: '#c9922a', marginBottom: 28, direction: 'rtl', textAlign: 'right', textShadow: '0 0 30px rgba(201,146,42,0.5)' }}>مدرّس اللغة العربية</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
+                <span key={s} style={{ padding: '6px 14px', border: '1px solid rgba(201,146,42,0.25)', fontSize: '0.7rem', color: '#c9922a', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{s}</span>
               ))}
             </div>
           </Reveal>

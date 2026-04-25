@@ -7,8 +7,8 @@ window.AE.DATA = {
   instructor: {
     name: "Hadi Shokeir",
     title: "Arabic Language Instructor",
-    bio: "With over a decade of teaching Arabic across all dialects and levels, Hadi brings a structured yet personal approach to language learning — blending classical tradition with modern pedagogy.",
-    credentials: ["MSc Linguistics", "10+ Years Teaching", "200+ Students Taught", "Levantine & Classical Specialist"],
+    bio: "",
+    credentials: [],
     avatar: null
   },
 
@@ -21,9 +21,8 @@ window.AE.DATA = {
       arabic: "أساسيات العربية",
       subtitle: "Script, sounds & first words",
       desc: "Master all 28 letters, their positional forms, and begin reading real Arabic words. The essential first step for every learner.",
-      lessons: 12, hours: 8, students: 47,
       color: "#c9922a",
-      topics: ["The Arabic alphabet", "Letter forms (isolated, initial, medial, final)", "Short & long vowels", "Sun & moon letters", "First 100 words"],
+      topics: ["The Arabic alphabet", "Letter forms (isolated, initial, medial, final)", "Short & long vowels", "Sun & moon letters"],
       featured: true
     },
     {
@@ -32,11 +31,10 @@ window.AE.DATA = {
       type: "Levantine",
       title: "Levantine Arabic",
       arabic: "العامية الشامية",
-      subtitle: "The dialect of Lebanon & Syria",
+      subtitle: "Conversational Arabic",
       desc: "Speak naturally with Levantine speakers. Learn conversational Arabic as it's truly spoken — not just in textbooks.",
-      lessons: 20, hours: 14, students: 62,
       color: "#5a8a6a",
-      topics: ["Everyday conversation", "Levantine pronunciation", "Common expressions", "Family & daily life", "Informal vs formal"],
+      topics: ["Everyday conversation", "Levantine pronunciation", "Common expressions", "Family & daily life"],
       featured: true
     },
     {
@@ -47,49 +45,9 @@ window.AE.DATA = {
       arabic: "العربية القرآنية",
       subtitle: "Read & understand the Quran",
       desc: "Learn to read and understand the language of the Quran directly. Structured around the most frequent Quranic vocabulary and grammar.",
-      lessons: 24, hours: 18, students: 89,
       color: "#6a5a8a",
-      topics: ["Quranic script & tajweed basics", "100 most frequent words", "Verb patterns", "Noun cases", "Surah-based study"],
+      topics: ["Quranic script & tajweed basics", "High-frequency vocabulary", "Verb patterns", "Surah-based study"],
       featured: true
-    },
-    {
-      id: "classical-grammar",
-      level: "Intermediate",
-      type: "Classical",
-      title: "Classical Grammar",
-      arabic: "النحو والصرف",
-      subtitle: "The logic of Arabic grammar",
-      desc: "Unlock the elegant system behind Arabic — roots, patterns, case endings, and the tri-literal root system that makes Arabic unique.",
-      lessons: 32, hours: 24, students: 31,
-      color: "#8a6a3a",
-      topics: ["Noun cases (raf', nasb, jarr)", "Verb morphology", "Broken plurals", "Dual forms", "Derived verb forms (awzaan)"],
-      featured: false
-    },
-    {
-      id: "vocabulary-builder",
-      level: "Intermediate",
-      type: "General Dialect",
-      title: "Vocabulary Builder",
-      arabic: "بناء المفردات",
-      subtitle: "500+ words, themed & spaced",
-      desc: "Expand your vocabulary systematically with themed sets and spaced repetition. Includes audio for every word.",
-      lessons: 18, hours: 12, students: 55,
-      color: "#5a7a8a",
-      topics: ["Family & relationships", "Food & cooking", "Work & professions", "Body & health", "Travel & directions"],
-      featured: false
-    },
-    {
-      id: "advanced-reading",
-      level: "Advanced",
-      type: "Classical",
-      title: "Advanced Reading",
-      arabic: "القراءة المتقدمة",
-      subtitle: "Texts, literature & media",
-      desc: "Read authentic Arabic texts — news articles, classical prose, and modern literature — with guided analysis and discussion.",
-      lessons: 16, hours: 20, students: 18,
-      color: "#7a4a4a",
-      topics: ["Al-Jazeera articles", "Classical poetry", "Modern short stories", "Formal written Arabic", "Critical analysis"],
-      featured: false
     }
   ],
 
@@ -101,8 +59,6 @@ window.AE.DATA = {
       { id: "l4", title: "Short Vowels (Harakat)", arabic: "الحركات القصيرة", duration: 40, type: "video+exercise", free: false },
       { id: "l5", title: "Long Vowels & Diphthongs", arabic: "المدود والحروف اللينة", duration: 38, type: "video+exercise", free: false },
       { id: "l6", title: "Sun & Moon Letters", arabic: "الشمسية والقمرية", duration: 42, type: "video+quiz", free: false },
-      { id: "l7", title: "First 50 Words", arabic: "أول خمسين كلمة", duration: 50, type: "flashcards", free: false },
-      { id: "l8", title: "Reading Practice I", arabic: "تدريب على القراءة ١", duration: 45, type: "exercise", free: false },
     ]
   },
 
@@ -137,44 +93,7 @@ window.AE.DATA = {
     { ar: 'ي', name: 'Ya', trans: 'y', group: 'y', forms: { isolated: 'ي', initial: 'يـ', medial: 'ـيـ', final: 'ـي' }, note: 'Two dots below. Like English Y or long Ī vowel.', example: { word: 'يَوْم', meaning: 'Day', trans: 'yawm' } },
   ],
 
-  testimonials: [
-    { name: "Sarah M.", flag: "🇬🇧", quote: "Hadi's structured approach finally made Arabic grammar click for me after years of struggling.", course: "Classical Grammar" },
-    { name: "Omar K.", flag: "🇺🇸", quote: "I can now have full conversations with my Lebanese family. The Levantine course is incredible.", course: "Levantine Arabic" },
-    { name: "Aisha R.", flag: "🇨🇦", quote: "Reading the Quran directly without translation — a dream I didn't think was possible in one year.", course: "Quranic Arabic" },
-    { name: "James T.", flag: "🇦🇺", quote: "The alphabet explorer and flashcards made learning letters feel like a game, not a chore.", course: "Arabic Foundations" },
-  ],
+  testimonials: [],
 
-  pricing: [
-    {
-      name: "Explorer",
-      arabic: "مستكشف",
-      price: 0,
-      period: "Free forever",
-      color: "#444",
-      desc: "Taste the language with free introductory content.",
-      features: ["2 free lessons per course", "Alphabet explorer", "Basic flashcards", "Community access"],
-      cta: "Start Free"
-    },
-    {
-      name: "Student",
-      arabic: "طالب",
-      price: 49,
-      period: "per month",
-      color: "#c9922a",
-      desc: "Full access to all courses and interactive tools.",
-      features: ["All course content", "Unlimited flashcards & quizzes", "Progress dashboard", "Audio pronunciation", "Monthly group Q&A", "Certificate of completion"],
-      cta: "Enrol Now",
-      popular: true
-    },
-    {
-      name: "Private",
-      arabic: "خاص",
-      price: 120,
-      period: "per month",
-      color: "#6a5a8a",
-      desc: "1-on-1 lessons with Hadi tailored to your goals.",
-      features: ["Everything in Student", "4 private lessons/month", "Personalised curriculum", "WhatsApp access", "Custom homework", "Progress reports"],
-      cta: "Book a Call"
-    }
-  ]
+  pricing: []
 };

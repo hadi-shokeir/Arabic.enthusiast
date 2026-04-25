@@ -73,25 +73,15 @@ function HeroSection({ setPage }) {
               Meet your teacher
             </button>
           </div>
-          {/* Trust strip */}
-          <div style={{ marginTop: 56, paddingTop: 32, borderTop: '1px solid rgba(201,146,42,0.15)' }}>
-            <div style={{ display: 'flex', gap: 32, marginBottom: 20 }}>
-              {[['7+','Years of teaching'],['200+','Students taught'],['3','Specialisations']].map(([n,l]) => (
-                <div key={l}>
-                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.8rem', color: '#c9922a', fontWeight: 600 }}>{n}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'rgba(245,240,232,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: 2 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
-                <span key={s} style={{
-                  fontFamily: 'DM Sans, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em',
-                  textTransform: 'uppercase', padding: '4px 12px',
-                  border: '1px solid rgba(201,146,42,0.25)', color: 'rgba(201,146,42,0.7)',
-                }}>{s}</span>
-              ))}
-            </div>
+          {/* Subject pills */}
+          <div style={{ marginTop: 48, paddingTop: 28, borderTop: '1px solid rgba(201,146,42,0.15)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
+              <span key={s} style={{
+                fontFamily: 'DM Sans, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em',
+                textTransform: 'uppercase', padding: '5px 14px',
+                border: '1px solid rgba(201,146,42,0.25)', color: 'rgba(201,146,42,0.7)',
+              }}>{s}</span>
+            ))}
           </div>
         </div>
 
@@ -271,12 +261,9 @@ function CoursesTeaser({ setPage }) {
                 <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.3rem', color: '#f5f0e8', marginBottom: 8, lineHeight: 1.3 }}>{c.title}</div>
                 <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.5rem', color: 'rgba(201,146,42,0.6)', direction: 'rtl', textAlign: 'right', marginBottom: 14 }}>{c.arabic}</div>
                 <div style={{ fontSize: '0.85rem', color: 'rgba(245,240,232,0.45)', lineHeight: 1.65, marginBottom: 24 }}>{c.desc}</div>
-                <div style={{ display: 'flex', gap: 20 }}>
-                  {[[c.lessons, 'lessons'],[c.hours, 'hours'],[c.students, 'students']].map(([v,l]) => (
-                    <div key={l}>
-                      <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.1rem', color: '#c9922a' }}>{v}</span>
-                      <span style={{ fontSize: '0.7rem', color: 'rgba(245,240,232,0.3)', marginLeft: 4, letterSpacing: '0.06em' }}>{l}</span>
-                    </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {(c.topics || []).slice(0, 2).map(t => (
+                    <span key={t} style={{ fontSize: '0.65rem', color: 'rgba(245,240,232,0.35)', border: '1px solid rgba(201,146,42,0.12)', padding: '3px 10px', letterSpacing: '0.04em' }}>{t}</span>
                   ))}
                 </div>
               </div>
@@ -339,7 +326,7 @@ function CtaSection({ setPage }) {
             Begin your<br /><em style={{ color: '#c9922a' }}>Arabic journey</em> today
           </h2>
           <p style={{ color: 'rgba(245,240,232,0.45)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 36 }}>
-            Join hundreds of students who have transformed their relationship with the Arabic language.
+            Take the first step towards understanding one of the world's most profound languages.
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
             <button onClick={() => { setPage('pricing'); window.scrollTo(0,0); }} style={{
@@ -370,7 +357,6 @@ function HomePage({ setPage }) {
       <FeaturesSection />
       <AlphabetTeaser setPage={setPage} />
       <CoursesTeaser setPage={setPage} />
-      <TestimonialsSection />
       <QuoteSection />
       <CtaSection setPage={setPage} />
     </div>
