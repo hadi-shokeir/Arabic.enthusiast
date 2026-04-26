@@ -40,12 +40,12 @@ textarea,input[type="text"],input:not([type]){font-family:var(--fa),var(--fb);di
 /* Sidebar */
 .sb{width:220px;min-width:220px;background:var(--bk);color:var(--wh);display:flex;flex-direction:column}
 .sb-hd{padding:24px 20px;border-bottom:1px solid var(--g700)}
-.sb-hd h1{font-family:var(--fh);font-size:24px;letter-spacing:3px;text-shadow:0 1px 0 #000,0 0 14px rgba(201,146,42,0.5),0 2px 6px rgba(0,0,0,0.9);color:#c9922a}
-.sb-hd small{font-size:11px;color:rgba(201,146,42,0.6);display:block;margin-top:4px;text-shadow:0 1px 2px rgba(0,0,0,0.8);font-weight:600;letter-spacing:1.5px}
+.sb-hd h1{font-family:var(--fh);font-size:24px;letter-spacing:3px;text-shadow:0 1px 0 #000,0 0 14px rgba(255,255,255,0.4),0 2px 6px rgba(0,0,0,0.9);color:#ffffff}
+.sb-hd small{font-size:11px;color:rgba(255,255,255,0.5);display:block;margin-top:4px;text-shadow:0 1px 2px rgba(0,0,0,0.8);font-weight:600;letter-spacing:1.5px}
 .sb-nav{flex:1;padding:8px 0;overflow-y:auto}
 .sb-it{display:flex;align-items:center;gap:12px;padding:11px 20px;cursor:pointer;border-left:3px solid transparent;color:#ccc;font-size:13px;font-weight:700;transition:background .1s;text-shadow:0 1px 3px rgba(0,0,0,0.9)}
 .sb-it:hover{background:rgba(255,255,255,0.06);color:var(--wh)}
-.sb-it.on{background:var(--wh);color:var(--bk);border-left-color:#c9922a;font-weight:800;text-shadow:none}
+.sb-it.on{background:var(--wh);color:var(--bk);border-left-color:#ffffff;font-weight:800;text-shadow:none}
 .sb-ft{padding:14px 20px;border-top:1px solid var(--g700);font-size:11px;color:var(--g500);text-shadow:0 1px 2px rgba(0,0,0,0.8)}
 /* Main */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
@@ -175,27 +175,27 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .free-left-stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--ok);margin-top:4px}
 .free-left-stepper .st-btn{background:var(--ok)}.free-left-stepper .st-btn:hover{background:#008844}
 /* Auth screens */
-.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0805;font-family:'DM Sans',sans-serif;padding:24px;box-sizing:border-box;overflow-y:auto;position:relative}
-.auth-wrap::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(201,146,42,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,146,42,0.04) 1px,transparent 1px);background-size:80px 80px}
-.auth-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(201,146,42,0.06) 0%,transparent 70%)}
-.auth-box{position:relative;z-index:1;background:rgba(15,12,8,0.85);border:1px solid rgba(201,146,42,0.2);backdrop-filter:blur(20px);padding:48px 44px;width:100%;max-width:440px}
-.auth-inp{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;transition:border-color 0.2s;box-sizing:border-box}
-.auth-inp:focus{border-color:rgba(201,146,42,0.5)}
-.auth-inp::placeholder{color:rgba(245,240,232,0.2)}
-.auth-label{display:block;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(201,146,42,0.7);margin-bottom:8px;font-weight:600}
-.auth-btn{width:100%;padding:14px;background:#c9922a;color:#0a0805;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;transition:background 0.2s}
-.auth-btn:hover{background:#e5b04a}
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#080808;font-family:'DM Sans',sans-serif;padding:24px;box-sizing:border-box;overflow-y:auto;position:relative}
+.auth-wrap::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:80px 80px}
+.auth-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(255,255,255,0.04) 0%,transparent 70%)}
+.auth-box{position:relative;z-index:1;background:rgba(14,14,14,0.85);border:1px solid rgba(255,255,255,0.14);backdrop-filter:blur(20px);padding:48px 44px;width:100%;max-width:440px}
+.auth-inp{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:#f0f0f0;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;transition:border-color 0.2s;box-sizing:border-box}
+.auth-inp:focus{border-color:rgba(255,255,255,0.4)}
+.auth-inp::placeholder{color:rgba(240,240,240,0.2)}
+.auth-label{display:block;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:8px;font-weight:600}
+.auth-btn{width:100%;padding:14px;background:#ffffff;color:#080808;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;transition:background 0.2s}
+.auth-btn:hover{background:#e0e0e0}
 .auth-btn:disabled{opacity:0.5;cursor:not-allowed}
-.auth-btn-ghost{width:100%;padding:13px;background:transparent;color:rgba(245,240,232,0.6);border:1px solid rgba(201,146,42,0.2);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s}
-.auth-btn-ghost:hover{border-color:#c9922a;color:#c9922a}
-.auth-sel{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;box-sizing:border-box;color-scheme:dark}
-.auth-textarea{width:100%;background:rgba(201,146,42,0.04);border:1px solid rgba(201,146,42,0.15);color:#f5f0e8;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;resize:vertical;min-height:80px;box-sizing:border-box;transition:border-color 0.2s}
-.auth-textarea:focus{border-color:rgba(201,146,42,0.5)}
-.auth-textarea::placeholder{color:rgba(245,240,232,0.2)}
-.auth-tabs{display:flex;border-bottom:1px solid rgba(201,146,42,0.2);margin-bottom:28px;gap:4px}
-.auth-tab{flex:1;padding:12px 8px;text-align:center;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:rgba(245,240,232,0.4);transition:color 0.2s;font-family:'DM Sans',sans-serif}
-.auth-tab:hover{color:rgba(245,240,232,0.7)}
-.auth-tab.on{color:#c9922a;border-bottom-color:#c9922a}
+.auth-btn-ghost{width:100%;padding:13px;background:transparent;color:rgba(240,240,240,0.6);border:1px solid rgba(255,255,255,0.14);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s}
+.auth-btn-ghost:hover{border-color:#ffffff;color:#ffffff}
+.auth-sel{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:#f0f0f0;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;box-sizing:border-box;color-scheme:dark}
+.auth-textarea{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);color:#f0f0f0;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;outline:none;resize:vertical;min-height:80px;box-sizing:border-box;transition:border-color 0.2s}
+.auth-textarea:focus{border-color:rgba(255,255,255,0.4)}
+.auth-textarea::placeholder{color:rgba(240,240,240,0.2)}
+.auth-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.14);margin-bottom:28px;gap:4px}
+.auth-tab{flex:1;padding:12px 8px;text-align:center;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:rgba(240,240,240,0.4);transition:color 0.2s;font-family:'DM Sans',sans-serif}
+.auth-tab:hover{color:rgba(240,240,240,0.7)}
+.auth-tab.on{color:#ffffff;border-bottom-color:#ffffff}
 .auth-role-sel{display:flex;gap:10px;margin-bottom:20px}
 .auth-role{flex:1;padding:14px;border:2px solid var(--g200);text-align:center;cursor:pointer;transition:all .1s}
 .auth-role.on{border-color:var(--bk);background:var(--bk);color:var(--wh)}
@@ -324,10 +324,10 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .qz-ar{font-family:'Amiri',serif;direction:rtl;font-size:22px;font-weight:700;text-align:center;line-height:1.8;color:#111}
 .qz-opt-ar{font-family:'Amiri',serif;direction:rtl;font-size:20px;font-weight:700;text-align:right}
 /* Library sub-tabs */
-.lib-tab-nav{display:flex;border-bottom:1px solid rgba(201,146,42,0.18);margin-bottom:20px;gap:4px}
-.lib-tab{padding:10px 18px;font-size:0.68rem;font-weight:600;color:rgba(245,240,232,0.35);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:0.1em;text-transform:uppercase;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
-.lib-tab:hover{color:rgba(245,240,232,0.65)}
-.lib-tab.on{color:#c9922a;border-bottom-color:#c9922a}
+.lib-tab-nav{display:flex;border-bottom:1px solid rgba(255,255,255,0.12);margin-bottom:20px;gap:4px}
+.lib-tab{padding:10px 18px;font-size:0.68rem;font-weight:600;color:rgba(240,240,240,0.35);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:0.1em;text-transform:uppercase;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.lib-tab:hover{color:rgba(240,240,240,0.65)}
+.lib-tab.on{color:#ffffff;border-bottom-color:#ffffff}
 /* Flashcard — single face, no 3D transform (eliminates backface flash) */
 .fc-scene{cursor:pointer;user-select:none}
 .fc-card{width:100%;min-height:180px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:20px;box-sizing:border-box;animation:fc-in .15s ease}
@@ -344,20 +344,20 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .conj-tbl .pron{font-family:'Amiri',serif;font-size:17px;direction:rtl;font-weight:700}
 @media(max-width:600px){.conj-tbl th .en{display:none}.conj-tbl .pron-en{display:none}.conj-tbl td .ar{font-size:17px !important}.lib-tab{padding:8px 10px;font-size:10px}}
 /* Resource link cards */
-.res-card{background:var(--sp-card,#16120c);border:1px solid rgba(201,146,42,0.12);border-radius:0;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;display:flex;flex-direction:column}
-.res-card:hover{border-color:rgba(201,146,42,0.4);transform:translateY(-2px)}
+.res-card{background:var(--sp-card,#16120c);border:1px solid rgba(255,255,255,0.08);border-radius:0;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;display:flex;flex-direction:column}
+.res-card:hover{border-color:rgba(255,255,255,0.3);transform:translateY(-2px)}
 .res-thumb{position:relative;width:100%;padding-bottom:52%;background:#080604;overflow:hidden;flex-shrink:0}
 .res-thumb img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
-.res-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(201,146,42,0.75);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.res-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;background:rgba(255,255,255,0.65);border-radius:50%;display:flex;align-items:center;justify-content:center}
 .res-body{padding:12px 14px;flex:1;min-width:0}
-.res-title{font-weight:600;font-size:13px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#f5f0e8;font-family:'DM Sans',sans-serif}
-.res-desc{font-size:11.5px;color:rgba(245,240,232,0.45);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5}
+.res-title{font-weight:600;font-size:13px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;color:#f0f0f0;font-family:'DM Sans',sans-serif}
+.res-desc{font-size:11.5px;color:rgba(240,240,240,0.45);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.5}
 .res-meta{margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 /* ── Mobile bottom nav for tutor dashboard ── */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bk);border-top:1px solid rgba(255,255,255,0.1);z-index:50;overflow-x:auto;padding:0;-webkit-overflow-scrolling:touch}
 .mob-nav::-webkit-scrollbar{display:none}
 .mob-nav-it{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 10px 7px;color:#aaa;cursor:pointer;border:none;background:none;font-family:var(--fb);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;flex-shrink:0;position:relative;min-width:56px}
-.mob-nav-it.on{color:#fff}.mob-nav-it.on::after{content:"";position:absolute;top:0;left:20%;right:20%;height:2px;background:#c9922a;border-radius:0 0 2px 2px}
+.mob-nav-it.on{color:#fff}.mob-nav-it.on::after{content:"";position:absolute;top:0;left:20%;right:20%;height:2px;background:#ffffff;border-radius:0 0 2px 2px}
 /* ── Mobile layout fixes ── */
 @media(max-width:768px){
   /* Tutor: hide sidebar, show bottom nav */
@@ -399,7 +399,7 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .cred-low{color:var(--bd)}.cred-ok{color:var(--ok)}.cred-warn{color:var(--wn)}
 
 /* student-portal-v2 */
-.sp2-root[data-theme="dark"]{--sp-bg:#080604;--sp-mid:#100e0a;--sp-card:#16120c;--sp-surface:rgba(201,146,42,0.03);--sp-amber:#c9922a;--sp-amber-l:#e5b04a;--sp-amber-d:#a87520;--sp-glow:rgba(201,146,42,0.08);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#f5f0e8;--sp-txt2:#a09880;--sp-txt3:#6a5f50;--sp-border:rgba(201,146,42,0.08);--sp-border-h:rgba(201,146,42,0.25)}
+.sp2-root[data-theme="dark"]{--sp-bg:#080808;--sp-mid:#111111;--sp-card:#161616;--sp-surface:rgba(255,255,255,0.02);--sp-amber:#ffffff;--sp-amber-l:#e0e0e0;--sp-amber-d:#cccccc;--sp-glow:rgba(255,255,255,0.05);--sp-teal:#52C4B8;--sp-green:#4CAF7D;--sp-red:#CF4744;--sp-rose:#E07A90;--sp-txt:#f0f0f0;--sp-txt2:#888888;--sp-txt3:#555555;--sp-border:rgba(255,255,255,0.07);--sp-border-h:rgba(255,255,255,0.22)}
 .sp2-root[data-theme="light"]{--sp-bg:#F5F3EE;--sp-mid:#ECEAE3;--sp-card:#FFFFFF;--sp-surface:rgba(0,0,0,0.02);--sp-amber:#B08030;--sp-amber-l:#D4A853;--sp-amber-d:#8A6010;--sp-glow:rgba(176,128,48,0.08);--sp-teal:#1F8A7F;--sp-green:#2E7D52;--sp-red:#C03030;--sp-rose:#C04060;--sp-txt:#1A1A1A;--sp-txt2:#555;--sp-txt3:#888;--sp-border:rgba(0,0,0,0.08);--sp-border-h:rgba(176,128,48,0.3)}
 body:has(.sp2-root){overflow:hidden}
 #root:has(.sp2-root){overflow:hidden;height:100dvh}
@@ -552,7 +552,7 @@ const DEFS = {
   msgDay:"Hi {name}, reminder: Arabic lesson tomorrow ({date}) at {time}.",
   msgHour:"Hi {name}, your Arabic lesson starts in 1 hour at {time}.",
   msgGen:"Hi {name}, hope you're well! When would you like your next Arabic lesson?",
-  themeAccent:"#c9922a",
+  themeAccent:"#ffffff",
   themeSidebar:"#000000",
   themeSidebarText:"#cccccc",
   themeBackground:"#fafafa",
@@ -1864,7 +1864,7 @@ function AuthScreen({onAuth}) {
   };
 
   const fgStyle = {marginBottom:20};
-  const radioLabelStyle = (active) => ({display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:"0.85rem",color:active?"#c9922a":"rgba(245,240,232,0.55)",transition:"color 0.2s"});
+  const radioLabelStyle = (active) => ({display:"flex",alignItems:"center",gap:10,cursor:"pointer",fontSize:"0.85rem",color:active?"#ffffff":"rgba(240,240,240,0.55)",transition:"color 0.2s"});
 
   return h`<div class="auth-wrap">
     <div class="auth-box">
@@ -1872,12 +1872,12 @@ function AuthScreen({onAuth}) {
       <!-- Logo + Title -->
       <div style=${{textAlign:"center",marginBottom:32}}>
         <div style=${{display:"flex",justifyContent:"center",marginBottom:14}}>
-          <div style=${{width:64,height:64,borderRadius:12,overflow:"hidden",border:"1px solid rgba(201,146,42,0.3)",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style=${{width:64,height:64,borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,0.22)",background:"#000",display:"flex",alignItems:"center",justifyContent:"center"}}>
             <img src="/logo.jpeg" style=${{width:64,height:64,objectFit:"contain",display:"block"}}/>
           </div>
         </div>
-        <div style=${{fontFamily:"'Cinzel',serif",fontSize:"1.05rem",letterSpacing:"0.18em",color:"#c9922a",textTransform:"uppercase",marginBottom:4}}>Arabic Enthusiast</div>
-        <div style=${{fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(245,240,232,0.25)",fontFamily:"'DM Sans',sans-serif"}}>Student Portal</div>
+        <div style=${{fontFamily:"'Cinzel',serif",fontSize:"1.05rem",letterSpacing:"0.18em",color:"#ffffff",textTransform:"uppercase",marginBottom:4}}>Arabic Enthusiast</div>
+        <div style=${{fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",color:"rgba(240,240,240,0.25)",fontFamily:"'DM Sans',sans-serif"}}>Student Portal</div>
       </div>
 
       <!-- Tabs (only for login / request) -->
@@ -1900,9 +1900,9 @@ function AuthScreen({onAuth}) {
         </div>
         <button class="auth-btn" onClick=${doLogin} disabled=${loading}>${loading?"Please wait...":"Log In →"}</button>
         <div style=${{marginTop:20,textAlign:"center"}}>
-          <span style=${{fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",letterSpacing:"0.05em",cursor:"pointer",transition:"color 0.2s"}}
-            onMouseEnter=${e=>e.target.style.color="rgba(201,146,42,0.6)"}
-            onMouseLeave=${e=>e.target.style.color="rgba(245,240,232,0.25)"}
+          <span style=${{fontSize:"0.72rem",color:"rgba(240,240,240,0.25)",letterSpacing:"0.05em",cursor:"pointer",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="rgba(255,255,255,0.5)"}
+            onMouseLeave=${e=>e.target.style.color="rgba(240,240,240,0.25)"}
             onClick=${()=>{setMode("setup");reset();}}>First-time tutor setup →</span>
         </div>
       </div>`}
@@ -1917,7 +1917,7 @@ function AuthScreen({onAuth}) {
           <label class="auth-label">Gender *</label>
           <div style=${{display:"flex",gap:20,marginTop:4}}>
             ${[["female","Female"],["male","Male"]].map(([v,l])=>h`<label key=${v} style=${radioLabelStyle(gender===v)}>
-              <input type="radio" name="gender" value=${v} checked=${gender===v} onChange=${()=>setGender(v)} style=${{accentColor:"#c9922a",width:15,height:15}}/>
+              <input type="radio" name="gender" value=${v} checked=${gender===v} onChange=${()=>setGender(v)} style=${{accentColor:"#ffffff",width:15,height:15}}/>
               ${l}
             </label>`)}
           </div>
@@ -1949,17 +1949,17 @@ function AuthScreen({onAuth}) {
           <textarea class="auth-textarea" value=${message} onInput=${e=>setMessage(e.target.value)} placeholder="e.g. I'm a complete beginner, or I want to improve my reading for travel..."/>
         </div>
         <button class="auth-btn" onClick=${doRequest} disabled=${loading}>${loading?"Sending...":"Send Request →"}</button>
-        <div style=${{marginTop:12,fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",lineHeight:1.7,textAlign:"center"}}>Hadi will review your info and confirm your access shortly.</div>
+        <div style=${{marginTop:12,fontSize:"0.72rem",color:"rgba(240,240,240,0.25)",lineHeight:1.7,textAlign:"center"}}>Hadi will review your info and confirm your access shortly.</div>
       </div>`}
 
       <!-- VERIFY WHATSAPP -->
       ${mode==="verify" && h`<div>
         <div style=${{textAlign:"center",marginBottom:28}}>
-          <div style=${{fontFamily:"'Amiri',serif",fontSize:"2.8rem",color:"rgba(201,146,42,0.4)",marginBottom:8}}>تحقق</div>
-          <div style=${{fontFamily:"'Playfair Display',serif",fontSize:"1.1rem",color:"#f5f0e8",marginBottom:10}}>Check your WhatsApp</div>
-          <div style=${{fontSize:"0.82rem",color:"rgba(245,240,232,0.4)",lineHeight:1.8}}>
+          <div style=${{fontFamily:"'Amiri',serif",fontSize:"2.8rem",color:"rgba(255,255,255,0.3)",marginBottom:8}}>تحقق</div>
+          <div style=${{fontFamily:"'Playfair Display',serif",fontSize:"1.1rem",color:"#f0f0f0",marginBottom:10}}>Check your WhatsApp</div>
+          <div style=${{fontSize:"0.82rem",color:"rgba(240,240,240,0.4)",lineHeight:1.8}}>
             A 6-digit code will be sent to<br/>
-            <span style=${{color:"#c9922a",fontWeight:600}}>${verifyPhone}</span><br/>
+            <span style=${{color:"#ffffff",fontWeight:600}}>${verifyPhone}</span><br/>
             Enter it below once you receive it.
           </div>
         </div>
@@ -1976,18 +1976,18 @@ function AuthScreen({onAuth}) {
           />
         </div>
         <button class="auth-btn" onClick=${doVerify} disabled=${loading}>${loading?"Verifying...":"Verify WhatsApp →"}</button>
-        <div style=${{marginTop:16,fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",textAlign:"center",lineHeight:1.8}}>
+        <div style=${{marginTop:16,fontSize:"0.72rem",color:"rgba(240,240,240,0.25)",textAlign:"center",lineHeight:1.8}}>
           Didn't receive a code? Make sure your number is correct.<br/>
-          <span style=${{cursor:"pointer",color:"rgba(201,146,42,0.5)",transition:"color 0.2s"}}
-            onMouseEnter=${e=>e.target.style.color="#c9922a"}
-            onMouseLeave=${e=>e.target.style.color="rgba(201,146,42,0.5)"}
+          <span style=${{cursor:"pointer",color:"rgba(255,255,255,0.4)",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="#ffffff"}
+            onMouseLeave=${e=>e.target.style.color="rgba(255,255,255,0.4)"}
             onClick=${()=>{setMode("request");reset();}}>← Go back and change number</span>
         </div>
       </div>`}
 
       <!-- FIRST-TIME TUTOR SETUP -->
       ${mode==="setup" && h`<div>
-        <div style=${{marginBottom:24,padding:"12px 16px",background:"rgba(201,146,42,0.06)",border:"1px solid rgba(201,146,42,0.2)",fontSize:"0.78rem",color:"rgba(245,240,232,0.5)",lineHeight:1.7}}>
+        <div style=${{marginBottom:24,padding:"12px 16px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.14)",fontSize:"0.78rem",color:"rgba(240,240,240,0.5)",lineHeight:1.7}}>
           First-time setup — create your tutor account. This only needs to be done once.
         </div>
         <div style=${fgStyle}>
@@ -2004,9 +2004,9 @@ function AuthScreen({onAuth}) {
         </div>
         <button class="auth-btn" onClick=${doSetup} disabled=${loading}>${loading?"Creating...":"Create Tutor Account →"}</button>
         <div style=${{marginTop:16,textAlign:"center"}}>
-          <span style=${{fontSize:"0.72rem",color:"rgba(245,240,232,0.25)",cursor:"pointer",transition:"color 0.2s"}}
-            onMouseEnter=${e=>e.target.style.color="rgba(201,146,42,0.6)"}
-            onMouseLeave=${e=>e.target.style.color="rgba(245,240,232,0.25)"}
+          <span style=${{fontSize:"0.72rem",color:"rgba(240,240,240,0.25)",cursor:"pointer",transition:"color 0.2s"}}
+            onMouseEnter=${e=>e.target.style.color="rgba(255,255,255,0.5)"}
+            onMouseLeave=${e=>e.target.style.color="rgba(240,240,240,0.25)"}
             onClick=${()=>{setMode("login");reset();}}>← Back to login</span>
         </div>
       </div>`}
@@ -3039,12 +3039,12 @@ function StudentLibraryTab({student: s, data, setData, initialTopic}) {
         <div style=${{marginBottom:16,fontSize:"0.78rem",color:"var(--sp-txt3)",letterSpacing:"0.05em"}}>Download your study materials below.</div>
         <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:1}}>
           ${allPdfs.map(c=>h`<div key=${c.id} onClick=${()=>downloadFile(c.fileName||"resource.pdf",c.fileData)}
-            style=${{display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"var(--sp-card)",border:"1px solid rgba(201,146,42,0.12)",padding:"24px 16px",cursor:"pointer",transition:"border-color 0.2s"}}
-            onMouseEnter=${e=>e.currentTarget.style.borderColor="rgba(201,146,42,0.4)"}
-            onMouseLeave=${e=>e.currentTarget.style.borderColor="rgba(201,146,42,0.12)"}>
-            <div style=${{width:48,height:48,background:"rgba(201,146,42,0.08)",border:"1px solid rgba(201,146,42,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>📄</div>
+            style=${{display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"var(--sp-card)",border:"1px solid rgba(255,255,255,0.08)",padding:"24px 16px",cursor:"pointer",transition:"border-color 0.2s"}}
+            onMouseEnter=${e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.3)"}
+            onMouseLeave=${e=>e.currentTarget.style.borderColor="rgba(255,255,255,0.08)"}>
+            <div style=${{width:48,height:48,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.14)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>📄</div>
             <div style=${{fontWeight:600,fontSize:"0.82rem",color:"var(--sp-txt)",textAlign:"center",wordBreak:"break-word",lineHeight:1.4}}>${c.title||c.name||c.fileName}</div>
-            ${c.category?h`<span style=${{padding:"2px 10px",background:"rgba(201,146,42,0.08)",color:"var(--sp-amber)",border:"1px solid rgba(201,146,42,0.2)",fontSize:"0.6rem",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase"}}>${c.category}</span>`:null}
+            ${c.category?h`<span style=${{padding:"2px 10px",background:"rgba(255,255,255,0.05)",color:"var(--sp-amber)",border:"1px solid rgba(255,255,255,0.14)",fontSize:"0.6rem",fontWeight:700,letterSpacing:"0.08em",textTransform:"uppercase"}}>${c.category}</span>`:null}
             ${c.description?h`<div style=${{fontSize:"0.72rem",color:"var(--sp-txt3)",textAlign:"center",lineHeight:1.5}}>${c.description}</div>`:null}
             <div style=${{fontSize:"0.72rem",color:"var(--sp-amber)",fontWeight:700,letterSpacing:"0.06em"}}>⬇ Download</div>
           </div>`)}
@@ -3069,7 +3069,7 @@ function StudentLibraryTab({student: s, data, setData, initialTopic}) {
                 <div class="res-title">${r.title||r.ogTitle||r.url}</div>
                 ${(r.description||r.ogDescription)?h`<div class="res-desc">${r.description||r.ogDescription}</div>`:null}
                 <div class="res-meta">
-                  ${r.category?h`<span style=${{padding:"2px 8px",background:"rgba(201,146,42,0.08)",color:"var(--sp-amber)",border:"1px solid rgba(201,146,42,0.2)",borderRadius:0,fontSize:"0.6rem",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase"}}>${r.category}</span>`:null}
+                  ${r.category?h`<span style=${{padding:"2px 8px",background:"rgba(255,255,255,0.05)",color:"var(--sp-amber)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:0,fontSize:"0.6rem",fontWeight:700,letterSpacing:"0.06em",textTransform:"uppercase"}}>${r.category}</span>`:null}
                   <span style=${{fontSize:"0.7rem",color:"var(--sp-txt3)"}}>${r.type==="youtube"?"▶ YouTube":"🔗 "+safeDomain(r.url)}</span>
                 </div>
               </div>
@@ -3355,7 +3355,7 @@ function StudentQuizTab({student: s, data, setData, initialTopic, onGoFlashcards
       ${qs.map((q,i)=>h`<div key=${i} style=${{background:"#fff",border:"1px solid #eee",borderRadius:12,padding:"20px 18px",marginBottom:14,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
         <div style=${{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"#bbb",marginBottom:6}}>Question ${i+1} of ${qs.length}</div>
         <div style=${{fontWeight:700,fontSize:15,marginBottom:q.ar&&q.show_ar!==false?"10px":"16px",lineHeight:1.6,color:"#111"}}>${q.q}</div>
-        ${q.ar&&q.show_ar!==false&&h`<div style=${{background:"linear-gradient(135deg,#fafafa,#f5f0e8)",border:"1px solid #e8dcc8",borderRadius:10,padding:"14px 20px",marginBottom:16,textAlign:"center"}}>
+        ${q.ar&&q.show_ar!==false&&h`<div style=${{background:"linear-gradient(135deg,#fafafa,#f0f0f0)",border:"1px solid #e8dcc8",borderRadius:10,padding:"14px 20px",marginBottom:16,textAlign:"center"}}>
           <div class="qz-ar">${q.ar}</div>
         </div>`}
         <div style=${{display:"flex",flexDirection:"column",gap:10}}>
@@ -5429,7 +5429,7 @@ function Dashboard({data, setData, auth}) {
       <!-- subtle decorative crescent -->
       <div style=${{position:"absolute",top:-18,right:-18,fontSize:80,opacity:0.06,lineHeight:1,userSelect:"none"}}>☪️</div>
       <!-- label -->
-      <div style=${{fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#c9922a",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+      <div style=${{fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:"#ffffff",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
         <span>✦</span><span>Today's Reminder — تذكرة اليوم</span>
       </div>
       <!-- Arabic -->
@@ -5445,7 +5445,7 @@ function Dashboard({data, setData, auth}) {
       </div>
       <!-- source -->
       <div style=${{display:"flex",alignItems:"center",gap:8,marginBottom: todayQuoteAdmin.note ? 12 : 0}}>
-        <span style=${{fontSize:11,fontWeight:700,color:"#1a1a2e",background:"#c9922a",padding:"3px 12px",borderRadius:20}}>
+        <span style=${{fontSize:11,fontWeight:700,color:"#1a1a2e",background:"#ffffff",padding:"3px 12px",borderRadius:20}}>
           ${todayQuoteAdmin.source}
         </span>
         <span style=${{fontFamily:"'Amiri','Noto Naskh Arabic',serif",fontSize:12,color:"#a09070",direction:"rtl"}}>
@@ -6817,7 +6817,7 @@ function Settings({data, setData}) {
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Pick a preset — one click applies all colors at once.</p>
       ${(()=>{
         const presets = [
-          ["⚫ Default",{themeAccent:"#c9922a",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}],
+          ["⚫ Default",{themeAccent:"#ffffff",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}],
           ["🌙 Dark Mode",{themeAccent:"#7c3aed",themeSidebar:"#0f0f1a",themeSidebarText:"#a0a0c0",themeBackground:"#1a1a2e",themeTopbar:"#0f0f1a",themeTopbarBorder:"#7c3aed",themeCardBg:"#16213e",themeCardBorder:"#7c3aed",themeStatBg:"#16213e",themeStatBorder:"#7c3aed",themeTableHeader:"#7c3aed",themeTableHeaderText:"#ffffff",themeCalHeader:"#7c3aed",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#7c3aed",themePrimaryBtnText:"#ffffff",themeTextMain:"#e0e0f0"}],
           ["🌊 Ocean",{themeAccent:"#0ea5e9",themeSidebar:"#0c1a2e",themeSidebarText:"#94c8e8",themeBackground:"#f0f9ff",themeTopbar:"#ffffff",themeTopbarBorder:"#0ea5e9",themeCardBg:"#ffffff",themeCardBorder:"#bae6fd",themeStatBg:"#f0f9ff",themeStatBorder:"#0ea5e9",themeTableHeader:"#0c1a2e",themeTableHeaderText:"#ffffff",themeCalHeader:"#0c1a2e",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#0ea5e9",themePrimaryBtnText:"#ffffff",themeTextMain:"#0c1a2e"}],
           ["🌿 Forest",{themeAccent:"#16a34a",themeSidebar:"#0f1f0f",themeSidebarText:"#86efac",themeBackground:"#f0fdf4",themeTopbar:"#ffffff",themeTopbarBorder:"#16a34a",themeCardBg:"#ffffff",themeCardBorder:"#bbf7d0",themeStatBg:"#f0fdf4",themeStatBorder:"#16a34a",themeTableHeader:"#0f1f0f",themeTableHeaderText:"#ffffff",themeCalHeader:"#0f1f0f",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#16a34a",themePrimaryBtnText:"#ffffff",themeTextMain:"#0f1f0f"}],
@@ -6826,7 +6826,7 @@ function Settings({data, setData}) {
           ["🌹 Rose",{themeAccent:"#e11d48",themeSidebar:"#1a0010",themeSidebarText:"#fda4af",themeBackground:"#fff1f2",themeTopbar:"#ffffff",themeTopbarBorder:"#e11d48",themeCardBg:"#ffffff",themeCardBorder:"#fecdd3",themeStatBg:"#fff1f2",themeStatBorder:"#e11d48",themeTableHeader:"#1a0010",themeTableHeaderText:"#ffffff",themeCalHeader:"#1a0010",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#e11d48",themePrimaryBtnText:"#ffffff",themeTextMain:"#1a0010"}],
           ["🌤 Soft",{themeAccent:"#f59e0b",themeSidebar:"#f8f6f0",themeSidebarText:"#6b5a3e",themeBackground:"#fdfbf7",themeTopbar:"#ffffff",themeTopbarBorder:"#f59e0b",themeCardBg:"#ffffff",themeCardBorder:"#fde68a",themeStatBg:"#fdfbf7",themeStatBorder:"#f59e0b",themeTableHeader:"#6b5a3e",themeTableHeaderText:"#ffffff",themeCalHeader:"#6b5a3e",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#f59e0b",themePrimaryBtnText:"#ffffff",themeTextMain:"#3a2d1e"}],
         ];
-        const currentAccent = S.themeAccent||"#c9922a";
+        const currentAccent = S.themeAccent||"#ffffff";
         return h`<div>
           <div style=${{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}}>
             ${presets.map(([name,cols])=>{
@@ -6840,7 +6840,7 @@ function Settings({data, setData}) {
             })}
           </div>
           <div style=${{display:"flex",alignItems:"center",gap:10}}>
-            <button class="btn btn-sm" onClick=${()=>setData({...data,settings:{...S,themeAccent:"#c9922a",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}})}>Reset to Default</button>
+            <button class="btn btn-sm" onClick=${()=>setData({...data,settings:{...S,themeAccent:"#ffffff",themeSidebar:"#000000",themeSidebarText:"#cccccc",themeBackground:"#fafafa",themeTopbar:"#ffffff",themeTopbarBorder:"#000000",themeCardBg:"#ffffff",themeCardBorder:"#000000",themeStatBg:"#ffffff",themeStatBorder:"#000000",themeTableHeader:"#000000",themeTableHeaderText:"#ffffff",themeCalHeader:"#000000",themeCalHeaderText:"#ffffff",themePrimaryBtn:"#000000",themePrimaryBtnText:"#ffffff",themeTextMain:"#000000"}})}>Reset to Default</button>
             <div style=${{fontSize:11,color:"var(--g400)"}}>Changes apply instantly.</div>
           </div>
         </div>`;
@@ -7916,15 +7916,15 @@ function App() {
     setAuth(null); setData(null);
   };
 
-  const LoadingScreen = () => h`<div style=${{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0a0805",gap:24,overflow:"hidden",position:"relative"}}>
-    <div style=${{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(201,146,42,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(201,146,42,0.03) 1px,transparent 1px)",backgroundSize:"80px 80px",pointerEvents:"none"}}></div>
+  const LoadingScreen = () => h`<div style=${{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:"#080808",gap:24,overflow:"hidden",position:"relative"}}>
+    <div style=${{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)",backgroundSize:"80px 80px",pointerEvents:"none"}}></div>
     <div style=${{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
       <svg width="140" height="140" viewBox="0 0 140 140" style=${{overflow:"visible"}}>
-        <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(201,146,42,0.08)" stroke-width="1.5"/>
-        <circle class="ae-load-arc" cx="70" cy="70" r="56" fill="none" stroke="#c9922a" stroke-width="2" stroke-dasharray="352" stroke-dashoffset="352" stroke-linecap="round"/>
-        <text class="ae-load-letter" x="70" y="93" text-anchor="middle" font-family="Amiri,serif" font-size="62" fill="#c9922a">ع</text>
+        <circle cx="70" cy="70" r="56" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1.5"/>
+        <circle class="ae-load-arc" cx="70" cy="70" r="56" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="352" stroke-dashoffset="352" stroke-linecap="round"/>
+        <text class="ae-load-letter" x="70" y="93" text-anchor="middle" font-family="Amiri,serif" font-size="62" fill="#ffffff">ع</text>
       </svg>
-      <div class="ae-load-title" style=${{fontFamily:"'Cinzel',serif",fontSize:"0.8rem",letterSpacing:"0.2em",color:"rgba(201,146,42,0.55)",textTransform:"uppercase"}}>Arabic Enthusiast</div>
+      <div class="ae-load-title" style=${{fontFamily:"'Cinzel',serif",fontSize:"0.8rem",letterSpacing:"0.2em",color:"rgba(255,255,255,0.45)",textTransform:"uppercase"}}>Arabic Enthusiast</div>
     </div>
   </div>`;
 
@@ -7961,7 +7961,7 @@ function App() {
   const activeNav = view === "profile" ? "students" : (navViewMap[view] || view);
 
   // Apply theme CSS vars
-  const accent         = S.themeAccent||"#c9922a";
+  const accent         = S.themeAccent||"#ffffff";
   const sidebarBg      = S.themeSidebar||"#000000";
   const sidebarText    = S.themeSidebarText||"#cccccc";
   const pageBg         = S.themeBackground||"#fafafa";
@@ -8046,7 +8046,7 @@ function App() {
     <div class="sb" style=${sbInlineStyle}>
       <div class="sb-hd" style=${sbHdInlineStyle}>
         ${S.tutorAvatar
-          ? h`<img src=${S.tutorAvatar} style=${{width:70,height:70,borderRadius:"50%",objectFit:"cover",display:"block",margin:"0 auto 10px",border:"2px solid rgba(201,146,42,0.5)"}}/>`
+          ? h`<img src=${S.tutorAvatar} style=${{width:70,height:70,borderRadius:"50%",objectFit:"cover",display:"block",margin:"0 auto 10px",border:"2px solid rgba(255,255,255,0.4)"}}/>`
           : h`<img src="/logo.jpeg" style=${{width:110,height:110,objectFit:"contain",display:"block",margin:"0 auto 10px",borderRadius:20}}/>`}
         <h1>${S.brand}</h1><small>${S.sub}</small>
       </div>
