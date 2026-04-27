@@ -1,10 +1,11 @@
 import { notFound }       from 'next/navigation'
 import type { Metadata }  from 'next'
+import BlogLayout         from '@/components/blog/BlogLayout'
 import { getAllPosts, getPostBySlug } from '@/lib/blog'
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Dynamic blog post — /blog/[slug]
-   Each slug maps to an MDX file in content/blog/.
+   MDX files are pure content (no imports/exports) — the layout is applied here.
 ───────────────────────────────────────────────────────────────────────────── */
 
 export function generateStaticParams() {
@@ -20,20 +21,30 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-// Dynamic import map — Next.js requires static import strings for MDX
-const POST_MODULES: Record<string, () => Promise<{ default: React.ComponentType }>> = {
-  'sun-and-moon-letters':   () => import('@/content/blog/sun-and-moon-letters.mdx'),
-  'why-levantine-arabic':   () => import('@/content/blog/why-levantine-arabic.mdx'),
-  'al-fatiha-word-by-word': () => import('@/content/blog/al-fatiha-word-by-word.mdx'),
+// Static import map — required because Next.js can't dynamic-import MDX at runtime
+async function loadContent(slug: string): Promise<React.ComponentType | null> {
+  switch (slug) {
+    case 'sun-and-moon-letters':
+      return (await import('@/content/blog/sun-and-moon-letters.mdx')).default
+    case 'why-levantine-arabic':
+      return (await import('@/content/blog/why-levantine-arabic.mdx')).default
+    case 'al-fatiha-word-by-word':
+      return (await import('@/content/blog/al-fatiha-word-by-word.mdx')).default
+    default:
+      return null
+  }
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const meta   = getPostBySlug(params.slug)
-  const loader = POST_MODULES[params.slug]
+  const meta    = getPostBySlug(params.slug)
+  if (!meta) notFound()
 
-  if (!meta || !loader) notFound()
+  const Content = await loadContent(params.slug)
+  if (!Content) notFound()
 
-  const { default: PostContent } = await loader()
-
-  return <PostContent />
+  return (
+    <BlogLayout meta={meta}>
+      <Content />
+    </BlogLayout>
+  )
 }
