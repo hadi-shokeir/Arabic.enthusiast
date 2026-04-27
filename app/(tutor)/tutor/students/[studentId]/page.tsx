@@ -399,7 +399,7 @@ export default function StudentManagePage({ params }: PageProps) {
             <div key={key}>
               <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: 4 }}>{label}</div>
               <SkillDots
-                value={(profile as Record<string, number | null>)[key] ?? 3}
+                value={(profile as unknown as Record<string, number | null>)[key] ?? 3}
                 onChange={v => updateSkill(key as keyof Profile, v)}
               />
             </div>
@@ -417,7 +417,7 @@ export default function StudentManagePage({ params }: PageProps) {
                 <div key={key}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: 4 }}>{label}</div>
                   <SkillDots
-                    value={(profile as Record<string, number | null>)[key] ?? 3}
+                    value={(profile as unknown as Record<string, number | null>)[key] ?? 3}
                     onChange={v => updateSkill(key as keyof Profile, v)}
                   />
                 </div>
@@ -439,7 +439,7 @@ export default function StudentManagePage({ params }: PageProps) {
                 <div key={key}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text3)', marginBottom: 4 }}>{label}</div>
                   <SkillDots
-                    value={(profile as Record<string, number | null>)[key] ?? 3}
+                    value={(profile as unknown as Record<string, number | null>)[key] ?? 3}
                     onChange={v => updateSkill(key as keyof Profile, v)}
                   />
                 </div>

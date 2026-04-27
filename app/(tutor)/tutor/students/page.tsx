@@ -35,7 +35,8 @@ export default async function StudentsPage() {
   ;(authUsers ?? []).forEach(u => { emailMap[u.id] = u.email ?? '' })
 
   const students: StudentRow[] = (profiles ?? [])
-    .map((p: StudentRow) => ({ ...p, email: emailMap[p.id] ?? '' }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((p: any) => ({ ...p, email: emailMap[p.id] ?? '' } as StudentRow))
     .filter((p: StudentRow) => !TUTOR_EMAILS.includes(p.email))
 
   const statusColor = (s: string) => s === 'active' ? '#6c6' : s === 'pending' ? '#ca8' : '#888'
