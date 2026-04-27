@@ -41,24 +41,24 @@ function Nav({ page, setPage }) {
     fontFamily: 'DM Sans, sans-serif', fontSize: '0.72rem',
     letterSpacing: '0.12em', textTransform: 'uppercase',
     padding: '10px 22px', background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.5)', color: '#f0f0f0', cursor: 'pointer',
-    transition: 'all 0.2s',
+    border: '1px solid rgba(229,201,120,0.48)', color: '#f7efe0', cursor: 'pointer',
+    transition: 'all 0.2s', borderRadius: 10,
   };
 
   return (
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
       padding: scrolled ? '12px 48px' : '20px 48px',
-      background: scrolled || menuOpen ? 'rgba(8,8,8,0.97)' : 'transparent',
+      background: scrolled || menuOpen ? 'rgba(8,8,8,0.94)' : 'transparent',
       backdropFilter: scrolled || menuOpen ? 'blur(16px)' : 'none',
-      borderBottom: scrolled || menuOpen ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent',
+      borderBottom: scrolled || menuOpen ? '1px solid rgba(229,201,120,0.14)' : '1px solid transparent',
       transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
     }}>
       {/* Main bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => go('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/logo.jpeg" alt="AE" style={{ height: 36, filter: 'brightness(0) invert(1)' }} />
-          <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.85rem', letterSpacing: '0.15em', color: '#ffffff', textTransform: 'uppercase' }}>Arabic Enthusiast</span>
+          <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.85rem', letterSpacing: '0.15em', color: '#e5c978', textTransform: 'uppercase' }}>Arabic Enthusiast</span>
         </button>
 
         {/* Desktop links */}
@@ -69,9 +69,9 @@ function Nav({ page, setPage }) {
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontFamily: 'DM Sans, sans-serif', fontSize: '0.78rem',
                 letterSpacing: '0.1em', textTransform: 'uppercase',
-                color: page === l.id ? '#ffffff' : 'rgba(240,240,240,0.5)',
+                color: page === l.id ? '#e5c978' : 'rgba(247,239,224,0.54)',
                 transition: 'color 0.2s', padding: '4px 0',
-                borderBottom: page === l.id ? '1px solid #ffffff' : '1px solid transparent',
+                borderBottom: page === l.id ? '1px solid #c9a24a' : '1px solid transparent',
               }}>{l.label}</button>
             </li>
           ))}
@@ -79,18 +79,18 @@ function Nav({ page, setPage }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={goPortal} style={btnStyle} className="nav-desktop"
-            onMouseEnter={e => { e.target.style.background = '#ffffff'; e.target.style.color = '#080808'; }}
-            onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = '#f0f0f0'; }}
+            onMouseEnter={e => { e.target.style.background = '#c9a24a'; e.target.style.color = '#17130c'; }}
+            onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = '#f7efe0'; }}
           >Login</button>
 
           {/* Hamburger — mobile only */}
           <button onClick={() => setMenuOpen(o => !o)} className="nav-mobile" style={{
-            background: 'none', border: '1px solid rgba(255,255,255,0.25)', cursor: 'pointer',
+            background: 'none', border: '1px solid rgba(229,201,120,0.3)', borderRadius: 10, cursor: 'pointer',
             padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 5,
           }}>
             {[0,1,2].map(i => (
               <span key={i} style={{
-                display: 'block', width: 22, height: 1.5, background: '#ffffff',
+                display: 'block', width: 22, height: 1.5, background: '#e5c978',
                 transition: 'all 0.25s',
                 transform: menuOpen
                   ? i === 0 ? 'translateY(6.5px) rotate(45deg)'
@@ -108,7 +108,7 @@ function Nav({ page, setPage }) {
       {menuOpen && (
         <div style={{
           paddingTop: 20, paddingBottom: 24,
-          borderTop: '1px solid rgba(255,255,255,0.08)', marginTop: 16,
+          borderTop: '1px solid rgba(229,201,120,0.14)', marginTop: 16,
           display: 'flex', flexDirection: 'column', gap: 4,
         }}>
           {links.map(l => (
@@ -116,8 +116,8 @@ function Nav({ page, setPage }) {
               background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
               fontFamily: 'DM Sans, sans-serif', fontSize: '1rem',
               letterSpacing: '0.08em', textTransform: 'uppercase',
-              color: page === l.id ? '#ffffff' : 'rgba(240,240,240,0.6)',
-              padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.06)',
+              color: page === l.id ? '#e5c978' : 'rgba(247,239,224,0.62)',
+              padding: '12px 0', borderBottom: '1px solid rgba(229,201,120,0.1)',
               transition: 'color 0.2s',
             }}>{l.label}</button>
           ))}

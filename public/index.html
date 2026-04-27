@@ -21,20 +21,20 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --ink: #080808; --ink2: #111111;
-  --gold: #ffffff; --gold2: #e0e0e0;
-  --cream: #f0f0f0; --muted: rgba(240,240,240,0.5);
-  --border: rgba(255,255,255,0.12);
+  --gold: #c9a24a; --gold2: #e5c978;
+  --cream: #f7efe0; --muted: rgba(247,239,224,0.56);
+  --border: rgba(229,201,120,0.16);
 }
 html { scroll-behavior: smooth; }
 body {
-  background: #080808; color: #f0f0f0;
+  background: #080808; color: var(--cream);
   font-family: 'DM Sans', sans-serif; overflow-x: hidden; min-height: 100vh;
 }
-::selection { background: rgba(201,146,42,0.3); color: #f5f0e8; }
+::selection { background: rgba(201,162,74,0.32); color: #fff8ea; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0805; }
-::-webkit-scrollbar-thumb { background: rgba(201,146,42,0.3); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(201,146,42,0.5); }
+::-webkit-scrollbar-thumb { background: rgba(201,162,74,0.36); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,162,74,0.56); }
 @keyframes spin       { to { transform: rotate(360deg); } }
 @keyframes float      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 @keyframes letterFade { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
