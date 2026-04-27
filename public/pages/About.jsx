@@ -2,7 +2,9 @@
 const { useState } = React;
 
 function AboutPage({ setPage }) {
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
   const { instructor } = window.AE.DATA;
+  const profile = { ...(instructor || {}), ...(site.instructor || {}) };
   const [form, setForm] = useState({ name: '', email: '', interest: 'Classical', message: '' });
   const [sent, setSent] = useState(false);
 
@@ -24,11 +26,11 @@ function AboutPage({ setPage }) {
           <Reveal>
             <Eyebrow>Your Instructor</Eyebrow>
             <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2.6rem, 4vw, 4rem)', color: '#f0f0f0', fontWeight: 600, lineHeight: 1.1, marginBottom: 24 }}>
-              {instructor.name}
+              {profile.name}
             </h1>
-            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: 'rgba(255,255,255,0.7)', marginBottom: 28, direction: 'rtl', textAlign: 'right', textShadow: '0 0 30px rgba(255,255,255,0.3)' }}>مدرّس اللغة العربية</div>
+            <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.6rem', color: 'rgba(255,255,255,0.7)', marginBottom: 28, direction: 'rtl', textAlign: 'right', textShadow: '0 0 30px rgba(255,255,255,0.3)' }}>{profile.arabicTitle || 'مدرّس اللغة العربية'}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 36 }}>
-              {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
+              {(profile.specialties || ['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic']).map(s => (
                 <span key={s} style={{ padding: '6px 14px', border: '1px solid rgba(255,255,255,0.2)', fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{s}</span>
               ))}
             </div>
@@ -36,14 +38,14 @@ function AboutPage({ setPage }) {
             {/* Bio */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 32, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <p style={{ color: 'rgba(240,240,240,0.7)', fontSize: '1rem', lineHeight: 1.85, margin: 0 }}>
-                Hadi Shokeir is a <strong style={{ color: '#f0f0f0', fontWeight: 500 }}>linguist, translator, and Arabic language instructor</strong> with over seven years of teaching experience. His background spans Classical Arabic, Levantine dialect, and Quranic studies — giving students a rare instructor who is equally at home in the sacred text and in everyday conversation.
+                {profile.bio1 || 'Hadi Shokeir is a linguist, translator, and Arabic language instructor with teaching experience across Classical Arabic, Levantine dialect, and Quranic studies.'}
               </p>
               <p style={{ color: 'rgba(240,240,240,0.5)', fontSize: '0.92rem', lineHeight: 1.85, margin: 0 }}>
-                As a student of Islamic studies, Hadi's relationship with Arabic goes beyond the academic — it is personal, devotional, and deeply rooted in tradition. He brings that same depth to every lesson, combining linguistic rigour with the patience and warmth that makes the language truly accessible.
+                {profile.bio2 || "His lessons combine linguistic structure, patient correction, and a personal relationship with the language so students can learn with clarity and confidence."}
               </p>
               {/* Credential row */}
               <div style={{ display: 'flex', gap: 32, marginTop: 8 }}>
-                {[['7+', 'Years teaching'], ['3', 'Specialisations'], ['1:1', 'Private lessons']].map(([num, label]) => (
+                {(profile.stats || [{value:'7+',label:'Years teaching'},{value:'3',label:'Specialisations'},{value:'1:1',label:'Private lessons'}]).map(({value:num, label}) => (
                   <div key={label}>
                     <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '1.6rem', color: '#ffffff', fontWeight: 600, lineHeight: 1 }}>{num}</div>
                     <div style={{ fontSize: '0.65rem', color: 'rgba(240,240,240,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4 }}>{label}</div>
@@ -76,8 +78,8 @@ function AboutPage({ setPage }) {
                     position: 'absolute', bottom: 20, left: 0, right: 0,
                     textAlign: 'center',
                   }}>
-                    <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.2em', color: '#ffffff', textTransform: 'uppercase', marginBottom: 4 }}>Hadi Shokeir</div>
-                    <div style={{ fontSize: '0.62rem', color: 'rgba(240,240,240,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Arabic Instructor</div>
+                    <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.75rem', letterSpacing: '0.2em', color: '#ffffff', textTransform: 'uppercase', marginBottom: 4 }}>{profile.name || 'Hadi Shokeir'}</div>
+                    <div style={{ fontSize: '0.62rem', color: 'rgba(240,240,240,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{profile.title || 'Arabic Instructor'}</div>
                   </div>
                 </div>
                 {/* Corner accents */}
@@ -97,11 +99,11 @@ function AboutPage({ setPage }) {
             <SectionHeading eyebrow="Approach" heading="Teaching Philosophy" center={true} />
           </Reveal>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-            {[
+            {(profile.philosophy || [
               { title: 'Structure First', arabic: 'البنية أولاً', desc: 'Arabic has an elegant, logical grammar. Learning the system — not just memorising phrases — is what gives you lasting ability.' },
               { title: 'Authentic Sounds', arabic: 'الأصوات الأصيلة', desc: 'From the first lesson, you\'ll learn to produce real Arabic sounds. No shortcuts that create bad habits to unlearn later.' },
               { title: 'Your Pace', arabic: 'بالسرعة التي تناسبك', desc: 'Every student\'s journey is different. Lessons adapt to your goals — whether Quran, dialect, conversation, or classical literature.' },
-            ].map((p, i) => (
+            ]).map((p, i) => (
               <Reveal key={p.title} delay={i * 0.1}>
                 <div style={{ background: 'rgba(14,14,14,0.8)', border: '1px solid rgba(255,255,255,0.07)', padding: '36px 32px', textAlign: 'center' }}>
                   <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: 12, textShadow: '0 0 25px rgba(255,255,255,0.25)' }}>{p.arabic}</div>
@@ -120,13 +122,13 @@ function AboutPage({ setPage }) {
           <Reveal>
             <Eyebrow>Get in Touch</Eyebrow>
             <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2rem, 3vw, 2.8rem)', color: '#f0f0f0', fontWeight: 600, lineHeight: 1.2, marginBottom: 20 }}>
-              Ready to begin?<br /><em style={{ color: '#ffffff' }}>Let's talk</em>
+              {profile.contactHeadingLine1 || 'Ready to begin?'}<br /><em style={{ color: '#ffffff' }}>{profile.contactHeadingAccent || "Let's talk"}</em>
             </h2>
             <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 40, maxWidth: 400 }}>
-              Whether you have questions about courses, want a free intro lesson, or are ready to enrol — send a message and Hadi will get back to you within 24 hours.
+              {profile.contactPrompt || 'Whether you have questions about courses, want a free intro lesson, or are ready to enrol, send a message and Hadi will get back to you.'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {[['📧', 'Email', 'hadishokeir@gmail.com'], ['🕌', 'Response time', 'Within 24 hours'], ['🌍', 'Location', 'Online — worldwide']].map(([icon, label, val]) => (
+              {[['📧', 'Email', profile.email || 'hadishokeir@gmail.com'], ['🕌', 'Response time', profile.responseTime || 'Within 24 hours'], ['🌍', 'Location', profile.location || 'Online - worldwide']].map(([icon, label, val]) => (
                 <div key={label} style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
                   <span style={{ fontSize: '1.2rem' }}>{icon}</span>
                   <div>

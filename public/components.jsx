@@ -1,5 +1,7 @@
 // ─── Shared Components ──────────────────────────────────────────────────────
 const { useState, useEffect, useRef } = React;
+const getSiteContent = () => window.AE?.site ? window.AE.site() : (window.AE?.DATA?.siteContent || {});
+const showSiteSection = name => (getSiteContent().sections || {})[name] !== false;
 
 // ── Scroll reveal hook ───────────────────────────────────────────────────────
 function useReveal(threshold = 0.15) {
@@ -28,12 +30,13 @@ function Nav({ page, setPage }) {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+  const site = getSiteContent();
   const links = [
     { id: 'home', label: 'Home' },
     { id: 'courses', label: 'Courses' },
-    { id: 'pricing', label: 'Pricing' },
-    { id: 'about', label: 'About' },
-  ];
+    { id: 'pricing', label: 'Pricing', section: 'pricing' },
+    { id: 'about', label: 'About', section: 'about' },
+  ].filter(link => !link.section || showSiteSection(link.section));
   const go = (id) => { setPage(id); setMenuOpen(false); window.scrollTo(0, 0); };
   const goPortal = () => { window.location.href = '/portal'; };
 
@@ -58,7 +61,7 @@ function Nav({ page, setPage }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={() => go('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
           <img src="/logo.jpeg" alt="AE" style={{ height: 36, filter: 'brightness(0) invert(1)' }} />
-          <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.85rem', letterSpacing: '0.15em', color: '#e5c978', textTransform: 'uppercase' }}>Arabic Enthusiast</span>
+          <span style={{ fontFamily: 'Cinzel, serif', fontSize: '0.85rem', letterSpacing: '0.15em', color: '#e5c978', textTransform: 'uppercase' }}>{site.brand || 'Arabic Enthusiast'}</span>
         </button>
 
         {/* Desktop links */}
@@ -134,6 +137,9 @@ function Nav({ page, setPage }) {
 // ── Footer ───────────────────────────────────────────────────────────────────
 function Footer({ setPage }) {
   const go = (id) => { setPage(id); window.scrollTo(0, 0); };
+  const site = getSiteContent();
+  const home = site.homepage || {};
+  const visible = site.sections || {};
   return (
     <footer style={{
       background: '#060606', borderTop: '1px solid rgba(255,255,255,0.08)',
@@ -141,17 +147,17 @@ function Footer({ setPage }) {
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 48, marginBottom: 48 }}>
         <div>
-          <div style={{ fontFamily: 'Cinzel, serif', color: '#ffffff', fontSize: '1rem', letterSpacing: '0.15em', marginBottom: 12 }}>ARABIC ENTHUSIAST</div>
+          <div style={{ fontFamily: 'Cinzel, serif', color: '#ffffff', fontSize: '1rem', letterSpacing: '0.15em', marginBottom: 12 }}>{site.brand || 'ARABIC ENTHUSIAST'}</div>
           <p style={{ color: 'rgba(240,240,240,0.4)', fontSize: '0.85rem', lineHeight: 1.7, maxWidth: 280 }}>
-            Professional Arabic instruction — from first letters to fluent reading. Taught with passion and precision.
+            {home.description || 'Professional Arabic instruction from first letters to fluent reading. Taught with passion and precision.'}
           </p>
           <div style={{ fontFamily: 'Amiri, serif', fontSize: '1.8rem', color: 'rgba(255,255,255,0.5)', marginTop: 16, direction: 'rtl', textShadow: '0 0 20px rgba(255,255,255,0.2)' }}>بِسْمِ اللَّهِ</div>
         </div>
         {[
-          { title: 'Learn', links: [['home','Home'],['courses','Courses'],['pricing','Pricing']] },
-          { title: 'About', links: [['about','Instructor'],['about','Teaching Method'],['about','Contact']] },
-          { title: 'Student', links: [['courses','Enrol Now'],['pricing','Pricing'],['about','Contact Hadi']] },
-        ].map(col => (
+          { title: 'Learn', links: [['home','Home'],['courses','Courses'], ...(visible.pricing === false ? [] : [['pricing','Pricing']])] },
+          { title: 'About', links: visible.about === false ? [] : [['about','Instructor'],['about','Teaching Method'],['about','Contact']] },
+          { title: 'Student', links: [['courses','Enrol Now'], ...(visible.pricing === false ? [] : [['pricing','Pricing']]), ...(visible.about === false ? [] : [['about','Contact Hadi']])] },
+        ].filter(col => col.links.length).map(col => (
           <div key={col.title}>
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>{col.title}</div>
             {col.links.map(([id, label]) => (
@@ -166,7 +172,7 @@ function Footer({ setPage }) {
         ))}
       </div>
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.72rem', color: 'rgba(240,240,240,0.25)' }}>© 2026 Arabic Enthusiast. All rights reserved.</span>
+        <span style={{ fontSize: '0.72rem', color: 'rgba(240,240,240,0.25)' }}>© 2026 {site.brand || 'Arabic Enthusiast'}. All rights reserved.</span>
         <span style={{ fontSize: '0.72rem', color: 'rgba(240,240,240,0.25)' }}>Teaching the world's most beautiful language.</span>
       </div>
     </footer>
@@ -229,4 +235,4 @@ function Badge({ children, color }) {
 }
 
 // Export all to window
-Object.assign(window, { Nav, Footer, Reveal, Eyebrow, SectionHeading, Badge, useReveal });
+Object.assign(window, { Nav, Footer, Reveal, Eyebrow, SectionHeading, Badge, useReveal, getSiteContent, showSiteSection });

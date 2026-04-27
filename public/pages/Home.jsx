@@ -3,6 +3,9 @@ const { useState, useEffect, useRef } = React;
 
 function HeroSection({ setPage }) {
   const [tick, setTick] = useState(0);
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
+  const subjects = Array.isArray(home.subjects) && home.subjects.length ? home.subjects : ['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'];
   const letters = ['ع', 'ر', 'ب', 'ي'];
   useEffect(() => {
     const t = setInterval(() => setTick(x => x + 1), 2200);
@@ -34,7 +37,7 @@ function HeroSection({ setPage }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
             <span style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.5)', display: 'block' }}></span>
-            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>Arabic Enthusiast</span>
+            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>{home.eyebrow || site.brand || 'Arabic Enthusiast'}</span>
           </div>
           <h1 style={{
             fontFamily: 'Playfair Display, serif',
@@ -42,12 +45,12 @@ function HeroSection({ setPage }) {
             fontWeight: 600, lineHeight: 1.1, color: '#f0f0f0',
             marginBottom: 28,
           }}>
-            Learn Arabic<br />
-            <em style={{ color: '#ffffff', fontStyle: 'italic' }}>with Passion</em><br />
-            & Precision
+            {home.titleLine1 || 'Learn Arabic'}<br />
+            <em style={{ color: '#ffffff', fontStyle: 'italic' }}>{home.titleAccent || 'with Passion'}</em><br />
+            {home.titleLine3 || '& Precision'}
           </h1>
           <p style={{ color: 'rgba(240,240,240,0.55)', fontSize: '1.05rem', lineHeight: 1.75, maxWidth: 440, marginBottom: 44 }}>
-            From your first letter to reading the Quran and conversing in dialect — structured courses that honour the depth and beauty of the Arabic language.
+            {home.description || 'From your first letter to reading the Quran and conversing in dialect, structured courses that honour the depth and beauty of the Arabic language.'}
           </p>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
@@ -58,7 +61,7 @@ function HeroSection({ setPage }) {
             }}
               onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'translateY(0)'; }}
-            >Explore Courses</button>
+            >{home.primaryCta || 'Explore Courses'}</button>
             <button onClick={() => { setPage('about'); window.scrollTo(0,0); }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
               letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -70,12 +73,12 @@ function HeroSection({ setPage }) {
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(240,240,240,0.2)'; e.currentTarget.style.color = 'rgba(240,240,240,0.6)'; }}
             >
               <span style={{ width: 30, height: 30, border: '1px solid currentColor', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>▶</span>
-              Meet your teacher
+              {home.secondaryCta || 'Meet your teacher'}
             </button>
           </div>
           {/* Subject pills */}
           <div style={{ marginTop: 48, paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {['Classical Arabic', 'Conversational Arabic', 'Quranic Arabic'].map(s => (
+            {subjects.map(s => (
               <span key={s} style={{
                 fontFamily: 'DM Sans, sans-serif', fontSize: '0.65rem', letterSpacing: '0.1em',
                 textTransform: 'uppercase', padding: '5px 14px',
@@ -151,7 +154,9 @@ function HeroSection({ setPage }) {
 }
 
 function FeaturesSection() {
-  const features = [
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
+  const features = Array.isArray(home.features) && home.features.length ? home.features : [
     { icon: '٢٨', label: '28 Letters', title: 'Master the Script', desc: 'Learn all 28 Arabic letters with their four positional forms — isolated, initial, medial and final. Interactive explorer included.' },
     { icon: '◎', label: 'Pronunciation', title: 'Authentic Sounds', desc: 'Audio for every letter, word, and phrase. Learn the sounds that don\'t exist in English — ʿAin, Ḥa, and Qaf.' },
     { icon: '⟳', label: 'Spaced Repetition', title: 'Vocabulary That Sticks', desc: 'Our flashcard system uses proven spacing algorithms so you retain what you learn long-term — not just for the exam.' },
@@ -161,7 +166,7 @@ function FeaturesSection() {
     <section style={{ padding: '100px 80px', position: 'relative' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <Reveal>
-          <SectionHeading eyebrow="Why Arabic Enthusiast" heading="Everything you need to learn Arabic properly." sub="Structured curriculum, interactive tools, and genuine teaching — no shortcuts." />
+          <SectionHeading eyebrow={home.featuresEyebrow || "Why Arabic Enthusiast"} heading={home.featuresHeading || "Everything you need to learn Arabic properly."} sub={home.featuresSub || "Structured curriculum, interactive tools, and genuine teaching, with no shortcuts."} />
         </Reveal>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2 }}>
           {features.map((f, i) => (
@@ -229,12 +234,14 @@ function AlphabetTeaser({ setPage }) {
 }
 
 function CoursesTeaser({ setPage }) {
-  const courses = window.AE.DATA.courses.filter(c => c.featured);
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
+  const courses = window.AE.DATA.courses.filter(c => c.featured && c.visible !== false);
   return (
     <section style={{ padding: '100px 80px' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <Reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 56 }}>
-          <SectionHeading eyebrow="Curriculum" heading="Choose your path" sub={null} />
+          <SectionHeading eyebrow={home.coursesEyebrow || "Curriculum"} heading={home.coursesHeading || "Choose your path"} sub={null} />
           <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
             fontFamily: 'DM Sans, sans-serif', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase',
             background: 'none', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(240,240,240,0.45)', padding: '10px 20px', cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap',
@@ -276,32 +283,36 @@ function CoursesTeaser({ setPage }) {
 }
 
 function QuoteSection() {
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
   return (
     <section style={{ padding: '80px', background: 'rgba(10,10,10,0.7)', borderTop: '1px solid rgba(255,255,255,0.07)', borderBottom: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
       <Reveal>
         <div style={{ fontFamily: 'Amiri, serif', fontSize: 'clamp(1.8rem, 4vw, 3rem)', color: '#ffffff', direction: 'rtl', marginBottom: 16, lineHeight: 1.6, textShadow: '0 0 40px rgba(255,255,255,0.3), 0 0 80px rgba(255,255,255,0.1)' }}>
-          وَعَلَّمَ آدَمَ الْأَسْمَاءَ كُلَّهَا
+          {home.quoteArabic || 'وَعَلَّمَ آدَمَ الْأَسْمَاءَ كُلَّهَا'}
         </div>
         <div style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '1.1rem', color: 'rgba(240,240,240,0.55)', maxWidth: 480, margin: '0 auto 8px' }}>
-          "And He taught Adam the names of all things"
+          "{home.quoteText || 'And He taught Adam the names of all things'}"
         </div>
-        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Quran 2:31</div>
+        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>{home.quoteSource || 'Quran 2:31'}</div>
       </Reveal>
     </section>
   );
 }
 
 function CtaSection({ setPage }) {
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
   return (
     <section style={{ padding: '120px 80px', textAlign: 'center' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
         <Reveal>
-          <div style={{ fontFamily: 'Amiri, serif', fontSize: '3.5rem', color: 'rgba(255,255,255,0.1)', marginBottom: 8, textShadow: '0 0 40px rgba(255,255,255,0.15)' }}>بِسْمِ اللَّهِ</div>
+          <div style={{ fontFamily: 'Amiri, serif', fontSize: '3.5rem', color: 'rgba(255,255,255,0.1)', marginBottom: 8, textShadow: '0 0 40px rgba(255,255,255,0.15)' }}>{home.ctaArabic || 'بِسْمِ اللَّهِ'}</div>
           <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f0f0f0', fontWeight: 600, lineHeight: 1.2, marginBottom: 20 }}>
-            Begin your<br /><em style={{ color: '#ffffff' }}>Arabic journey</em> today
+            {home.ctaTitleLine1 || 'Begin your'}<br /><em style={{ color: '#ffffff' }}>{home.ctaTitleAccent || 'Arabic journey'}</em> {home.ctaTitleLine3 || 'today'}
           </h2>
           <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 36 }}>
-            Take the first step towards understanding one of the world's most profound languages.
+            {home.ctaDescription || "Take the first step towards understanding one of the world's most profound languages."}
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
             <button onClick={() => { setPage('pricing'); window.scrollTo(0,0); }} style={{
@@ -310,14 +321,14 @@ function CtaSection({ setPage }) {
             }}
               onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'none'; }}
-            >See Pricing</button>
+            >{home.ctaPrimary || 'See Pricing'}</button>
             <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase',
               padding: '16px 32px', background: 'transparent', border: '1px solid rgba(240,240,240,0.2)', color: 'rgba(240,240,240,0.6)', cursor: 'pointer', transition: 'all 0.2s',
             }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#ffffff'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(240,240,240,0.2)'; e.currentTarget.style.color = 'rgba(240,240,240,0.6)'; }}
-            >Browse Courses</button>
+            >{home.ctaSecondary || 'Browse Courses'}</button>
           </div>
         </Reveal>
       </div>
@@ -326,14 +337,15 @@ function CtaSection({ setPage }) {
 }
 
 function HomePage({ setPage }) {
+  const show = window.showSiteSection || (() => true);
   return (
     <div>
-      <HeroSection setPage={setPage} />
-      <FeaturesSection />
-      <AlphabetTeaser setPage={setPage} />
-      <CoursesTeaser setPage={setPage} />
-      <QuoteSection />
-      <CtaSection setPage={setPage} />
+      {show('homeHero') && <HeroSection setPage={setPage} />}
+      {show('features') && <FeaturesSection />}
+      {show('alphabet') && <AlphabetTeaser setPage={setPage} />}
+      {show('courses') && <CoursesTeaser setPage={setPage} />}
+      {show('quote') && <QuoteSection />}
+      {show('cta') && <CtaSection setPage={setPage} />}
     </div>
   );
 }

@@ -62,6 +62,7 @@ body::before {
 <body>
 <div id="root"></div>
 
+<script src="/site-content.js"></script>
 <script src="/data.js"></script>
 <script type="text/babel" src="/components.jsx"></script>
 <script type="text/babel" src="/pages/Home.jsx"></script>
@@ -76,6 +77,7 @@ function App() {
   const [page, setPage] = useState('home');
   const [lesson, setLesson] = useState('arabic-foundations');
   const [key, setKey] = useState(0);
+  const [siteKey, setSiteKey] = useState(0);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('ae_page');
@@ -83,6 +85,20 @@ function App() {
     // Never restore 'dashboard' — always redirect to portal
     if (saved && saved !== 'dashboard') setPage(saved);
     if (savedLesson) setLesson(savedLesson);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/site')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.content && window.AE?.mergeSiteContent) {
+          window.AE.DATA = window.AE.mergeSiteContent(window.AE.DATA, d.content);
+          if (alive) setSiteKey(k => k + 1);
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   function navigateTo(newPage) {
@@ -102,7 +118,7 @@ function App() {
   return (
     <div>
       <Nav page={page} setPage={navigateTo} />
-      <main key={key} className="page-enter">
+      <main key={`${key}-${siteKey}`} className="page-enter">
         {page === 'home'    && <HomePage    setPage={navigateTo} />}
         {page === 'courses' && <CoursesPage setPage={navigateTo} setLesson={navigateLesson} />}
         {page === 'lesson'  && <LessonPage  courseId={lesson}    setPage={navigateTo} />}

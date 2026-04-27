@@ -115,7 +115,9 @@ function AlphabetExplorer() {
 
 // ── Courses Page ──────────────────────────────────────────────────────────────
 function CoursesPage({ setPage, setLesson }) {
-  const courses = window.AE.DATA.courses;
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const home = site.homepage || {};
+  const courses = window.AE.DATA.courses.filter(c => c.visible !== false);
   const [filter, setFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
@@ -132,7 +134,7 @@ function CoursesPage({ setPage, setLesson }) {
         <Reveal>
           <Eyebrow>All Courses</Eyebrow>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2.4rem, 4vw, 3.6rem)', color: '#f0f0f0', fontWeight: 600, lineHeight: 1.15, marginBottom: 16 }}>
-            Your path to Arabic<br /><em style={{ color: '#ffffff' }}>starts here</em>
+            {home.coursesHeading || 'Your path to Arabic'}<br /><em style={{ color: '#ffffff' }}>starts here</em>
           </h1>
           <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', maxWidth: 500, lineHeight: 1.7 }}>Structured courses across Classical, Levantine, and Quranic Arabic — for every level.</p>
         </Reveal>
@@ -205,7 +207,8 @@ function CoursesPage({ setPage, setLesson }) {
 
 // ── Lesson Page ───────────────────────────────────────────────────────────────
 function LessonPage({ courseId, setPage }) {
-  const courses = window.AE.DATA.courses;
+  const visibleCourses = window.AE.DATA.courses.filter(c => c.visible !== false);
+  const courses = visibleCourses.length ? visibleCourses : window.AE.DATA.courses;
   const course = courses.find(c => c.id === courseId) || courses[0];
   const allLessons = window.AE.DATA.lessons[course.id] || window.AE.DATA.lessons['arabic-foundations'];
   const [activeLesson, setActiveLesson] = useState(0);

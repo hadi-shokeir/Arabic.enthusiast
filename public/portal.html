@@ -16,6 +16,7 @@
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js" type="module"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="/site-content.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bk:#0a0907;--wh:#fffdf8;--ae-bg:#f4f1e9;--ae-panel:#fffdf8;--ae-panel-2:#fbf8f0;--ae-ink:#17130c;--ae-muted:#756f62;--ae-line:#d8c9a3;--ae-line-soft:#eadfca;--ae-gold:#c9a24a;--ae-gold-2:#e5c978;--g50:#f8f5ed;--g100:#eee6d6;--g200:#dfd0b2;--g300:#c8b78f;--g400:#8d8067;--g500:#6d6456;--g600:#4c4539;--g700:#302a22;--g800:#17130c;--ok:#2e7d52;--wn:#b87516;--bd:#b43c3c;--fh:'Playfair Display',serif;--fb:'DM Sans',sans-serif;--fa:'Noto Kufi Arabic',sans-serif}
@@ -744,7 +745,7 @@ async function pushImages(settings) {
 
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 18;
+const DATA_VERSION = 19;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
@@ -853,7 +854,9 @@ const DEFS = {
     6:{enabled:false,ranges:[]}
   }
 };
-const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],resources:[],lessonLogs:[],studioItems:[],settings:{...DEFS},_version:DATA_VERSION};
+const defaultSiteContent = () => window.AE?.cloneSiteContent ? window.AE.cloneSiteContent() : {};
+const normalizeSiteContent = content => window.AE?.normalizeSiteContent ? window.AE.normalizeSiteContent(content) : (content || defaultSiteContent());
+const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],resources:[],lessonLogs:[],studioItems:[],siteContent:defaultSiteContent(),settings:{...DEFS},_version:DATA_VERSION};
 
 // ─── IndexedDB Storage ───
 const DB_NAME = "TutorDB", DB_STORE = "appdata", DB_KEY = "main";
@@ -1010,7 +1013,12 @@ function migrateData(data) {
     d.students = (d.students||[]).map(withSkillDefaults);
     d._version = DATA_VERSION;
   }
+  if (v < 19) {
+    d.siteContent = normalizeSiteContent(d.siteContent);
+    d._version = DATA_VERSION;
+  }
   if (!d.studioItems) d.studioItems = [];
+  d.siteContent = normalizeSiteContent(d.siteContent);
   d.students = (d.students||[]).map(withSkillDefaults);
   return d;
 }
@@ -7477,6 +7485,264 @@ function PracticeAdmin({data, onProfile}) {
   </div>`;
 }
 
+function WebsiteControl({data, setData, auth}) {
+  const site = normalizeSiteContent(data.siteContent);
+  const [tab, setTab] = useState("overview");
+  const [publishStatus, setPublishStatus] = useState("");
+
+  const stamp = () => new Date().toISOString();
+  const saveSite = next => setData({...data, siteContent: normalizeSiteContent({...next, status:"draft", updatedAt:stamp()})});
+  const patchSite = patch => saveSite({...site, ...patch});
+  const patchHome = patch => patchSite({homepage:{...site.homepage, ...patch}});
+  const patchInstructor = patch => patchSite({instructor:{...site.instructor, ...patch}});
+  const patchPricing = patch => patchSite({pricing:{...site.pricing, ...patch}});
+  const patchSection = (key, value) => patchSite({sections:{...site.sections, [key]:value}});
+  const splitList = value => (value || "").split(/\n|,/).map(x=>x.trim()).filter(Boolean);
+  const joinList = value => (value || []).join(", ");
+  const updateCourse = (id, patch) => patchSite({courses:site.courses.map(c=>c.id===id?{...c,...patch}:c)});
+  const updateFeature = (index, patch) => {
+    const features = [...(site.homepage.features || [])];
+    features[index] = {...features[index], ...patch};
+    patchHome({features});
+  };
+  const updateStat = (index, patch) => {
+    const stats = [...(site.instructor.stats || [])];
+    stats[index] = {...stats[index], ...patch};
+    patchInstructor({stats});
+  };
+  const updatePhilosophy = (index, patch) => {
+    const philosophy = [...(site.instructor.philosophy || [])];
+    philosophy[index] = {...philosophy[index], ...patch};
+    patchInstructor({philosophy});
+  };
+  const addCourse = () => patchSite({courses:[...site.courses,{id:uid(),visible:true,featured:false,level:"Beginner",type:"Classical",title:"New Course",arabic:"",subtitle:"",desc:"",color:"#ffffff",topics:[]}]});
+  const resetDraft = () => { if(confirm("Reset website draft to the default starter content?")) patchSite(defaultSiteContent()); };
+  const publish = async () => {
+    setPublishStatus("publishing");
+    const content = normalizeSiteContent({...site, status:"published", lastPublishedAt:stamp(), updatedAt:site.updatedAt||stamp()});
+    const res = await apiPost("/api/site", {token:auth?.token, content});
+    if (res?.ok) {
+      const published = normalizeSiteContent({...content, status:"published", lastPublishedAt:res.savedAt});
+      setData({...data, siteContent:published});
+      setPublishStatus("published");
+      setTimeout(()=>setPublishStatus(""), 3500);
+    } else {
+      setPublishStatus(res?.error || "Publish failed");
+    }
+  };
+
+  const visibleCount = Object.values(site.sections || {}).filter(Boolean).length;
+  const courseCount = (site.courses || []).filter(c=>c.visible!==false).length;
+  const changedAt = site.updatedAt ? new Date(site.updatedAt).toLocaleString() : "Not edited yet";
+  const publishedAt = site.lastPublishedAt ? new Date(site.lastPublishedAt).toLocaleString() : "Not published yet";
+  const tabs = [["overview","Overview"],["home","Homepage"],["about","My Page"],["courses","Courses"],["visibility","Visibility"]];
+
+  return h`<div>
+    <div class="card" style=${{display:"flex",gap:14,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
+      <div>
+        <h3 style=${{marginBottom:5}}>Website Control</h3>
+        <p style=${{fontSize:13,color:"var(--g500)",lineHeight:1.6,maxWidth:720}}>Edit what visitors see on the public website, keep changes as a draft, then publish when you are ready.</p>
+      </div>
+      <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <a class="btn btn-sm" href="/" target="_blank" rel="noreferrer">Open Website</a>
+        <button class="btn btn-sm" onClick=${resetDraft}>Reset Draft</button>
+        <button class="btn btn-p" onClick=${publish}>${publishStatus==="publishing"?"Publishing...":publishStatus==="published"?"Published":"Publish Website"}</button>
+      </div>
+      ${publishStatus&&publishStatus!=="publishing"&&publishStatus!=="published"&&h`<div style=${{width:"100%",fontSize:12,color:"var(--bd)",fontWeight:700}}>${publishStatus}</div>`}
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="lb">Visible Sections</div><div class="vl">${visibleCount}</div><div class="su">Homepage and public pages</div></div>
+      <div class="stat"><div class="lb">Visible Courses</div><div class="vl">${courseCount}</div><div class="su">Courses students can discover</div></div>
+      <div class="stat"><div class="lb">Draft Updated</div><div class="vl" style=${{fontSize:22}}>${changedAt}</div><div class="su">Auto-saved in tutor portal</div></div>
+      <div class="stat"><div class="lb">Last Published</div><div class="vl" style=${{fontSize:22}}>${publishedAt}</div><div class="su">Live public website</div></div>
+    </div>
+
+    <div class="tabs">
+      ${tabs.map(([id,label])=>h`<div key=${id} class=${"tab"+(tab===id?" on":"")} onClick=${()=>setTab(id)}>${label}</div>`)}
+    </div>
+
+    ${tab==="overview"&&h`<div class="fr">
+      <div class="card">
+        <h3>Draft Preview</h3>
+        <div style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,overflow:"hidden",background:"var(--ae-panel-2)"}}>
+          <div style=${{padding:20,background:"linear-gradient(135deg,#17130c,#2d2618)",color:"#fff"}}>
+            <div style=${{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:"rgba(255,255,255,.55)",marginBottom:10}}>${site.homepage.eyebrow||site.brand}</div>
+            <div style=${{fontFamily:"var(--fh)",fontSize:30,lineHeight:1.08,marginBottom:10}}>${site.homepage.titleLine1}<br/><em>${site.homepage.titleAccent}</em><br/>${site.homepage.titleLine3}</div>
+            <p style=${{fontSize:13,lineHeight:1.65,color:"rgba(255,255,255,.68)",maxWidth:520}}>${site.homepage.description}</p>
+          </div>
+          <div style=${{padding:16}}>
+            <div style=${{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--g500)",fontWeight:800,marginBottom:10}}>Featured Courses</div>
+            <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10}}>
+              ${site.courses.filter(c=>c.visible!==false&&c.featured!==false).slice(0,3).map(c=>h`<div key=${c.id} style=${{border:"1px solid var(--ae-line-soft)",borderRadius:12,padding:12,background:"var(--ae-panel)"}}>
+                <div style=${{height:3,background:c.color||"#c9a24a",borderRadius:3,marginBottom:10}}></div>
+                <div style=${{fontFamily:"var(--fh)",fontSize:17,color:"var(--ae-ink)"}}>${c.title}</div>
+                <div style=${{fontSize:11,color:"var(--g500)",margin:"4px 0 8px"}}>${c.level} - ${c.type}</div>
+                <div style=${{fontSize:12,color:"var(--g600)",lineHeight:1.45}}>${c.desc}</div>
+              </div>`)}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Publishing Rules</h3>
+        <div style=${{display:"grid",gap:10,fontSize:13,lineHeight:1.6,color:"var(--g600)"}}>
+          <div><b>Draft:</b> changes here save inside the tutor portal and cloud backup.</div>
+          <div><b>Publish:</b> pushes the draft to the live public website for visitors.</div>
+          <div><b>Courses:</b> visible courses appear on the Courses page; featured courses appear on the homepage.</div>
+          <div><b>Visibility:</b> hide entire sections without deleting their text.</div>
+        </div>
+      </div>
+    </div>`}
+
+    ${tab==="home"&&h`<div>
+      <div class="card"><h3>Homepage Hero</h3>
+        <div class="fr">
+          <div class="fg"><label>Brand / Eyebrow</label><input value=${site.homepage.eyebrow||""} onInput=${e=>patchHome({eyebrow:e.target.value})}/></div>
+          <div class="fg"><label>Website Brand</label><input value=${site.brand||""} onInput=${e=>patchSite({brand:e.target.value})}/></div>
+          <div class="fg"><label>Title Line 1</label><input value=${site.homepage.titleLine1||""} onInput=${e=>patchHome({titleLine1:e.target.value})}/></div>
+          <div class="fg"><label>Title Accent</label><input value=${site.homepage.titleAccent||""} onInput=${e=>patchHome({titleAccent:e.target.value})}/></div>
+          <div class="fg"><label>Title Line 3</label><input value=${site.homepage.titleLine3||""} onInput=${e=>patchHome({titleLine3:e.target.value})}/></div>
+          <div class="fg"><label>Subject Pills (comma separated)</label><input value=${joinList(site.homepage.subjects)} onInput=${e=>patchHome({subjects:splitList(e.target.value)})}/></div>
+        </div>
+        <div class="fg"><label>Description</label><textarea rows="3" value=${site.homepage.description||""} onInput=${e=>patchHome({description:e.target.value})}></textarea></div>
+        <div class="fr"><div class="fg"><label>Primary Button</label><input value=${site.homepage.primaryCta||""} onInput=${e=>patchHome({primaryCta:e.target.value})}/></div><div class="fg"><label>Secondary Button</label><input value=${site.homepage.secondaryCta||""} onInput=${e=>patchHome({secondaryCta:e.target.value})}/></div></div>
+      </div>
+
+      <div class="card"><h3>Feature Cards</h3>
+        <div class="fr">
+          <div class="fg"><label>Section Eyebrow</label><input value=${site.homepage.featuresEyebrow||""} onInput=${e=>patchHome({featuresEyebrow:e.target.value})}/></div>
+          <div class="fg"><label>Section Heading</label><input value=${site.homepage.featuresHeading||""} onInput=${e=>patchHome({featuresHeading:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>Section Text</label><textarea rows="2" value=${site.homepage.featuresSub||""} onInput=${e=>patchHome({featuresSub:e.target.value})}></textarea></div>
+        <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:12}}>
+          ${(site.homepage.features||[]).map((f,i)=>h`<div key=${i} style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,padding:14,background:"var(--ae-panel-2)"}}>
+            <div class="fr">
+              <div class="fg"><label>Icon Text</label><input value=${f.icon||""} onInput=${e=>updateFeature(i,{icon:e.target.value})}/></div>
+              <div class="fg"><label>Small Label</label><input value=${f.label||""} onInput=${e=>updateFeature(i,{label:e.target.value})}/></div>
+            </div>
+            <div class="fg"><label>Title</label><input value=${f.title||""} onInput=${e=>updateFeature(i,{title:e.target.value})}/></div>
+            <div class="fg"><label>Description</label><textarea rows="3" value=${f.desc||""} onInput=${e=>updateFeature(i,{desc:e.target.value})}></textarea></div>
+          </div>`)}
+        </div>
+      </div>
+
+      <div class="card"><h3>Quote, CTA, and Pricing Page</h3>
+        <div class="fr">
+          <div class="fg"><label>Courses Section Eyebrow</label><input value=${site.homepage.coursesEyebrow||""} onInput=${e=>patchHome({coursesEyebrow:e.target.value})}/></div>
+          <div class="fg"><label>Courses Section Heading</label><input value=${site.homepage.coursesHeading||""} onInput=${e=>patchHome({coursesHeading:e.target.value})}/></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Quote Arabic</label><input value=${site.homepage.quoteArabic||""} onInput=${e=>patchHome({quoteArabic:e.target.value})}/></div>
+          <div class="fg"><label>Quote Source</label><input value=${site.homepage.quoteSource||""} onInput=${e=>patchHome({quoteSource:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>Quote Translation</label><input value=${site.homepage.quoteText||""} onInput=${e=>patchHome({quoteText:e.target.value})}/></div>
+        <div class="fr3">
+          <div class="fg"><label>CTA Line 1</label><input value=${site.homepage.ctaTitleLine1||""} onInput=${e=>patchHome({ctaTitleLine1:e.target.value})}/></div>
+          <div class="fg"><label>CTA Accent</label><input value=${site.homepage.ctaTitleAccent||""} onInput=${e=>patchHome({ctaTitleAccent:e.target.value})}/></div>
+          <div class="fg"><label>CTA Line 3</label><input value=${site.homepage.ctaTitleLine3||""} onInput=${e=>patchHome({ctaTitleLine3:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>CTA Description</label><textarea rows="2" value=${site.homepage.ctaDescription||""} onInput=${e=>patchHome({ctaDescription:e.target.value})}></textarea></div>
+        <div class="fr">
+          <div class="fg"><label>CTA Primary</label><input value=${site.homepage.ctaPrimary||""} onInput=${e=>patchHome({ctaPrimary:e.target.value})}/></div>
+          <div class="fg"><label>CTA Secondary</label><input value=${site.homepage.ctaSecondary||""} onInput=${e=>patchHome({ctaSecondary:e.target.value})}/></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Pricing Title</label><input value=${site.pricing.titleLine1||""} onInput=${e=>patchPricing({titleLine1:e.target.value})}/></div>
+          <div class="fg"><label>Pricing Accent</label><input value=${site.pricing.titleAccent||""} onInput=${e=>patchPricing({titleAccent:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>Pricing Description</label><textarea rows="2" value=${site.pricing.description||""} onInput=${e=>patchPricing({description:e.target.value})}></textarea></div>
+      </div>
+    </div>`}
+
+    ${tab==="about"&&h`<div>
+      <div class="card"><h3>My Public Profile</h3>
+        <div class="fr">
+          <div class="fg"><label>Name</label><input value=${site.instructor.name||""} onInput=${e=>patchInstructor({name:e.target.value})}/></div>
+          <div class="fg"><label>Professional Title</label><input value=${site.instructor.title||""} onInput=${e=>patchInstructor({title:e.target.value})}/></div>
+          <div class="fg"><label>Arabic Title</label><input value=${site.instructor.arabicTitle||""} onInput=${e=>patchInstructor({arabicTitle:e.target.value})}/></div>
+          <div class="fg"><label>Specialties (comma separated)</label><input value=${joinList(site.instructor.specialties)} onInput=${e=>patchInstructor({specialties:splitList(e.target.value)})}/></div>
+        </div>
+        <div class="fg"><label>Bio Paragraph 1</label><textarea rows="3" value=${site.instructor.bio1||""} onInput=${e=>patchInstructor({bio1:e.target.value})}></textarea></div>
+        <div class="fg"><label>Bio Paragraph 2</label><textarea rows="3" value=${site.instructor.bio2||""} onInput=${e=>patchInstructor({bio2:e.target.value})}></textarea></div>
+      </div>
+      <div class="card"><h3>Stats and Teaching Philosophy</h3>
+        <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12,marginBottom:14}}>
+          ${(site.instructor.stats||[]).map((s,i)=>h`<div key=${i} style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,padding:12}}>
+            <div class="fg"><label>Number</label><input value=${s.value||""} onInput=${e=>updateStat(i,{value:e.target.value})}/></div>
+            <div class="fg"><label>Label</label><input value=${s.label||""} onInput=${e=>updateStat(i,{label:e.target.value})}/></div>
+          </div>`)}
+        </div>
+        <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>
+          ${(site.instructor.philosophy||[]).map((p,i)=>h`<div key=${i} style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,padding:12,background:"var(--ae-panel-2)"}}>
+            <div class="fg"><label>Title</label><input value=${p.title||""} onInput=${e=>updatePhilosophy(i,{title:e.target.value})}/></div>
+            <div class="fg"><label>Arabic Heading</label><input value=${p.arabic||""} onInput=${e=>updatePhilosophy(i,{arabic:e.target.value})}/></div>
+            <div class="fg"><label>Description</label><textarea rows="3" value=${p.desc||""} onInput=${e=>updatePhilosophy(i,{desc:e.target.value})}></textarea></div>
+          </div>`)}
+        </div>
+      </div>
+      <div class="card"><h3>Contact Section</h3>
+        <div class="fr">
+          <div class="fg"><label>Heading Line</label><input value=${site.instructor.contactHeadingLine1||""} onInput=${e=>patchInstructor({contactHeadingLine1:e.target.value})}/></div>
+          <div class="fg"><label>Heading Accent</label><input value=${site.instructor.contactHeadingAccent||""} onInput=${e=>patchInstructor({contactHeadingAccent:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>Prompt Text</label><textarea rows="3" value=${site.instructor.contactPrompt||""} onInput=${e=>patchInstructor({contactPrompt:e.target.value})}></textarea></div>
+        <div class="fr3">
+          <div class="fg"><label>Email</label><input value=${site.instructor.email||""} onInput=${e=>patchInstructor({email:e.target.value})}/></div>
+          <div class="fg"><label>Response Time</label><input value=${site.instructor.responseTime||""} onInput=${e=>patchInstructor({responseTime:e.target.value})}/></div>
+          <div class="fg"><label>Location</label><input value=${site.instructor.location||""} onInput=${e=>patchInstructor({location:e.target.value})}/></div>
+        </div>
+      </div>
+    </div>`}
+
+    ${tab==="courses"&&h`<div>
+      <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:12,flexWrap:"wrap"}}>
+        <p style=${{fontSize:13,color:"var(--g500)",lineHeight:1.6}}>Visible courses appear on the Courses page. Featured courses also appear on the homepage.</p>
+        <button class="btn btn-p" onClick=${addCourse}>Add Course</button>
+      </div>
+      ${(site.courses||[]).map((c,index)=>h`<div class="card" key=${c.id}>
+        <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginBottom:12,flexWrap:"wrap"}}>
+          <h3 style=${{margin:0}}>${c.title||"Untitled Course"}</h3>
+          <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <button class=${"btn btn-sm "+(c.visible!==false?"btn-p":"")} onClick=${()=>updateCourse(c.id,{visible:c.visible===false})}>${c.visible===false?"Hidden":"Visible"}</button>
+            <button class=${"btn btn-sm "+(c.featured!==false?"btn-p":"")} onClick=${()=>updateCourse(c.id,{featured:c.featured===false})}>${c.featured===false?"Not Featured":"Featured"}</button>
+            <button class="btn btn-sm btn-d" onClick=${()=>{if(confirm("Remove this course from the website draft?")) patchSite({courses:site.courses.filter(x=>x.id!==c.id)})}}>Remove</button>
+          </div>
+        </div>
+        <div class="fr3">
+          <div class="fg"><label>Title</label><input value=${c.title||""} onInput=${e=>updateCourse(c.id,{title:e.target.value})}/></div>
+          <div class="fg"><label>Arabic Title</label><input value=${c.arabic||""} onInput=${e=>updateCourse(c.id,{arabic:e.target.value})}/></div>
+          <div class="fg"><label>Subtitle</label><input value=${c.subtitle||""} onInput=${e=>updateCourse(c.id,{subtitle:e.target.value})}/></div>
+          <div class="fg"><label>Level</label><select value=${c.level||"Beginner"} onChange=${e=>updateCourse(c.id,{level:e.target.value})}><option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>All Levels</option></select></div>
+          <div class="fg"><label>Type</label><input value=${c.type||""} onInput=${e=>updateCourse(c.id,{type:e.target.value})}/></div>
+          <div class="fg"><label>Accent Color</label><input type="color" value=${c.color||"#ffffff"} onInput=${e=>updateCourse(c.id,{color:e.target.value})}/></div>
+        </div>
+        <div class="fg"><label>Description</label><textarea rows="3" value=${c.desc||""} onInput=${e=>updateCourse(c.id,{desc:e.target.value})}></textarea></div>
+        <div class="fg"><label>Topics (one per line)</label><textarea rows="3" value=${(c.topics||[]).join("\n")} onInput=${e=>updateCourse(c.id,{topics:splitList(e.target.value)})}></textarea></div>
+      </div>`)}
+    </div>`}
+
+    ${tab==="visibility"&&h`<div class="card"><h3>Section Visibility</h3>
+      <p style=${{fontSize:13,color:"var(--g500)",lineHeight:1.6,marginBottom:16}}>Turn sections off when you want to hide them from visitors without deleting your writing.</p>
+      <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12}}>
+        ${[
+          ["homeHero","Homepage hero"],
+          ["features","Feature cards"],
+          ["alphabet","Alphabet preview"],
+          ["courses","Homepage course preview"],
+          ["quote","Quote section"],
+          ["cta","Homepage final CTA"],
+          ["pricing","Pricing page and nav link"],
+          ["about","About page and nav link"]
+        ].map(([key,label])=>h`<label key=${key} style=${{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,border:"1px solid var(--ae-line-soft)",borderRadius:14,padding:"12px 14px",background:"var(--ae-panel-2)",cursor:"pointer"}}>
+          <span style=${{fontWeight:800,fontSize:13}}>${label}</span>
+          <input type="checkbox" checked=${site.sections[key]!==false} onChange=${e=>patchSection(key,e.target.checked)} style=${{width:20,height:20}}/>
+        </label>`)}
+      </div>
+    </div>`}
+  </div>`;
+}
+
 function Settings({data, setData}) {
   const S = data.settings;
   const u = (k,v) => setData({...data, settings:{...S,[k]:v}});
@@ -8772,6 +9038,7 @@ function App() {
     ["lessons","Scheduling & Calendar","cal"],
     ["payments","Payment Tracker","pay"],
     ["materials","Library & Resources","cur"],
+    ["website","Website Control","set"],
     ["studio","Learning Studio","ai"],
     ["practice","Games, Quizzes & Exercises","ai"],
     ["homework","Homework & Tasks","hw"],
@@ -8796,6 +9063,7 @@ function App() {
     ${view==="lessons" && h`<${LessonsAdmin} data=${data} setData=${update} auth=${auth}/>`}
     ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
     ${view==="materials" && h`<${MaterialsAdmin} data=${data} setData=${update} auth=${auth}/>`}
+    ${view==="website" && h`<${WebsiteControl} data=${data} setData=${update} auth=${auth}/>`}
     ${view==="studio" && h`<${StudioAdmin} data=${data} setData=${update}/>`}
     ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
     ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
@@ -8895,6 +9163,7 @@ function App() {
         ${view==="lessons" && h`<${LessonsAdmin} data=${data} setData=${update} auth=${auth}/>`}
         ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
         ${view==="materials" && h`<${MaterialsAdmin} data=${data} setData=${update} auth=${auth}/>`}
+        ${view==="website" && h`<${WebsiteControl} data=${data} setData=${update} auth=${auth}/>`}
         ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
         ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
         ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile}/>`}

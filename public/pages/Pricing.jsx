@@ -1,6 +1,8 @@
 // ─── Pricing Page ─────────────────────────────────────────────────────────────
 
 function PricingPage({ setPage }) {
+  const site = window.getSiteContent ? window.getSiteContent() : (window.AE?.DATA?.siteContent || {});
+  const pricing = site.pricing || {};
   return (
     <div style={{ paddingTop: 100, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
       {/* Background glow */}
@@ -18,14 +20,14 @@ function PricingPage({ setPage }) {
           <div style={{ fontFamily: 'Amiri, serif', fontSize: '3rem', color: 'rgba(255,255,255,0.35)', marginBottom: 12, textShadow: '0 0 30px rgba(255,255,255,0.15)' }}>قريباً</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, justifyContent: 'center' }}>
             <span style={{ display: 'block', width: 28, height: 1, background: 'rgba(255,255,255,0.4)' }}></span>
-            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>Pricing</span>
+            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)' }}>{pricing.eyebrow || 'Pricing'}</span>
             <span style={{ display: 'block', width: 28, height: 1, background: 'rgba(255,255,255,0.4)' }}></span>
           </div>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', color: '#f0f0f0', fontWeight: 600, lineHeight: 1.2, marginBottom: 20 }}>
-            Pricing coming<br /><em style={{ color: '#ffffff' }}>soon</em>
+            {pricing.titleLine1 || 'Pricing coming'}<br /><em style={{ color: '#ffffff' }}>{pricing.titleAccent || 'soon'}</em>
           </h1>
           <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 44 }}>
-            Details are being finalised. In the meantime, reach out directly — Hadi will be happy to discuss options based on your goals and availability.
+            {pricing.description || 'Details are being finalised. In the meantime, reach out directly to discuss options based on your goals and availability.'}
           </p>
           <button onClick={() => { setPage('about'); window.scrollTo(0,0); }} style={{
             fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
@@ -35,7 +37,7 @@ function PricingPage({ setPage }) {
           }}
             onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'none'; }}
-          >Get in Touch →</button>
+          >{pricing.cta || 'Get in Touch'} →</button>
         </Reveal>
       </div>
     </div>

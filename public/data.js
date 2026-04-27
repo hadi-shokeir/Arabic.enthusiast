@@ -4,6 +4,7 @@ window.AE = window.AE || {};
 window.AE.DATA = {
   brand: "ARABIC ENTHUSIAST",
   tagline: "Learn Arabic with Passion & Precision",
+  siteContent: window.AE.cloneSiteContent ? window.AE.cloneSiteContent() : null,
   instructor: {
     name: "Hadi Shokeir",
     title: "Arabic Language Instructor",
