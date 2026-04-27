@@ -170,6 +170,20 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .assess-card h4{font-family:var(--fh);font-size:16px;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .assess-card textarea{width:100%;padding:9px 11px;border:2px solid var(--g200);font-family:var(--fa),var(--fb);font-size:13px;resize:vertical;min-height:70px;outline:none;line-height:1.6;direction:auto;unicode-bidi:plaintext}
 .assess-card textarea:focus{border-color:var(--bk)}
+.assessment-track-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.assessment-track-toggle{min-height:112px;text-align:left;border:1.5px solid var(--g200);border-radius:14px;background:var(--wh);color:var(--g600);cursor:pointer;padding:14px;display:flex;flex-direction:column;gap:8px;transition:all .16s;font-family:var(--fb)}
+.assessment-track-toggle:hover{transform:translateY(-1px);border-color:var(--track,#c9a24a)}
+.assessment-track-toggle.on{border-color:var(--track,#c9a24a);box-shadow:0 12px 24px rgba(0,0,0,0.07)}
+.assessment-track-kicker{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:var(--g400)}
+.assessment-track-title{font-size:14px;font-weight:800;color:var(--g800);line-height:1.2}
+.assessment-track-meta{font-size:11px;line-height:1.45;color:var(--g500)}
+.assessment-track-score{margin-top:auto;font-size:12px;font-weight:800;color:var(--track,#c9a24a)}
+.assessment-section-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.assessment-section-tab{border:1px solid var(--g200);border-radius:999px;background:var(--wh);color:var(--g500);font-size:12px;font-weight:800;padding:8px 13px;cursor:pointer;font-family:var(--fb);transition:all .16s}
+.assessment-section-tab.on{background:var(--track,#c9a24a);border-color:var(--track,#c9a24a);color:#fff}
+.assessment-chart-panel{background:var(--g50);border:1px solid var(--g100);border-radius:14px;padding:12px 4px;margin-bottom:14px;--chart-label:var(--g700);--chart-grid:var(--g200);--chart-ring:var(--g300)}
+.assessment-axis-config{margin-top:10px;padding:12px 14px;background:var(--g50);border:1px solid var(--g100);border-radius:12px;display:flex;flex-wrap:wrap;gap:8px;--axis-chip-bg:#fff;--axis-chip-text:#666;--axis-chip-border:#ddd}
+.assessment-axis-note{width:100%;font-size:11px;color:var(--g500);margin-bottom:4px}
 /* Share button */
 .btn-share{background:#128C7E;color:#fff;border-color:#128C7E}.btn-share:hover{background:#075E54}
 .free-left-stepper{display:inline-flex;align-items:center;gap:0;border:2px solid var(--ok);margin-top:4px}
@@ -378,6 +392,10 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
   /* Cards full width */
   .card{padding:14px 12px}
   .mo{width:96% !important;max-height:90vh !important}
+  .assessment-track-grid{grid-template-columns:1fr !important}
+  .skill-row{align-items:flex-start;flex-wrap:wrap}
+  .skill-label{width:100%}
+  .skill-level{margin-left:0}
 }
 @media(max-width:600px){
   .student-root{overflow-x:hidden}
@@ -474,6 +492,18 @@ body:has(.sp2-root){overflow:hidden}
 .tutor-root .cal-c.om{background:var(--sp-mid);color:var(--sp-txt3)}
 .tutor-root .cal-c.today{box-shadow:inset 0 0 0 2px var(--sp-amber)}
 .tutor-root .cal-e{background:var(--sp-glow);color:var(--sp-amber-l);border-radius:6px}
+.tutor-root .assessment-track-toggle{background:var(--sp-surface)!important;border-color:var(--sp-border)!important;color:var(--sp-txt2)!important}
+.tutor-root .assessment-track-toggle:hover,.tutor-root .assessment-track-toggle.on{border-color:var(--track,var(--sp-amber))!important;background:var(--sp-glow)!important}
+.tutor-root .assessment-track-title{color:var(--sp-txt)!important}
+.tutor-root .assessment-track-meta,.tutor-root .assessment-track-kicker{color:var(--sp-txt2)!important}
+.tutor-root .assessment-section-tab{background:var(--sp-surface);border-color:var(--sp-border);color:var(--sp-txt2)}
+.tutor-root .assessment-section-tab.on{background:var(--track,var(--sp-amber));border-color:var(--track,var(--sp-amber));color:#fff}
+.tutor-root .assessment-chart-panel{background:var(--sp-surface);border-color:var(--sp-border);--chart-label:var(--sp-txt2);--chart-grid:rgba(229,201,120,0.16);--chart-ring:rgba(229,201,120,0.32)}
+.tutor-root .assessment-axis-config{background:var(--sp-surface);border-color:var(--sp-border);--axis-chip-bg:var(--sp-card);--axis-chip-text:var(--sp-txt2);--axis-chip-border:var(--sp-border)}
+.tutor-root .assessment-axis-note{color:var(--sp-txt2)}
+.tutor-root .skill-label{color:var(--sp-txt2)}
+.tutor-root .skill-dot{border-color:var(--sp-border-h);color:var(--sp-txt2);border-radius:9px}
+.tutor-root .skill-dot.on{background:var(--sp-amber);border-color:var(--sp-amber);color:#17130c}
 @keyframes sp2Up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ae-draw-arc{from{stroke-dashoffset:352}to{stroke-dashoffset:0}}
 @keyframes ae-fade-letter{0%,50%{opacity:0;transform:scale(0.7) translateY(4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
@@ -542,10 +572,31 @@ async function pushImages(settings) {
 
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 17;
+const DATA_VERSION = 18;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
+const STUDY_TRACK_IDS = ["classical","dialect","quran"];
+const SKILL_DEFAULTS = {
+  skillReading:3, skillWriting:3, skillListening:3, skillSpeaking:3,
+  skillGrammar:3, skillVocab:3, skillComprehension:3, skillPronunciation:3,
+  skillDialectListening:3, skillDialectSpeaking:3, skillDialectVocab:3, skillDialectPronunciation:3,
+  skillFluency:3, skillDialectComprehension:3, skillConfidence:3, skillCultural:3,
+  skillTajweed:3, skillMakharij:3, skillHifz:3, skillTarteel:3,
+  skillQuranVocab:3, skillQuranComprehension:3, skillWaqf:3, skillQuranFluency:3
+};
+function cleanStudyTypes(types, fallback) {
+  const selected = Array.isArray(types) ? types.filter(t => STUDY_TRACK_IDS.includes(t)) : [];
+  return selected.length ? [...new Set(selected)] : (fallback || ["classical","dialect","quran"]);
+}
+function withSkillDefaults(student) {
+  const out = {...(student || {})};
+  Object.entries(SKILL_DEFAULTS).forEach(([key,val]) => {
+    if (out[key] === undefined) out[key] = val;
+  });
+  out.studyTypes = cleanStudyTypes(out.studyTypes);
+  return out;
+}
 
 // FIX #10: Configurable currency
 const fm = (n, currency) => (currency || "$") + (n||0).toFixed(2);
@@ -783,7 +834,12 @@ function migrateData(data) {
     }));
     d._version = DATA_VERSION;
   }
+  if (v < 18) {
+    d.students = (d.students||[]).map(withSkillDefaults);
+    d._version = DATA_VERSION;
+  }
   if (!d.studioItems) d.studioItems = [];
+  d.students = (d.students||[]).map(withSkillDefaults);
   return d;
 }
 
@@ -798,7 +854,7 @@ async function loadData() {
 }
 function getStorageEstimate() { return (navigator.storage?.estimate) ? navigator.storage.estimate() : Promise.resolve({usage:0,quota:0}); }
 
-const mkStudent = S => ({id:uid(),studentNumber:0,quizHistory:[],name:"",email:"",phone:"",whatsapp:"",timezone:"",avatar:"",gender:"",nickname:"",nicknameEmoji:"",type:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],paymentPlan:(S?.payPlans||DEFS.payPlans)[0],lessonRate:0,bundleSize:10,lessonsTotal:0,lessonsTaken:0,remainingClasses:0,freeTotal:0,freeTaken:0,totalPaid:0,startDate:today(),notes:[],assignedLessons:[],completedLessons:[],active:true,enrollmentStatus:"",studioAccess:true,studentNote:"",skillReading:3,skillWriting:3,skillListening:3,skillSpeaking:3,skillDialectListening:3,skillDialectSpeaking:3,skillTajweed:3,skillMakharij:3,skillHifz:3,skillTarteel:3,studyTypes:["classical","dialect","quran"],teacherSummary:"",teacherStrengths:"",teacherImprove:"",teacherPrivateNotes:"",goals:"",nextSteps:"",homeworkNotes:"",skillHistory:[],focusItems:[],weeklyTasks:[],xp:0,streakDays:0,streakLastDate:null});
+const mkStudent = S => ({id:uid(),studentNumber:0,quizHistory:[],name:"",email:"",phone:"",whatsapp:"",timezone:"",avatar:"",gender:"",nickname:"",nicknameEmoji:"",type:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],paymentPlan:(S?.payPlans||DEFS.payPlans)[0],lessonRate:0,bundleSize:10,lessonsTotal:0,lessonsTaken:0,remainingClasses:0,freeTotal:0,freeTaken:0,totalPaid:0,startDate:today(),notes:[],assignedLessons:[],completedLessons:[],active:true,enrollmentStatus:"",studioAccess:true,studentNote:"",...SKILL_DEFAULTS,studyTypes:["classical","dialect","quran"],teacherSummary:"",teacherStrengths:"",teacherImprove:"",teacherPrivateNotes:"",goals:"",nextSteps:"",homeworkNotes:"",skillHistory:[],focusItems:[],weeklyTasks:[],xp:0,streakDays:0,streakLastDate:null});
 const nextStudentNumber = (students) => { const nums = (students||[]).map(s=>s.studentNumber||0); return (nums.length ? Math.max(...nums) : 0) + 1; };
 const mkLesson = S => ({id:uid(),studentId:"",groupId:"",date:today(),time:"10:00",duration:60,type:(S?.types||DEFS.types)[0],status:"Scheduled",notes:""});
 const mkPayment = () => ({id:uid(),studentId:"",amount:0,date:today(),method:"Cash",notes:"",lessonsAdded:0,status:"Pending"});
@@ -888,7 +944,11 @@ function freeLeft(s) {
 // ─── Skill Helpers ───
 const SKILL_LABELS = ["—","Beginner","Developing","Intermediate","Proficient","Advanced"];
 const SKILL_COLORS = ["#ccc","#dd2222","#ff8800","#ddaa00","#44aa44","#00aa55"];
-function skillAvg(s) { return Math.round(((s.skillReading||3)+(s.skillWriting||3)+(s.skillListening||3)+(s.skillSpeaking||3))/4*10)/10; }
+function skillAvg(s) {
+  const axes = assessmentAxesForStudent(s);
+  if (!axes.length) return 0;
+  return Math.round((axes.reduce((sum,a)=>sum+(s[a.key]||3),0)/axes.length)*10)/10;
+}
 
 // ─── Spider Chart — Skill Axes ───
 const ALL_SKILL_AXES = {
@@ -924,10 +984,24 @@ const ALL_SKILL_AXES = {
   ]
 };
 const DEFAULT_ACTIVE_AXES = {
-  classical:["skillReading","skillWriting","skillListening","skillSpeaking","skillGrammar","skillVocab"],
-  dialect:["skillDialectListening","skillDialectSpeaking","skillDialectVocab","skillFluency","skillConfidence","skillDialectComprehension"],
-  quran:["skillTajweed","skillMakharij","skillHifz","skillTarteel","skillQuranVocab","skillQuranFluency"],
+  classical:["skillReading","skillWriting","skillListening","skillSpeaking","skillGrammar","skillVocab","skillComprehension","skillPronunciation"],
+  dialect:["skillDialectListening","skillDialectSpeaking","skillDialectVocab","skillDialectPronunciation","skillFluency","skillDialectComprehension","skillConfidence","skillCultural"],
+  quran:["skillTajweed","skillMakharij","skillHifz","skillTarteel","skillQuranVocab","skillQuranComprehension","skillWaqf","skillQuranFluency"],
 };
+const ASSESSMENT_TRACKS = [
+  {id:"classical", title:"Classical Arabic", short:"Classical", kicker:"Fusha", icon:"CA", color:"#2f6fd6", detail:"Reading, writing, listening, speaking, grammar, vocabulary, comprehension, pronunciation."},
+  {id:"dialect", title:"Conversational Arabic", short:"Conversation", kicker:"Spoken", icon:"CV", color:"#9c27b0", detail:"Listening, speaking, vocabulary, pronunciation, fluency, comprehension, confidence, cultural awareness."},
+  {id:"quran", title:"Quranic Arabic", short:"Quranic", kicker:"Quran", icon:"QA", color:"#2e9f5d", detail:"Tajweed, makharij, hifz, tarteel, Quran vocabulary, comprehension, waqf, recitation fluency."}
+];
+function assessmentAxesForStudent(s, type) {
+  const types = type ? [type] : cleanStudyTypes(s?.studyTypes);
+  return types.flatMap(t => ALL_SKILL_AXES[t] || []);
+}
+function trackSkillAvg(s, type) {
+  const axes = assessmentAxesForStudent(s, type);
+  if (!axes.length) return "0.0";
+  return (axes.reduce((sum,a)=>sum+(s[a.key]||3),0)/axes.length).toFixed(1);
+}
 
 function SpiderChart({axes, size, color}) {
   size = size||240; color = color||"#2196f3";
@@ -940,12 +1014,12 @@ function SpiderChart({axes, size, color}) {
   // Grid rings
   const rings = [1,2,3,4,5].map(ring => {
     const pts = axes.map((_,i)=>pt(i,ring).join(",")).join(" ");
-    return h`<polygon key=${ring} points=${pts} fill="none" stroke=${ring===5?"#b8d0f0":"#ebebeb"} strokeWidth=${ring===5?1.5:0.8}/>`;
+    return h`<polygon key=${ring} points=${pts} fill="none" stroke=${ring===5?"var(--chart-ring,#b8d0f0)":"var(--chart-grid,#ebebeb)"} strokeWidth=${ring===5?1.5:0.8}/>`;
   });
   // Axis lines
   const axisLines = axes.map((_,i) => {
     const [x,y]=pt(i,5);
-    return h`<line key=${"ax"+i} x1=${cx} y1=${cy} x2=${x} y2=${y} stroke="#d8d8d8" strokeWidth="1"/>`;
+    return h`<line key=${"ax"+i} x1=${cx} y1=${cy} x2=${x} y2=${y} stroke="var(--chart-grid,#d8d8d8)" strokeWidth="1"/>`;
   });
   // Data polygon
   const dataPts = axes.map((a,i)=>pt(i,a.value||0).join(",")).join(" ");
@@ -962,7 +1036,7 @@ function SpiderChart({axes, size, color}) {
   const axLabels = axes.map((ax,i) => {
     const a=ang(i), lx=+(cx+lr*Math.cos(a)).toFixed(2), ly=+(cy+lr*Math.sin(a)).toFixed(2);
     const ta=Math.cos(a)>0.15?"start":Math.cos(a)<-0.15?"end":"middle";
-    return h`<text key=${"l"+i} x=${lx} y=${ly} textAnchor=${ta} dominantBaseline="middle" fontSize="10.5" fill="#333" fontFamily="system-ui,sans-serif" fontWeight="700">${ax.short}</text>`;
+    return h`<text key=${"l"+i} x=${lx} y=${ly} textAnchor=${ta} dominantBaseline="middle" fontSize="10.5" fill="var(--chart-label,#333)" fontFamily="system-ui,sans-serif" fontWeight="700">${ax.short}</text>`;
   });
 
   return h`<svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} style=${{display:"block",margin:"auto",overflow:"visible"}}>
@@ -972,7 +1046,7 @@ function SpiderChart({axes, size, color}) {
   </svg>`;
 }
 
-function SkillCategoryCard({type, title, icon, color, s, upd, recordSnap}) {
+function SkillCategoryCard({type, title, icon, color, s, upd, updMany, recordSnap}) {
   const [showCfg, setShowCfg] = useState(false);
   const allAxes = ALL_SKILL_AXES[type]||[];
   const activeKeys = (s.skillAxes&&s.skillAxes[type])||DEFAULT_ACTIVE_AXES[type]||[];
@@ -985,15 +1059,17 @@ function SkillCategoryCard({type, title, icon, color, s, upd, recordSnap}) {
     upd("skillAxes", {...(s.skillAxes||DEFAULT_ACTIVE_AXES), [type]:next});
   };
   const onDot = (key, val) => {
-    if (recordSnap) { const hist=recordSnap(s); upd("skillHistory",hist); }
-    upd(key, val);
+    const patch = {[key]:val};
+    if (recordSnap) patch.skillHistory = recordSnap({...s,[key]:val});
+    if (updMany) updMany(patch);
+    else Object.entries(patch).forEach(([k,v])=>upd(k,v));
   };
-  return h`<div class="assess-card">
+  return h`<div class="assess-card assessment-skill-card" style=${{borderLeftColor:color,"--track":color}}>
     <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
       <h4 style=${{margin:0}}>${icon} ${title}</h4>
       <span style=${{fontSize:14,fontWeight:700,color}}>${avg} / 5</span>
     </div>
-    <div style=${{background:"#fafafa",borderRadius:12,padding:"12px 4px",marginBottom:14}}>
+    <div class="assessment-chart-panel">
       <${SpiderChart} axes=${chartAxes} size=${220} color=${color}/>
     </div>
     ${active.map(a=>h`<div key=${a.key} class="skill-row">
@@ -1004,14 +1080,14 @@ function SkillCategoryCard({type, title, icon, color, s, upd, recordSnap}) {
     <button onClick=${()=>setShowCfg(!showCfg)} style=${{
       marginTop:12,padding:"5px 14px",borderRadius:20,fontSize:11,cursor:"pointer",
       background:"transparent",color,border:"1.5px solid "+color,fontWeight:600,transition:"all 0.15s"
-    }}>${showCfg?"▲ Done":"⚙ Manage"} Skills (${active.length}/${allAxes.length} active)</button>
-    ${showCfg&&h`<div style=${{marginTop:10,padding:"12px 14px",background:"#f5f5f5",borderRadius:10,display:"flex",flexWrap:"wrap",gap:8}}>
-      <div style=${{width:"100%",fontSize:11,color:"#888",marginBottom:4}}>Toggle skills on the chart — at least 3 must be active:</div>
+    }}>${showCfg?"Done":"Manage"} Skills (${active.length}/${allAxes.length} active)</button>
+    ${showCfg&&h`<div class="assessment-axis-config">
+      <div class="assessment-axis-note">Toggle skills on the chart. Keep at least 3 active for the web chart.</div>
       ${allAxes.map(a=>h`<button key=${a.key} onClick=${()=>toggleAxis(a.key)} style=${{
         padding:"5px 12px",borderRadius:20,fontSize:11,cursor:"pointer",fontWeight:600,transition:"all 0.15s",
-        background:activeKeys.includes(a.key)?color:"#fff",
-        color:activeKeys.includes(a.key)?"#fff":"#666",
-        border:"1.5px solid "+(activeKeys.includes(a.key)?color:"#ddd"),
+        background:activeKeys.includes(a.key)?color:"var(--axis-chip-bg,#fff)",
+        color:activeKeys.includes(a.key)?"#fff":"var(--axis-chip-text,#666)",
+        border:"1.5px solid "+(activeKeys.includes(a.key)?color:"var(--axis-chip-border,#ddd)"),
       }}>${activeKeys.includes(a.key)?"✓ ":"+ "}${a.label} ${a.ar}</button>`)}
     </div>`}
   </div>`;
@@ -1044,7 +1120,9 @@ function recordSkillSnapshot(s) {
   const hist = s.skillHistory || [];
   const last = hist[hist.length - 1];
   const now = {date: today(), r: s.skillReading||3, w: s.skillWriting||3, l: s.skillListening||3, sp: s.skillSpeaking||3};
-  if (!last || last.r!==now.r || last.w!==now.w || last.l!==now.l || last.sp!==now.sp || (new Date()-new Date(last.date))>7*86400000) {
+  Object.keys(SKILL_DEFAULTS).forEach(k => { now[k] = s[k] || 3; });
+  const changed = !last || Object.keys(SKILL_DEFAULTS).some(k => (last[k] ?? 3) !== now[k]);
+  if (changed || (new Date()-new Date(last.date))>7*86400000) {
     return [...hist, now].slice(-20);
   }
   return hist;
@@ -1060,10 +1138,7 @@ function genEncouragement(s, data) {
   const startD = new Date(s.startDate);
   const weeks = Math.max(1, Math.round((new Date() - startD) / (7*86400000)));
   const att = attendanceStats(s.id, data.lessons);
-  const skills = [
-    {n:"Reading",v:s.skillReading||3},{n:"Writing",v:s.skillWriting||3},
-    {n:"Listening",v:s.skillListening||3},{n:"Speaking",v:s.skillSpeaking||3}
-  ].sort((a,b)=>b.v-a.v);
+  const skills = assessmentAxesForStudent(s).map(a => ({n:a.label, v:s[a.key]||3})).sort((a,b)=>b.v-a.v);
   const best = skills[0];
   const growing = skills[skills.length-1];
   let p = "";
@@ -1082,7 +1157,9 @@ function genEncouragement(s, data) {
   const hist = s.skillHistory || [];
   if (hist.length >= 2) {
     const first = hist[0], last = hist[hist.length-1];
-    const totalGain = (last.r+last.w+last.l+last.sp) - (first.r+first.w+first.l+first.sp);
+    const legacy = {skillReading:"r", skillWriting:"w", skillListening:"l", skillSpeaking:"sp"};
+    const snapVal = (snap, key) => snap[key] !== undefined ? snap[key] : (legacy[key] ? snap[legacy[key]] : 3);
+    const totalGain = assessmentAxesForStudent(s).reduce((sum,a)=>sum+(snapVal(last,a.key)-snapVal(first,a.key)),0);
     if (totalGain > 0) p += "Since starting, " + name + " has improved by " + totalGain + " skill point" + (totalGain>1?"s":"") + " across all areas — clear evidence of dedication. ";
   }
   if (s.teacherSummary) p += s.teacherSummary + " ";
@@ -1283,6 +1360,19 @@ function exportProfilePDF(s, data, shareWA) {
       <td style="font-size:12px;color:#666;padding:8px 0">${SKILL_LABELS[val]||"—"}${arrow}</td>
     </tr>`;
   };
+  const prevSkill = key => {
+    if (!prev) return null;
+    const legacy = {skillReading:"r", skillWriting:"w", skillListening:"l", skillSpeaking:"sp"};
+    return prev[key] !== undefined ? prev[key] : (legacy[key] ? prev[legacy[key]] : null);
+  };
+  const skillSections = cleanStudyTypes(s.studyTypes).map(id => {
+    const meta = ASSESSMENT_TRACKS.find(t=>t.id===id) || {title:id};
+    const rows = (ALL_SKILL_AXES[id]||[]).map(a => skillRow(a.label, s[a.key]||3, prevSkill(a.key))).join("");
+    return `<div style="margin-bottom:18px">
+      <div style="font-size:12px;font-weight:900;color:#111;margin-bottom:8px">${meta.title} <span style="font-size:11px;color:${meta.color||"#000"};margin-left:8px">${trackSkillAvg(s,id)} / 5</span></div>
+      <table style="width:auto">${rows}</table>
+    </div>`;
+  }).join("");
 
   const statBox = (label, val, color) => `
     <div style="flex:1;background:#f7f7f7;border-radius:8px;padding:14px 10px;border-left:4px solid ${color||"#000"}">
@@ -1344,12 +1434,7 @@ function exportProfilePDF(s, data, shareWA) {
     ${(att.missed>0||att.cancelled>0)?`<div style="font-size:11px;color:#999">Missed: ${att.missed} &nbsp;·&nbsp; Cancelled: ${att.cancelled} &nbsp;·&nbsp; Total scheduled: ${att.total}</div>`:""}`)}
 
   ${section("Skill Assessment", `
-    <table style="width:auto">
-      ${skillRow("Reading", s.skillReading||3, prev?.r)}
-      ${skillRow("Writing", s.skillWriting||3, prev?.w)}
-      ${skillRow("Listening", s.skillListening||3, prev?.l)}
-      ${skillRow("Speaking", s.skillSpeaking||3, prev?.sp)}
-    </table>
+    ${skillSections}
     <div style="margin-top:10px;font-size:13px;font-weight:700;color:#00aa55">Overall: ${avg} / 5</div>`)}
 
   ${section("Progress Snapshot", `
@@ -5052,6 +5137,7 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
 function StudentProfile({data, setData, profileId, auth}) {
   const s = data.students.find(x=>x.id===profileId);
   const [tab, setTab] = useState("overview");
+  const [assessmentTrack, setAssessmentTrack] = useState("classical");
   const [aiResult, setAiResult] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [showHwForm, setShowHwForm] = useState(false);
@@ -5077,6 +5163,18 @@ function StudentProfile({data, setData, profileId, auth}) {
   });
   const dset = (k,v) => setDraft(d=>({...d,[k]:v}));
   const dsave = k => upd(k, draft[k]);
+  const activeStudyTypes = cleanStudyTypes(s.studyTypes);
+  const activeAssessmentTrack = activeStudyTypes.includes(assessmentTrack) ? assessmentTrack : activeStudyTypes[0];
+  const activeTrackMeta = ASSESSMENT_TRACKS.find(t=>t.id===activeAssessmentTrack) || ASSESSMENT_TRACKS[0];
+  const toggleStudyType = id => {
+    const cur = cleanStudyTypes(s.studyTypes);
+    const isActive = cur.includes(id);
+    const nextRaw = isActive ? cur.filter(x=>x!==id) : [...cur,id];
+    const next = nextRaw.length ? nextRaw : [id];
+    if (!isActive) setAssessmentTrack(id);
+    else if (activeAssessmentTrack === id) setAssessmentTrack(next[0]);
+    upd("studyTypes", next);
+  };
 
   const saveCard = async (cardName) => {
     setSavedCard(cardName);
@@ -5233,43 +5331,34 @@ function StudentProfile({data, setData, profileId, auth}) {
           <button class="btn btn-sm" style=${{fontSize:11,flexShrink:0}} onClick=${()=>setData({...data,students:data.students.map(x=>x.id===s.id?{...x,studentNote:""}:x)})}>✓ Clear</button>
         </div>
       </div>`}
-      <!-- Study Type Toggles -->
-      <div class="assess-card">
-        <h4>📚 What This Student Is Studying</h4>
-        <div style=${{fontSize:11,color:"var(--g500)",marginBottom:14}}>Toggle which subjects are active for this student. Only active subjects show their skills below.</div>
-        <div style=${{display:"flex",gap:10,flexWrap:"wrap"}}>
-          ${[
-            ["classical","📜 Classical Arabic (فصحى)","#2196f3"],
-            ["dialect","🗣 Dialect (عامية)","#9c27b0"],
-            ["quran","🕌 Qur'an (قرآن)","#4caf50"]
-          ].map(([id,label,col])=>{
-            const active = (s.studyTypes||["classical","dialect","quran"]).includes(id);
-            const toggle = () => {
-              const cur = s.studyTypes||["classical","dialect","quran"];
-              upd("studyTypes", active ? cur.filter(x=>x!==id) : [...cur,id]);
-            };
-            return h`<button key=${id} onClick=${toggle} style=${{
-              padding:"10px 18px",borderRadius:10,cursor:"pointer",fontWeight:700,fontSize:13,
-              border:"2px solid "+(active?col:"#ddd"),
-              background:active?col+"18":"#f8f8f8",
-              color:active?col:"#aaa",
-              display:"flex",alignItems:"center",gap:8,transition:"all 0.15s"
-            }}>
-              <span style=${{width:16,height:16,borderRadius:4,background:active?col:"#ddd",display:"inline-block",flexShrink:0,transition:"background 0.15s"}}></span>
-              ${label}
+      <div class="assess-card" style=${{borderLeftColor:activeTrackMeta.color}}>
+        <div style=${{display:"flex",justifyContent:"space-between",gap:14,alignItems:"flex-start",marginBottom:14,flexWrap:"wrap"}}>
+          <div>
+            <h4 style=${{marginBottom:4}}>Assessment Web Chart</h4>
+            <div style=${{fontSize:12,color:"var(--g500)",lineHeight:1.6}}>Choose what this student is learning, then switch between the enabled chart sections below.</div>
+          </div>
+          <div style=${{fontSize:12,fontWeight:800,color:activeTrackMeta.color,whiteSpace:"nowrap"}}>${activeStudyTypes.length} / 3 tracks active</div>
+        </div>
+        <div class="assessment-track-grid">
+          ${ASSESSMENT_TRACKS.map(t=>{
+            const active = activeStudyTypes.includes(t.id);
+            return h`<button key=${t.id} class=${"assessment-track-toggle "+(active?"on":"")} style=${{"--track":t.color,borderColor:active?t.color:"",background:active?t.color+"18":""}} onClick=${()=>toggleStudyType(t.id)}>
+              <div class="assessment-track-kicker">${active?"Active":"Off"} / ${t.kicker}</div>
+              <div class="assessment-track-title">${t.title}</div>
+              <div class="assessment-track-meta">${t.detail}</div>
+              <div class="assessment-track-score">${trackSkillAvg(s,t.id)} / 5 / ${(ALL_SKILL_AXES[t.id]||[]).length} skills</div>
             </button>`;
+          })}
+        </div>
+        <div class="assessment-section-tabs">
+          ${activeStudyTypes.map(id=>{
+            const t = ASSESSMENT_TRACKS.find(x=>x.id===id) || ASSESSMENT_TRACKS[0];
+            return h`<button key=${id} class=${"assessment-section-tab "+(activeAssessmentTrack===id?"on":"")} style=${{"--track":t.color}} onClick=${()=>setAssessmentTrack(id)}>${t.short}</button>`;
           })}
         </div>
       </div>
 
-      <!-- Classical Arabic Skills — spider chart with toggleable axes -->
-      ${(s.studyTypes||["classical","dialect","quran"]).includes("classical")&&h`<${SkillCategoryCard} type="classical" title="Classical Arabic — فصحى" icon="📜" color="#2196f3" s=${s} upd=${upd} recordSnap=${recordSkillSnapshot}/>`}
-
-      <!-- Conversational / Dialect Skills -->
-      ${(s.studyTypes||["classical","dialect","quran"]).includes("dialect")&&h`<${SkillCategoryCard} type="dialect" title="Conversational Arabic — عامية" icon="🗣" color="#9c27b0" s=${s} upd=${upd}/>`}
-
-      <!-- Qur'an Skills -->
-      ${(s.studyTypes||["classical","dialect","quran"]).includes("quran")&&h`<${SkillCategoryCard} type="quran" title="Quranic Arabic — قرآن" icon="🕌" color="#4caf50" s=${s} upd=${upd}/>`}
+      <${SkillCategoryCard} type=${activeAssessmentTrack} title=${activeTrackMeta.title} icon=${activeTrackMeta.icon} color=${activeTrackMeta.color} s=${s} upd=${upd} updMany=${updMany} recordSnap=${recordSkillSnapshot}/>
 
       <div class="assess-card">
         <h4>🎯 Goals & Next Steps</h4>
