@@ -7485,6 +7485,7 @@ function Settings({data, setData}) {
   const sset = (k,v) => setSd(d=>({...d,[k]:v}));
   const ssave = k => u(k, sd[k]);
   const [storage, setStorage] = useState(null);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
   useEffect(() => { getStorageEstimate().then(est => setStorage(est)); }, [data]);
   const dataSizeMB = (new Blob([JSON.stringify(data)]).size / 1024 / 1024).toFixed(2);
 
@@ -7643,7 +7644,18 @@ function Settings({data, setData}) {
       <button class="btn btn-sm" style=${{marginTop:6}} onClick=${()=>setData({...data,settings:{...S,themeFontHeading:"Bebas Neue",themeFontBody:"DM Sans",themeFontBrand:"Bebas Neue",themeFontSizeHeading:28,themeFontSizeBody:14,themeFontSizeBrand:24}})}>Reset fonts</button>
     </div>
 
-    <div class="card"><h3>📅 MY AVAILABILITY</h3>
+    <div class="card">
+      <div onClick=${()=>setAvailabilityOpen(v=>!v)} style=${{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,cursor:"pointer",flexWrap:"wrap"}}>
+        <div>
+          <h3 style=${{marginBottom:4}}>📅 MY AVAILABILITY</h3>
+          <p style=${{fontSize:12,color:"var(--g500)",margin:0,lineHeight:1.6}}>Weekly hours students can book from. Expand only when you need to edit.</p>
+        </div>
+        <div style=${{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+          ${(()=>{const avail=S.availability||{};const enabled=[0,1,2,3,4,5,6].filter(i=>(avail[i]||{}).enabled).length;return h`<span class="bg bg-ok">${enabled} days on</span>`;})()}
+          <button class="btn btn-sm" onClick=${e=>{e.stopPropagation();setAvailabilityOpen(v=>!v);}}>${availabilityOpen?"Collapse":"Edit availability"}</button>
+        </div>
+      </div>
+      ${availabilityOpen&&h`<div style=${{marginTop:16}}>
       <p style=${{fontSize:12,color:"var(--g500)",marginBottom:16}}>Toggle each day on/off, then add time ranges for when you're available. Students will see open slots and book directly.</p>
       ${(()=>{
         const avail = S.availability || {};
@@ -7730,6 +7742,7 @@ function Settings({data, setData}) {
           ${enabledCount>0&&h`<div style=${{marginTop:8,fontSize:11,color:"var(--g500)",lineHeight:1.6}}>💡 Repeats every week. For example: Monday 9:00–17:00 with 60-min lessons = 8 bookable slots. Students pick a slot and you confirm it.</div>`}
         </div>`;
       })()}
+      </div>`}
     </div>
 
     <div class="card" style=${{display:"none"}}><h3>🖼 BACKGROUND IMAGES</h3>
