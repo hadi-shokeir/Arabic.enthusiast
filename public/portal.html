@@ -5089,6 +5089,27 @@ function StudentProfile({data, setData, profileId, auth}) {
     </div>
 
     ${tab==="overview" && h`<div>
+      <div class="assess-card">
+        <h4>Student Details</h4>
+        <div class="fr">
+          <div class="fg"><label>Full Name</label><input value=${s.name||""} onInput=${e=>upd("name",e.target.value)} placeholder="Student name"/></div>
+          <div class="fg"><label>Email</label><input type="email" value=${s.email||""} onInput=${e=>upd("email",e.target.value)} placeholder="student@email.com"/></div>
+        </div>
+        <div class="fr">
+          <div class="fg"><label>Phone Number</label><input value=${s.phone||""} onInput=${e=>upd("phone",e.target.value)} placeholder="+961..."/></div>
+          <div class="fg"><label>WhatsApp</label><input value=${s.whatsapp||""} onInput=${e=>upd("whatsapp",e.target.value)} placeholder="+961..."/></div>
+        </div>
+        <div class="fr3">
+          <div class="fg"><label>Arabic Type / Goal</label><select value=${s.type||S.types[0]} onChange=${e=>upd("type",e.target.value)}>${S.types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div>
+          <div class="fg"><label>Current Level</label><select value=${s.level||S.levels[0]} onChange=${e=>upd("level",e.target.value)}>${S.levels.map(l=>h`<option key=${l}>${l}</option>`)}</select></div>
+          <div class="fg"><label>Payment Plan</label><select value=${s.paymentPlan||S.payPlans[0]} onChange=${e=>upd("paymentPlan",e.target.value)}>${S.payPlans.map(p=>h`<option key=${p}>${p}</option>`)}</select></div>
+        </div>
+        <div class="fr3">
+          <div class="fg"><label>Timezone</label><input value=${s.timezone||""} onInput=${e=>upd("timezone",e.target.value)} placeholder="Asia/Beirut"/></div>
+          <div class="fg"><label>Total Lessons</label><input type="number" value=${s.lessonsTotal||0} onInput=${e=>upd("lessonsTotal",+e.target.value)}/></div>
+          <div class="fg"><label>Lessons Taken</label><input type="number" value=${s.lessonsTaken||0} onInput=${e=>upd("lessonsTaken",+e.target.value)}/></div>
+        </div>
+      </div>
       ${s.studentNote&&h`<div class="assess-card" style=${{borderLeftColor:"#7b1fa2",background:"#fdf4ff",marginBottom:14}}>
         <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
           <div style=${{flex:1}}>
@@ -6773,6 +6794,51 @@ function HomeworkView({data, onProfile}) {
 // ════════════════════════════════════════
 // SETTINGS — with currency & week start
 // ════════════════════════════════════════
+// Practice overview for games, quizzes, and exercises
+function PracticeAdmin({data, onProfile}) {
+  const students = data.students || [];
+  const curriculum = data.curriculum || [];
+  const assignedCount = students.reduce((sum,s)=>sum+(s.assignedLessons||[]).length,0);
+  const completedCount = students.reduce((sum,s)=>sum+(s.completedLessons||[]).length,0);
+  const quizAttempts = students.flatMap(s=>(s.quizHistory||[]).map(q=>({...q,student:s})));
+  const avgQuiz = quizAttempts.length ? Math.round(quizAttempts.reduce((a,q)=>a+(q.score||0),0)/quizAttempts.length) : 0;
+  const activeTasks = students.reduce((sum,s)=>sum+(s.weeklyTasks||[]).filter(t=>!t.doneAt).length,0);
+  const rows = students.filter(s=>s.active).map(s=>{
+    const assigned = (s.assignedLessons||[]).length;
+    const completed = (s.completedLessons||[]).length;
+    const quizzes = s.quizHistory||[];
+    const lastQuiz = quizzes.length ? quizzes[quizzes.length-1] : null;
+    return {s, assigned, completed, quizzes, lastQuiz};
+  });
+
+  return h`<div>
+    <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)"}}>
+      <div class="stat"><div class="lb">Exercise Library</div><div class="vl">${curriculum.length}</div><div class="su">curriculum items</div></div>
+      <div class="stat"><div class="lb">Assigned</div><div class="vl">${assignedCount}</div><div class="su">${completedCount} completed</div></div>
+      <div class="stat"><div class="lb">Quiz Average</div><div class="vl">${avgQuiz}%</div><div class="su">${quizAttempts.length} attempts</div></div>
+      <div class="stat"><div class="lb">Open Tasks</div><div class="vl">${activeTasks}</div><div class="su">weekly student tasks</div></div>
+    </div>
+    <div class="card" style=${{padding:0}}>
+      <div style=${{padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"2px solid var(--bk)",gap:10,flexWrap:"wrap"}}>
+        <h3 style=${{fontFamily:"var(--fh)",fontSize:20,letterSpacing:1.5,margin:0}}>GAMES, QUIZZES & EXERCISES</h3>
+        <div style=${{fontSize:12,color:"var(--g500)"}}>Assign exercises from each student profile or add items in Library & Resources.</div>
+      </div>
+      <div style=${{overflowX:"auto"}}><table><thead><tr><th>Student</th><th>Assigned</th><th>Completed</th><th>Quiz Attempts</th><th>Last Score</th><th>Open Tasks</th><th></th></tr></thead><tbody>
+        ${rows.map(({s,assigned,completed,quizzes,lastQuiz})=>h`<tr key=${s.id}>
+          <td style=${{fontWeight:700}}>${s.name}</td>
+          <td>${assigned}</td>
+          <td>${completed}</td>
+          <td>${quizzes.length}</td>
+          <td>${lastQuiz ? ((lastQuiz.score||0)+"%") : "None yet"}</td>
+          <td>${(s.weeklyTasks||[]).filter(t=>!t.doneAt).length}</td>
+          <td><button class="btn btn-xs" onClick=${()=>onProfile(s.id)}>Open Profile</button></td>
+        </tr>`)}
+        ${rows.length===0&&h`<tr><td colspan="7" style=${{textAlign:"center",color:"var(--g400)",padding:30}}>No active students yet</td></tr>`}
+      </tbody></table></div>
+    </div>
+  </div>`;
+}
+
 function Settings({data, setData}) {
   const S = data.settings;
   const u = (k,v) => setData({...data, settings:{...S,[k]:v}});
@@ -7792,7 +7858,8 @@ function App() {
       if (!s || s === 'profile') return 'dashboard';
       // Remap old view names after merge
       if (s === 'scheduling' || s === 'calendar') return 'lessons';
-      if (s === 'curriculum' || s === 'resources') return 'materials';
+      if (s === 'curriculum' || s === 'resources' || s === 'library') return 'materials';
+      if (s === 'games' || s === 'quizzes' || s === 'exercises') return 'practice';
       return s;
     } catch { return 'dashboard'; }
   });
@@ -7950,14 +8017,15 @@ function App() {
   const nav = [
     ["dashboard","Dashboard","dash"],
     ["students","Students","stu"],
-    ["lessons","Lessons","cal"],
-    ["payments","Payments","pay"],
-    ["materials","Materials","cur"],
-    ["homework","Homework","hw"],
+    ["lessons","Scheduling & Calendar","cal"],
+    ["payments","Payment Tracker","pay"],
+    ["materials","Library & Resources","cur"],
+    ["practice","Games, Quizzes & Exercises","ai"],
+    ["homework","Homework & Tasks","hw"],
     ["settings","Settings","set"]
   ];
   // Remap old view names for activeNav highlight
-  const navViewMap = {scheduling:"lessons", calendar:"lessons", curriculum:"materials", resources:"materials", requests:"dashboard"};
+  const navViewMap = {scheduling:"lessons", calendar:"lessons", curriculum:"materials", resources:"materials", library:"materials", games:"practice", quizzes:"practice", exercises:"practice", requests:"dashboard"};
   const activeNav = view === "profile" ? "students" : (navViewMap[view] || view);
 
   // Apply theme CSS vars
@@ -8084,6 +8152,7 @@ function App() {
         ${view==="lessons" && h`<${LessonsAdmin} data=${data} setData=${update} auth=${auth}/>`}
         ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
         ${view==="materials" && h`<${MaterialsAdmin} data=${data} setData=${update} auth=${auth}/>`}
+        ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
         ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
         ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile}/>`}
         ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
