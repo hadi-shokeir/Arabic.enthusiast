@@ -542,7 +542,7 @@ async function pushImages(settings) {
 
 // ─── Helpers ───
 const SK = "tutor-v5";
-const DATA_VERSION = 16;
+const DATA_VERSION = 17;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const fmt = d => d ? new Date(d).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
 const today = () => new Date().toISOString().split("T")[0];
@@ -630,7 +630,7 @@ const DEFS = {
     6:{enabled:false,ranges:[]}
   }
 };
-const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],resources:[],lessonLogs:[],settings:{...DEFS},_version:DATA_VERSION};
+const DD = {students:[],lessons:[],payments:[],curriculum:[],groups:[],homework:[],lessonRequests:[],resources:[],lessonLogs:[],studioItems:[],settings:{...DEFS},_version:DATA_VERSION};
 
 // ─── IndexedDB Storage ───
 const DB_NAME = "TutorDB", DB_STORE = "appdata", DB_KEY = "main";
@@ -775,6 +775,15 @@ function migrateData(data) {
     }));
     d._version = DATA_VERSION;
   }
+  if (v < 17) {
+    d.studioItems = d.studioItems || [];
+    d.students = (d.students||[]).map(s => ({
+      ...s,
+      studioAccess: s.studioAccess !== undefined ? s.studioAccess : true
+    }));
+    d._version = DATA_VERSION;
+  }
+  if (!d.studioItems) d.studioItems = [];
   return d;
 }
 
@@ -789,7 +798,7 @@ async function loadData() {
 }
 function getStorageEstimate() { return (navigator.storage?.estimate) ? navigator.storage.estimate() : Promise.resolve({usage:0,quota:0}); }
 
-const mkStudent = S => ({id:uid(),studentNumber:0,quizHistory:[],name:"",email:"",phone:"",whatsapp:"",timezone:"",avatar:"",gender:"",nickname:"",nicknameEmoji:"",type:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],paymentPlan:(S?.payPlans||DEFS.payPlans)[0],lessonRate:0,bundleSize:10,lessonsTotal:0,lessonsTaken:0,remainingClasses:0,freeTotal:0,freeTaken:0,totalPaid:0,startDate:today(),notes:[],assignedLessons:[],completedLessons:[],active:true,enrollmentStatus:"",studentNote:"",skillReading:3,skillWriting:3,skillListening:3,skillSpeaking:3,skillDialectListening:3,skillDialectSpeaking:3,skillTajweed:3,skillMakharij:3,skillHifz:3,skillTarteel:3,studyTypes:["classical","dialect","quran"],teacherSummary:"",teacherStrengths:"",teacherImprove:"",teacherPrivateNotes:"",goals:"",nextSteps:"",homeworkNotes:"",skillHistory:[],focusItems:[],weeklyTasks:[],xp:0,streakDays:0,streakLastDate:null});
+const mkStudent = S => ({id:uid(),studentNumber:0,quizHistory:[],name:"",email:"",phone:"",whatsapp:"",timezone:"",avatar:"",gender:"",nickname:"",nicknameEmoji:"",type:(S?.types||DEFS.types)[0],level:(S?.levels||DEFS.levels)[0],paymentPlan:(S?.payPlans||DEFS.payPlans)[0],lessonRate:0,bundleSize:10,lessonsTotal:0,lessonsTaken:0,remainingClasses:0,freeTotal:0,freeTaken:0,totalPaid:0,startDate:today(),notes:[],assignedLessons:[],completedLessons:[],active:true,enrollmentStatus:"",studioAccess:true,studentNote:"",skillReading:3,skillWriting:3,skillListening:3,skillSpeaking:3,skillDialectListening:3,skillDialectSpeaking:3,skillTajweed:3,skillMakharij:3,skillHifz:3,skillTarteel:3,studyTypes:["classical","dialect","quran"],teacherSummary:"",teacherStrengths:"",teacherImprove:"",teacherPrivateNotes:"",goals:"",nextSteps:"",homeworkNotes:"",skillHistory:[],focusItems:[],weeklyTasks:[],xp:0,streakDays:0,streakLastDate:null});
 const nextStudentNumber = (students) => { const nums = (students||[]).map(s=>s.studentNumber||0); return (nums.length ? Math.max(...nums) : 0) + 1; };
 const mkLesson = S => ({id:uid(),studentId:"",groupId:"",date:today(),time:"10:00",duration:60,type:(S?.types||DEFS.types)[0],status:"Scheduled",notes:""});
 const mkPayment = () => ({id:uid(),studentId:"",amount:0,date:today(),method:"Cash",notes:"",lessonsAdded:0,status:"Pending"});
@@ -797,6 +806,7 @@ const mkCurriculum = S => ({id:uid(),title:"",category:(S?.types||DEFS.types)[0]
 const mkGroup = S => ({id:uid(),name:"",type:(S?.types||DEFS.types)[0],studentIds:[],schedule:"",notes:"",whatsappUrl:""});
 const mkHomework = sid => ({id:uid(),studentId:sid||"",title:"",description:"",dueDate:today(),assignedDate:today(),status:"assigned",submissionText:"",submissionUrl:"",submittedAt:null,teacherComment:"",reviewedAt:null});
 const mkLessonLog = (sid) => ({id:uid(),studentId:sid||"",date:today(),coveredTopics:"",performance:"",teacherNotes:"",aiNextSteps:"",aiWeeklyTasks:[],aiStudentSummary:"",aiTeacherSummary:"",createdAt:today()});
+const mkStudioItem = () => ({id:uid(),title:"",type:"Exercise",track:"General",level:"All Levels",category:"General",description:"",instructions:"",url:"",fileName:"",fileData:"",published:false,audience:"all",createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
 
 // ─── XP + Streak helper ───
 // Call this with the current student object and the XP amount to award.
@@ -4280,6 +4290,7 @@ function StudentPreferencesTab({student: s, data, setData, auth}) {
 const SP_NAV = [
   {id:'home',icon:'🏠',label:'Home',group:null},
   {id:'ai',icon:'🤖',label:'AI Tutor',group:null},
+  {id:'studio',icon:'🎓',label:'Learning Studio',group:'LEARN'},
   {id:'skills',icon:'⚡',label:'Skills',group:'LEARN'},
   {id:'foundation',icon:'🌿',label:'Foundation',group:'LEARN'},
   {id:'script',icon:'ب',label:'Script',group:'LEARN'},
@@ -4375,6 +4386,77 @@ const SP_SHOP = [
   {id:5,name:"Flashcard Deck: Food & Daily Life",nameAr:"بطاقات: الطعام والحياة",price:4.99,type:"digital",img:"🍽️",rating:4.8,reviews:567},
   {id:6,name:"Root-Pattern Reference Guide",nameAr:"دليل الأوزان والجذور",price:12.99,type:"digital",img:"🌿",rating:4.9,reviews:278},
 ];
+
+function StudentLearningStudio({student: s, data}) {
+  const [filter, setFilter] = useState("All");
+  const [opened, setOpened] = useState(null);
+  const all = (data.studioItems||[]).filter(item => item.published);
+  const visible = all.filter(item => item.audience !== "subscribers" || s.studioAccess);
+  const cats = ["All", ...new Set(visible.map(i=>i.category||i.type||"General").filter(Boolean))];
+  const list = filter === "All" ? visible : visible.filter(i => (i.category||i.type||"General") === filter);
+  const typeIcon = t => ({
+    "Tracing":"✍️","Speaking Drill":"🎙️","Listening":"🎧","Quiz":"🧠","Exercise":"📝","PDF":"📄","Video / Link":"▶️","Lesson":"📚"
+  }[t] || "🎓");
+  const openFile = item => item.fileData ? downloadFile(item.fileName||item.title||"studio-item", item.fileData) : null;
+
+  if (!s.studioAccess && visible.length === 0) return h`<div style=${{maxWidth:680,margin:"0 auto"}}>
+    <div class="sp2-card" style=${{textAlign:"center",padding:34}}>
+      <div style=${{fontSize:42,marginBottom:12}}>🎓</div>
+      <h2 style=${{fontFamily:"'Playfair Display',serif",color:"var(--sp-txt)",marginBottom:8}}>Learning Studio</h2>
+      <p style=${{color:"var(--sp-txt2)",lineHeight:1.7}}>Your Learning Studio membership is not active yet. Ask Hadi to unlock extra activities, drills, tracing sheets, and speaking practice.</p>
+    </div>
+  </div>`;
+
+  return h`<div>
+    <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,flexWrap:"wrap",marginBottom:18}}>
+      <div>
+        <div class="sp2-nav-grp" style=${{padding:0,marginBottom:6}}>Subscription Learning</div>
+        <h2 style=${{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:600,color:"var(--sp-txt)",margin:0}}>Learning Studio</h2>
+        <p style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.7,marginTop:6}}>Extra drills, uploads, tracing, speaking tasks, quizzes, and activities from Hadi.</p>
+      </div>
+      <span class="sp2-badge sp2-badge-a">${visible.length} available</span>
+    </div>
+    <div class="sp2-tabs" style=${{marginBottom:18}}>
+      ${cats.map(c=>h`<button key=${c} class=${"sp2-tab "+(filter===c?"on":"")} onClick=${()=>setFilter(c)}>${c}</button>`)}
+    </div>
+    ${list.length===0 ? h`<div class="sp2-card" style=${{textAlign:"center",padding:34}}>
+      <div style=${{fontSize:38,marginBottom:10}}>📭</div>
+      <div style=${{fontFamily:"'Playfair Display',serif",fontSize:21,color:"var(--sp-txt)",marginBottom:6}}>Nothing published here yet</div>
+      <p style=${{color:"var(--sp-txt2)",fontSize:13}}>Hadi can upload and publish studio activities from the tutor portal.</p>
+    </div>` : h`<div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+      ${list.map(item=>h`<div key=${item.id} class="sp2-card sp2-card-h" onClick=${()=>setOpened(item)} style=${{display:"flex",flexDirection:"column",gap:12}}>
+        <div style=${{display:"flex",alignItems:"flex-start",gap:12}}>
+          <div style=${{width:46,height:46,borderRadius:12,background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:23,flexShrink:0}}>${typeIcon(item.type)}</div>
+          <div style=${{minWidth:0}}>
+            <div style=${{fontFamily:"'Playfair Display',serif",fontSize:18,fontWeight:700,color:"var(--sp-txt)",lineHeight:1.25}}>${item.title||"Untitled"}</div>
+            <div style=${{fontSize:11,color:"var(--sp-txt3)",marginTop:4}}>${item.type} • ${item.level||"All Levels"} • ${item.track||"General"}</div>
+          </div>
+        </div>
+        ${item.description&&h`<p style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.65,margin:0}}>${item.description}</p>`}
+        <div style=${{display:"flex",gap:6,flexWrap:"wrap",marginTop:"auto"}}>
+          <span class="sp2-badge sp2-badge-t">${item.category||"General"}</span>
+          ${item.fileName&&h`<span class="sp2-badge sp2-badge-a">File</span>`}
+          ${item.url&&h`<span class="sp2-badge sp2-badge-g">Link</span>`}
+        </div>
+      </div>`)}
+    </div>`}
+    ${opened&&h`<${Modal} title=${opened.title||"Learning Studio"} onClose=${()=>setOpened(null)} footer=${h`
+      ${opened.fileData&&h`<button class="btn" onClick=${()=>openFile(opened)}>Download File</button>`}
+      ${opened.url&&h`<button class="btn btn-p" onClick=${()=>window.open(opened.url,"_blank")}>Open Link</button>`}
+      <button class="btn" onClick=${()=>setOpened(null)}>Close</button>
+    `}>
+      <div style=${{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
+        <span class="sp2-badge sp2-badge-a">${opened.type}</span>
+        <span class="sp2-badge sp2-badge-t">${opened.level||"All Levels"}</span>
+        <span class="sp2-badge sp2-badge-g">${opened.track||"General"}</span>
+      </div>
+      ${opened.description&&h`<p style=${{fontSize:14,lineHeight:1.75,color:"var(--sp-txt2)",marginBottom:14}}>${opened.description}</p>`}
+      ${opened.instructions&&h`<div class="sp2-card" style=${{boxShadow:"none",background:"var(--sp-surface)",whiteSpace:"pre-wrap",fontSize:14,lineHeight:1.8}}>${opened.instructions}</div>`}
+      ${opened.fileName&&h`<div style=${{marginTop:14,fontSize:13,color:"var(--sp-txt2)"}}>Attached file: <b>${opened.fileName}</b></div>`}
+      ${opened.url&&h`<div style=${{marginTop:14,fontSize:13,color:"var(--sp-txt2)",wordBreak:"break-all"}}>${opened.url}</div>`}
+    <//>`}
+  </div>`;
+}
 
 const SP_TUTOR_PROMPT = `You are Hadi's Arabic language AI tutor. Hadi is a professional Arabic tutor (linguist, native-level Arabic) who has assigned you to support his students between lessons.
 
@@ -4899,6 +4981,7 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
     // ── SHOP ──
 
     // ── LIBRARY ──
+    if(spTab==='studio') return h`<${StudentLearningStudio} student=${s} data=${data}/>`;
     if(spTab==='library') return h`<${StudentLibraryTab} student=${s} data=${data} setData=${setData} initialTopic=${jumpTopic}/>`;
 
     // ── BOOK ──
@@ -5134,7 +5217,10 @@ function StudentProfile({data, setData, profileId, auth}) {
         </div>
         <div class="fr3">
           <div class="fg"><label>Timezone</label><input value=${s.timezone||""} onInput=${e=>upd("timezone",e.target.value)} placeholder="Asia/Beirut"/></div>
+          <div class="fg"><label>Learning Studio Access</label><select value=${s.studioAccess===false?"off":"on"} onChange=${e=>upd("studioAccess",e.target.value==="on")}><option value="on">Active / Included</option><option value="off">Off / Subscription inactive</option></select></div>
           <div class="fg"><label>Total Lessons</label><input type="number" value=${s.lessonsTotal||0} onInput=${e=>upd("lessonsTotal",+e.target.value)}/></div>
+        </div>
+        <div class="fr3">
           <div class="fg"><label>Lessons Taken</label><input type="number" value=${s.lessonsTaken||0} onInput=${e=>upd("lessonsTaken",+e.target.value)}/></div>
         </div>
       </div>
@@ -7875,6 +7961,89 @@ function MaterialsAdmin({data, setData, auth}) {
   </div>`;
 }
 
+function StudioAdmin({data, setData}) {
+  const [show, setShow] = useState(false);
+  const [form, setForm] = useState(mkStudioItem());
+  const [filter, setFilter] = useState("All");
+  const fileRef = useRef(null);
+  const items = data.studioItems || [];
+  const cats = ["All", ...new Set(items.map(i=>i.category||"General").filter(Boolean))];
+  const list = (filter==="All" ? items : items.filter(i=>(i.category||"General")===filter)).sort((a,b)=>new Date(b.updatedAt||b.createdAt||0)-new Date(a.updatedAt||a.createdAt||0));
+  const types = ["Exercise","Tracing","Speaking Drill","Listening","Quiz","PDF","Video / Link","Lesson"];
+  const tracks = ["General","Levantine","Classical","Quranic","Writing","Speaking","Listening","Reading","Grammar","Vocabulary"];
+  const levels = ["All Levels","Beginner","Intermediate","Advanced"];
+  const audiences = [["all","All active students"],["subscribers","Studio subscribers only"]];
+  const openNew = () => { setForm(mkStudioItem()); setShow(true); };
+  const openEdit = item => { setForm({...mkStudioItem(),...item}); setShow(true); };
+  const handleFile = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 50e6) { alert("Max 50MB"); return; }
+    const r = new FileReader();
+    r.onload = () => setForm(x=>({...x,fileName:f.name,fileData:r.result,title:x.title||f.name.replace(/\.[^.]+$/,"")}));
+    r.readAsDataURL(f);
+  };
+  const saveItem = () => {
+    if (!form.title.trim()) return alert("Please add a title.");
+    const toSave = {...form, id:form.id||uid(), updatedAt:new Date().toISOString(), createdAt:form.createdAt||new Date().toISOString()};
+    const exists = items.find(i=>i.id===toSave.id);
+    setData({...data, studioItems: exists ? items.map(i=>i.id===toSave.id?toSave:i) : [...items,toSave]});
+    setShow(false); setForm(mkStudioItem());
+  };
+  const togglePub = item => setData({...data, studioItems: items.map(i=>i.id===item.id?{...i,published:!i.published,updatedAt:new Date().toISOString()}:i)});
+  const del = item => { if(confirm("Delete this Learning Studio item?")) setData({...data, studioItems:items.filter(i=>i.id!==item.id)}); };
+
+  return h`<div>
+    <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)"}}>
+      <div class="stat"><div class="lb">Studio Items</div><div class="vl">${items.length}</div></div>
+      <div class="stat"><div class="lb">Published</div><div class="vl">${items.filter(i=>i.published).length}</div></div>
+      <div class="stat"><div class="lb">Subscriber Only</div><div class="vl">${items.filter(i=>i.audience==="subscribers").length}</div></div>
+      <div class="stat"><div class="lb">Uploads</div><div class="vl">${items.filter(i=>i.fileData).length}</div></div>
+    </div>
+    <div style=${{display:"flex",gap:10,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+      <div style=${{display:"flex",gap:4,flexWrap:"wrap"}}>
+        ${cats.map(c=>h`<button key=${c} class=${"btn btn-sm "+(filter===c?"btn-p":"")} onClick=${()=>setFilter(c)}>${c}</button>`)}
+      </div>
+      <button class="btn btn-p" style=${{marginLeft:"auto"}} onClick=${openNew}>+ Add Studio Item</button>
+    </div>
+    ${list.length===0 ? h`<div class="empty"><h3>NO STUDIO ITEMS</h3><p>Add tracing sheets, speaking drills, quizzes, PDFs, videos, links, and extra activities.</p></div>` : h`
+      <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
+        ${list.map(item=>h`<div key=${item.id} class="card" style=${{marginBottom:0,display:"flex",flexDirection:"column",gap:10}}>
+          <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"flex-start"}}>
+            <div>
+              <h3 style=${{margin:0,fontSize:20}}>${item.title||"Untitled"}</h3>
+              <div style=${{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                <span class="tg">${item.type}</span>
+                <span class="tg">${item.level||"All Levels"}</span>
+                <span class="tg">${item.audience==="subscribers"?"Subscribers":"All Students"}</span>
+              </div>
+            </div>
+            <button class=${"btn btn-xs "+(item.published?"btn-p":"")} onClick=${()=>togglePub(item)}>${item.published?"Live":"Hidden"}</button>
+          </div>
+          ${item.description&&h`<p style=${{fontSize:13,lineHeight:1.65,color:"var(--g500)",margin:0}}>${item.description}</p>`}
+          <div style=${{fontSize:11,color:"var(--g500)",marginTop:"auto"}}>${item.category||"General"} • ${item.track||"General"}${item.fileName?" • "+item.fileName:""}${item.url?" • link":""}</div>
+          <div style=${{display:"flex",gap:6,flexWrap:"wrap"}}>
+            <button class="btn btn-sm" onClick=${()=>openEdit(item)}>${ic('edt')} Edit</button>
+            ${item.fileData&&h`<button class="btn btn-sm" onClick=${()=>downloadFile(item.fileName||item.title,item.fileData)}>Preview File</button>`}
+            <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>del(item)}>${ic('del')} Delete</button>
+          </div>
+        </div>`)}
+      </div>`}
+    ${show&&h`<${Modal} title=${items.find(i=>i.id===form.id)?"EDIT STUDIO ITEM":"ADD STUDIO ITEM"} onClose=${()=>setShow(false)} footer=${h`
+      <button class="btn" onClick=${()=>setShow(false)}>Cancel</button>
+      <button class="btn btn-p" onClick=${saveItem}>Save</button>
+    `}>
+      <div class="fr"><div class="fg"><label>Title</label><input value=${form.title} onInput=${e=>setForm({...form,title:e.target.value})} placeholder="e.g. Write the letters ب ت ث"/></div><div class="fg"><label>Type</label><select value=${form.type} onChange=${e=>setForm({...form,type:e.target.value})}>${types.map(t=>h`<option key=${t}>${t}</option>`)}</select></div></div>
+      <div class="fr3"><div class="fg"><label>Track</label><select value=${form.track} onChange=${e=>setForm({...form,track:e.target.value})}>${tracks.map(t=>h`<option key=${t}>${t}</option>`)}</select></div><div class="fg"><label>Level</label><select value=${form.level} onChange=${e=>setForm({...form,level:e.target.value})}>${levels.map(l=>h`<option key=${l}>${l}</option>`)}</select></div><div class="fg"><label>Category</label><input value=${form.category} onInput=${e=>setForm({...form,category:e.target.value})} placeholder="Writing, Speaking..."/></div></div>
+      <div class="fr"><div class="fg"><label>Availability</label><select value=${form.audience} onChange=${e=>setForm({...form,audience:e.target.value})}>${audiences.map(([v,l])=>h`<option key=${v} value=${v}>${l}</option>`)}</select></div><div class="fg"><label>Status</label><select value=${form.published?"published":"draft"} onChange=${e=>setForm({...form,published:e.target.value==="published"})}><option value="draft">Hidden / Draft</option><option value="published">Published to students</option></select></div></div>
+      <div class="fg"><label>Description</label><textarea value=${form.description} onInput=${e=>setForm({...form,description:e.target.value})} placeholder="What should students know before opening this?"/></div>
+      <div class="fg"><label>Instructions / Activity Content</label><textarea value=${form.instructions} onInput=${e=>setForm({...form,instructions:e.target.value})} placeholder="For tracing: paste words/letters. For speaking: write prompts. For quizzes/exercises: write the questions or instructions."/></div>
+      <div class="fg"><label>Link / Video URL</label><input value=${form.url} onInput=${e=>setForm({...form,url:e.target.value})} placeholder="https://..."/></div>
+      <div class="fg"><label>Upload File (PDF, image, audio, etc. max 50MB)</label><div class="fu" onClick=${()=>fileRef.current?.click()}><input ref=${fileRef} type="file" onChange=${handleFile}/>${form.fileName?h`<span>${ic('fi')} ${form.fileName}</span>`:h`<p style=${{fontWeight:600}}>Click to upload a file</p>`}</div></div>
+    <//>`}
+  </div>`;
+}
+
 // ════════════════════════════════════════
 // MAIN APP with Auth
 // ════════════════════════════════════════
@@ -7888,6 +8057,7 @@ function App() {
       if (s === 'scheduling' || s === 'calendar') return 'lessons';
       if (s === 'curriculum' || s === 'resources' || s === 'library') return 'materials';
       if (s === 'games' || s === 'quizzes' || s === 'exercises') return 'practice';
+      if (s === 'learning-studio') return 'studio';
       return s;
     } catch { return 'dashboard'; }
   });
@@ -8054,12 +8224,13 @@ function App() {
     ["lessons","Scheduling & Calendar","cal"],
     ["payments","Payment Tracker","pay"],
     ["materials","Library & Resources","cur"],
+    ["studio","Learning Studio","ai"],
     ["practice","Games, Quizzes & Exercises","ai"],
     ["homework","Homework & Tasks","hw"],
     ["settings","Settings","set"]
   ];
   // Remap old view names for activeNav highlight
-  const navViewMap = {scheduling:"lessons", calendar:"lessons", curriculum:"materials", resources:"materials", library:"materials", games:"practice", quizzes:"practice", exercises:"practice", requests:"dashboard"};
+  const navViewMap = {scheduling:"lessons", calendar:"lessons", curriculum:"materials", resources:"materials", library:"materials", "learning-studio":"studio", games:"practice", quizzes:"practice", exercises:"practice", requests:"dashboard"};
   const activeNav = view === "profile" ? "students" : (navViewMap[view] || view);
 
   // Apply theme CSS vars
@@ -8154,6 +8325,7 @@ function App() {
     ${view==="lessons" && h`<${LessonsAdmin} data=${data} setData=${update} auth=${auth}/>`}
     ${view==="payments" && h`<${Payments} data=${data} setData=${update}/>`}
     ${view==="materials" && h`<${MaterialsAdmin} data=${data} setData=${update} auth=${auth}/>`}
+    ${view==="studio" && h`<${StudioAdmin} data=${data} setData=${update}/>`}
     ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
     ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
     ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile}/>`}
