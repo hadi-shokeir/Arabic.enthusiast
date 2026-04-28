@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Arabic Enthusiast">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/logo.jpeg">
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Montserrat:wght@400;600;700;800&family=Raleway:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700&family=Anton&family=Teko:wght@400;500;600;700&family=Russo+One&family=Black+Han+Sans&family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@400;600;700&family=Cinzel:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&family=Nunito:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&family=Manrope:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Montserrat:wght@400;600;700;800&family=Raleway:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700&family=Anton&family=Teko:wght@400;500;600;700&family=Russo+One&family=Black+Han+Sans&family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@400;600;700&family=Cinzel:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Lato:wght@400;700&family=Nunito:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&family=Manrope:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;500;600;700&family=Lateef:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/htm/3.1.1/htm.module.js" type="module"></script>
@@ -4878,6 +4878,14 @@ const TRACE_SETS = [
   ]}
 ];
 
+const TRACE_FONTS = [
+  {id:"naskh",label:"Naskh",stack:"'Noto Naskh Arabic','Amiri',serif",weight:400,scale:1,stroke:0.07,desc:"Clear textbook shapes"},
+  {id:"lateef",label:"Lateef",stack:"'Lateef','Noto Naskh Arabic',serif",weight:400,scale:1.12,stroke:0.06,desc:"Slim handwriting feel"},
+  {id:"scheherazade",label:"Scheherazade",stack:"'Scheherazade New','Amiri',serif",weight:400,scale:1.02,stroke:0.065,desc:"Traditional and open"},
+  {id:"amiri",label:"Amiri",stack:"'Amiri','Noto Naskh Arabic',serif",weight:400,scale:0.98,stroke:0.07,desc:"Elegant reading style"},
+  {id:"kufi",label:"Kufi",stack:"'Noto Kufi Arabic',sans-serif",weight:400,scale:0.84,stroke:0.06,desc:"Blocky beginner forms"}
+];
+
 function parseTraceSource(sourceText) {
   const lines = (sourceText||"")
     .split(/\n|,/)
@@ -4894,6 +4902,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const [idx, setIdx] = useState(0);
   const [customText, setCustomText] = useState("");
   const [brush, setBrush] = useState(22);
+  const [fontId, setFontId] = useState("naskh");
+  const [guideSize, setGuideSize] = useState(84);
   const [showGrid, setShowGrid] = useState(true);
   const [score, setScore] = useState(null);
   const [feedback, setFeedback] = useState("");
@@ -4905,6 +4915,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const currentSet = sets.find(x=>x.id===setId) || sets[0];
   const item = customText.trim() ? {text:customText.trim(),label:"My custom text",hint:"Trace your custom Arabic text."} : (currentSet.items[idx] || currentSet.items[0]);
   const text = item?.text || "ب";
+  const traceFont = TRACE_FONTS.find(f=>f.id===fontId) || TRACE_FONTS[0];
 
   const drawGuide = (ctx, w, h, mask=false) => {
     ctx.clearRect(0,0,w,h);
@@ -4921,31 +4932,33 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         ctx.beginPath(); ctx.moveTo(22,h*0.64); ctx.lineTo(w-22,h*0.64); ctx.stroke();
       }
     }
-    let fontSize = text.length <= 1 ? Math.min(210, h*0.62) : text.length <= 6 ? Math.min(150, h*0.48) : Math.min(108, h*0.38);
+    let fontSize = text.length <= 1 ? Math.min(174, h*0.54) : text.length <= 6 ? Math.min(118, h*0.4) : Math.min(86, h*0.31);
+    fontSize *= (guideSize/100) * traceFont.scale;
     ctx.direction = "rtl";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     do {
-      ctx.font = "700 "+fontSize+"px 'Amiri','Noto Kufi Arabic',serif";
-      if (ctx.measureText(text).width < w-42 || fontSize < 34) break;
+      ctx.font = traceFont.weight+" "+fontSize+"px "+traceFont.stack;
+      if (ctx.measureText(text).width < w-48 || fontSize < 30) break;
       fontSize -= 6;
     } while (fontSize > 28);
     const x = w/2, y = h*0.52;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.lineWidth = Math.max(18, fontSize*0.14);
     if (mask) {
+      ctx.lineWidth = Math.max(20, fontSize*0.18);
       ctx.strokeStyle = "#fff";
       ctx.fillStyle = "#fff";
       ctx.strokeText(text,x,y);
       ctx.fillText(text,x,y);
       return;
     }
-    ctx.setLineDash([10,10]);
-    ctx.strokeStyle = "rgba(229,201,120,0.38)";
+    ctx.lineWidth = Math.max(7, fontSize*traceFont.stroke);
+    ctx.setLineDash([8,14]);
+    ctx.strokeStyle = "rgba(229,201,120,0.48)";
     ctx.strokeText(text,x,y);
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(247,239,224,0.08)";
+    ctx.fillStyle = "rgba(247,239,224,0.045)";
     ctx.fillText(text,x,y);
     ctx.fillStyle = "rgba(229,201,120,0.78)";
     ctx.font = "800 11px 'DM Sans',sans-serif";
@@ -4994,8 +5007,9 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     const onResize = () => redraw();
     window.addEventListener("resize", onResize);
     setTimeout(redraw,40);
+    document.fonts?.ready?.then(redraw).catch(()=>{});
     return () => window.removeEventListener("resize", onResize);
-  }, [text, showGrid, compact]);
+  }, [text, showGrid, compact, fontId, guideSize]);
 
   const point = e => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -5074,6 +5088,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         </div>
         <div style=${{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}><input type="checkbox" checked=${showGrid} onChange=${e=>setShowGrid(e.target.checked)}/> Grid</label>
+          <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Font <select value=${fontId} onChange=${e=>{setFontId(e.target.value);clearInk();}} style=${{background:"var(--sp-surface)",border:"1px solid var(--sp-border)",borderRadius:8,padding:"6px 8px",color:"var(--sp-txt)",fontFamily:"'DM Sans',sans-serif"}}>${TRACE_FONTS.map(f=>h`<option key=${f.id} value=${f.id}>${f.label}</option>`)}</select></label>
+          <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Size <input type="range" min="68" max="110" value=${guideSize} onInput=${e=>{setGuideSize(+e.target.value);clearInk();}} style=${{width:86}}/></label>
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Brush <input type="range" min="12" max="34" value=${brush} onInput=${e=>setBrush(+e.target.value)} style=${{width:90}}/></label>
         </div>
       </div>
