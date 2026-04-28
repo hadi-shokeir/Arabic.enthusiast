@@ -89,6 +89,18 @@ function App() {
 
   useEffect(() => {
     let alive = true;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('preview') === 'draft') {
+      try {
+        const draft = JSON.parse(localStorage.getItem('ae_site_preview') || 'null');
+        if (draft && window.AE?.mergeSiteContent) {
+          window.AE.DATA = window.AE.mergeSiteContent(window.AE.DATA, draft);
+          if (params.get('page')) setPage(params.get('page'));
+          if (alive) setSiteKey(k => k + 1);
+          return () => { alive = false; };
+        }
+      } catch {}
+    }
     fetch('/api/site')
       .then(r => r.ok ? r.json() : null)
       .then(d => {

@@ -7517,6 +7517,26 @@ function WebsiteControl({data, setData, auth}) {
   };
   const addCourse = () => patchSite({courses:[...site.courses,{id:uid(),visible:true,featured:false,level:"Beginner",type:"Classical",title:"New Course",arabic:"",subtitle:"",desc:"",color:"#ffffff",topics:[]}]});
   const resetDraft = () => { if(confirm("Reset website draft to the default starter content?")) patchSite(defaultSiteContent()); };
+  const previewDraft = (page="home") => {
+    try { localStorage.setItem("ae_site_preview", JSON.stringify(site)); } catch {}
+    window.open("/?preview=draft&page="+encodeURIComponent(page), "_blank", "noopener,noreferrer");
+  };
+  const loadPublished = async () => {
+    setPublishStatus("loading");
+    try {
+      const r = await fetch("/api/site");
+      const d = await r.json();
+      if (d?.content) {
+        setData({...data, siteContent: normalizeSiteContent({...d.content, status:"published", lastPublishedAt:d.savedAt||d.content.lastPublishedAt||""})});
+        setPublishStatus("loaded");
+        setTimeout(()=>setPublishStatus(""), 3500);
+      } else {
+        setPublishStatus("No published website content yet");
+      }
+    } catch {
+      setPublishStatus("Could not load published content");
+    }
+  };
   const publish = async () => {
     setPublishStatus("publishing");
     const content = normalizeSiteContent({...site, status:"published", lastPublishedAt:stamp(), updatedAt:site.updatedAt||stamp()});
@@ -7535,7 +7555,28 @@ function WebsiteControl({data, setData, auth}) {
   const courseCount = (site.courses || []).filter(c=>c.visible!==false).length;
   const changedAt = site.updatedAt ? new Date(site.updatedAt).toLocaleString() : "Not edited yet";
   const publishedAt = site.lastPublishedAt ? new Date(site.lastPublishedAt).toLocaleString() : "Not published yet";
-  const tabs = [["overview","Overview"],["home","Homepage"],["about","My Page"],["courses","Courses"],["visibility","Visibility"]];
+  const hasUnpublished = !!(site.updatedAt && (!site.lastPublishedAt || new Date(site.updatedAt) > new Date(site.lastPublishedAt)));
+  const publishState = !site.lastPublishedAt ? "Not Published" : hasUnpublished ? "Unpublished" : "Published";
+  const publishColor = !site.lastPublishedAt || hasUnpublished ? "var(--wn)" : "var(--ok)";
+  const writingRows = [
+    ["Homepage","Hero eyebrow",site.homepage.eyebrow,"home"],
+    ["Homepage","Main title",[site.homepage.titleLine1,site.homepage.titleAccent,site.homepage.titleLine3].filter(Boolean).join(" "),"home"],
+    ["Homepage","Hero description",site.homepage.description,"home"],
+    ["Homepage","Feature heading",site.homepage.featuresHeading,"home"],
+    ["Homepage","Feature intro",site.homepage.featuresSub,"home"],
+    ["Homepage","Quote",site.homepage.quoteText,"home"],
+    ["Homepage","CTA title",[site.homepage.ctaTitleLine1,site.homepage.ctaTitleAccent,site.homepage.ctaTitleLine3].filter(Boolean).join(" "),"home"],
+    ["Homepage","CTA description",site.homepage.ctaDescription,"home"],
+    ["My Page","Name",site.instructor.name,"about"],
+    ["My Page","Title",site.instructor.title,"about"],
+    ["My Page","Bio paragraph 1",site.instructor.bio1,"about"],
+    ["My Page","Bio paragraph 2",site.instructor.bio2,"about"],
+    ["My Page","Contact prompt",site.instructor.contactPrompt,"about"],
+    ["Pricing","Pricing text",site.pricing.description,"home"],
+    ...site.courses.map(c=>["Courses",c.title||"Untitled course",c.desc,"courses"])
+  ];
+  const wordCount = writingRows.reduce((sum,row)=>sum+((row[2]||"").trim()? (row[2]||"").trim().split(/\s+/).length : 0),0);
+  const tabs = [["overview","Overview"],["writing","Writing"],["home","Homepage"],["about","My Page"],["courses","Courses"],["visibility","Visibility"]];
 
   return h`<div>
     <div class="card" style=${{display:"flex",gap:14,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
@@ -7544,17 +7585,20 @@ function WebsiteControl({data, setData, auth}) {
         <p style=${{fontSize:13,color:"var(--g500)",lineHeight:1.6,maxWidth:720}}>Edit what visitors see on the public website, keep changes as a draft, then publish when you are ready.</p>
       </div>
       <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button class="btn btn-sm" onClick=${()=>previewDraft("home")}>Preview Draft</button>
         <a class="btn btn-sm" href="/" target="_blank" rel="noreferrer">Open Website</a>
+        <button class="btn btn-sm" onClick=${loadPublished}>Load Live</button>
         <button class="btn btn-sm" onClick=${resetDraft}>Reset Draft</button>
         <button class="btn btn-p" onClick=${publish}>${publishStatus==="publishing"?"Publishing...":publishStatus==="published"?"Published":"Publish Website"}</button>
       </div>
-      ${publishStatus&&publishStatus!=="publishing"&&publishStatus!=="published"&&h`<div style=${{width:"100%",fontSize:12,color:"var(--bd)",fontWeight:700}}>${publishStatus}</div>`}
+      ${publishStatus&&publishStatus!=="publishing"&&publishStatus!=="published"&&publishStatus!=="loaded"&&h`<div style=${{width:"100%",fontSize:12,color:"var(--bd)",fontWeight:700}}>${publishStatus}</div>`}
     </div>
 
     <div class="stats">
       <div class="stat"><div class="lb">Visible Sections</div><div class="vl">${visibleCount}</div><div class="su">Homepage and public pages</div></div>
       <div class="stat"><div class="lb">Visible Courses</div><div class="vl">${courseCount}</div><div class="su">Courses students can discover</div></div>
-      <div class="stat"><div class="lb">Draft Updated</div><div class="vl" style=${{fontSize:22}}>${changedAt}</div><div class="su">Auto-saved in tutor portal</div></div>
+      <div class="stat"><div class="lb">Writing Size</div><div class="vl">${wordCount}</div><div class="su">Approximate public-site words</div></div>
+      <div class="stat"><div class="lb">Draft Status</div><div class="vl" style=${{fontSize:22,color:publishColor}}>${publishState}</div><div class="su">Draft updated: ${changedAt}</div></div>
       <div class="stat"><div class="lb">Last Published</div><div class="vl" style=${{fontSize:22}}>${publishedAt}</div><div class="su">Live public website</div></div>
     </div>
 
@@ -7564,7 +7608,14 @@ function WebsiteControl({data, setData, auth}) {
 
     ${tab==="overview"&&h`<div class="fr">
       <div class="card">
-        <h3>Draft Preview</h3>
+        <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:12,flexWrap:"wrap"}}>
+          <h3 style=${{margin:0}}>Draft Preview</h3>
+          <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <button class="btn btn-sm" onClick=${()=>previewDraft("home")}>Homepage</button>
+            <button class="btn btn-sm" onClick=${()=>previewDraft("courses")}>Courses</button>
+            <button class="btn btn-sm" onClick=${()=>previewDraft("about")}>My Page</button>
+          </div>
+        </div>
         <div style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,overflow:"hidden",background:"var(--ae-panel-2)"}}>
           <div style=${{padding:20,background:"linear-gradient(135deg,#17130c,#2d2618)",color:"#fff"}}>
             <div style=${{fontSize:10,textTransform:"uppercase",letterSpacing:2,color:"rgba(255,255,255,.55)",marginBottom:10}}>${site.homepage.eyebrow||site.brand}</div>
@@ -7588,9 +7639,39 @@ function WebsiteControl({data, setData, auth}) {
         <h3>Publishing Rules</h3>
         <div style=${{display:"grid",gap:10,fontSize:13,lineHeight:1.6,color:"var(--g600)"}}>
           <div><b>Draft:</b> changes here save inside the tutor portal and cloud backup.</div>
+          <div><b>Preview Draft:</b> opens the public site using your current draft without changing what visitors see.</div>
           <div><b>Publish:</b> pushes the draft to the live public website for visitors.</div>
+          <div><b>Load Live:</b> replaces your draft with what is currently published.</div>
           <div><b>Courses:</b> visible courses appear on the Courses page; featured courses appear on the homepage.</div>
           <div><b>Visibility:</b> hide entire sections without deleting their text.</div>
+        </div>
+      </div>
+    </div>`}
+
+    ${tab==="writing"&&h`<div>
+      <div class="card">
+        <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap",marginBottom:14}}>
+          <div>
+            <h3 style=${{marginBottom:5}}>Writing Overview</h3>
+            <p style=${{fontSize:13,color:"var(--g500)",lineHeight:1.6}}>A quick scan of the public-facing text you control. Use this to spot weak wording, repeated phrases, or missing sections before publishing.</p>
+          </div>
+          <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <button class="btn btn-sm" onClick=${()=>setTab("home")}>Edit Homepage</button>
+            <button class="btn btn-sm" onClick=${()=>setTab("about")}>Edit My Page</button>
+            <button class="btn btn-sm" onClick=${()=>setTab("courses")}>Edit Courses</button>
+          </div>
+        </div>
+        <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:12}}>
+          ${writingRows.map(([area,label,text,target],i)=>h`<div key=${i} onClick=${()=>setTab(target)} style=${{border:"1px solid var(--ae-line-soft)",borderRadius:14,padding:14,background:"var(--ae-panel-2)",cursor:"pointer"}}>
+            <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginBottom:8}}>
+              <span class="tg">${area}</span>
+              <span style=${{fontSize:11,color:"var(--g500)",fontWeight:800}}>${((text||"").trim()? (text||"").trim().split(/\s+/).length : 0)} words</span>
+            </div>
+            <div style=${{fontWeight:800,fontSize:13,color:"var(--ae-ink)",marginBottom:6}}>${label}</div>
+            <div style=${{fontSize:12,color:(text||"").trim()?"var(--g600)":"var(--bd)",lineHeight:1.55,maxHeight:78,overflow:"hidden"}}>
+              ${(text||"").trim() || "Empty - add wording before publishing."}
+            </div>
+          </div>`)}
         </div>
       </div>
     </div>`}
