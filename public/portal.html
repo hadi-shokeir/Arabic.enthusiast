@@ -5114,27 +5114,71 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     const coverage = guidePx ? covered/guidePx : 0;
     const drift = inkPx ? offGuide/inkPx : 0;
     const precision = Math.max(0, 1-drift);
-    const boxScore = (() => {
-      if (!isFinite(gb.minX) || !isFinite(ib.minX)) return 0;
+    const boxesReady = isFinite(gb.minX) && isFinite(ib.minX);
+    const boxMetrics = (() => {
+      if (!boxesReady) return {placement:0,proportion:0};
       const gw=Math.max(1,gb.maxX-gb.minX), gh=Math.max(1,gb.maxY-gb.minY);
       const iw=Math.max(1,ib.maxX-ib.minX), ih=Math.max(1,ib.maxY-ib.minY);
       const gcx=(gb.minX+gb.maxX)/2, gcy=(gb.minY+gb.maxY)/2;
       const icx=(ib.minX+ib.maxX)/2, icy=(ib.minY+ib.maxY)/2;
       const centerScore = 1-Math.min(1,(Math.abs(icx-gcx)/gw + Math.abs(icy-gcy)/gh)/0.85);
       const sizeScore = 1-Math.min(1,(Math.abs(iw-gw)/gw + Math.abs(ih-gh)/gh)/1.25);
-      return Math.max(0,(centerScore*0.58 + sizeScore*0.42));
+      const ratioScore = 1-Math.min(1,Math.abs(Math.log((iw/ih)/(gw/gh)))/1.15);
+      return {placement:Math.max(0,(centerScore*0.58 + sizeScore*0.42)),proportion:Math.max(0,ratioScore)};
+    })();
+    const shapeMimicScore = (() => {
+      if (!boxesReady) return 0;
+      const N = 46, pad = 0.08;
+      const makeGrid = (data,b) => {
+        const out = new Uint8Array(N*N);
+        const bw=Math.max(1,b.maxX-b.minX), bh=Math.max(1,b.maxY-b.minY);
+        const step = Math.max(1, Math.floor(Math.max(bw,bh)/320));
+        for (let y=Math.floor(b.minY); y<=b.maxY; y+=step) {
+          for (let x=Math.floor(b.minX); x<=b.maxX; x+=step) {
+            if (data[(y*guide.width+x)*4+3] <= 18) continue;
+            const nx = pad + (1-pad*2)*((x-b.minX)/bw);
+            const ny = pad + (1-pad*2)*((y-b.minY)/bh);
+            const gx = Math.max(0,Math.min(N-1,Math.round(nx*(N-1))));
+            const gy = Math.max(0,Math.min(N-1,Math.round(ny*(N-1))));
+            for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++) {
+              const xx=gx+dx, yy=gy+dy;
+              if (xx>=0&&xx<N&&yy>=0&&yy<N) out[yy*N+xx]=1;
+            }
+          }
+        }
+        return out;
+      };
+      const gg = makeGrid(g,gb), kk = makeGrid(k,ib);
+      let inter=0, gc=0, kc=0;
+      const grow = new Array(N).fill(0), krow = new Array(N).fill(0), gcol = new Array(N).fill(0), kcol = new Array(N).fill(0);
+      for (let y=0; y<N; y++) for (let x=0; x<N; x++) {
+        const i=y*N+x, gv=gg[i], kv=kk[i];
+        if (gv) { gc++; grow[y]++; gcol[x]++; }
+        if (kv) { kc++; krow[y]++; kcol[x]++; }
+        if (gv&&kv) inter++;
+      }
+      if (!gc || !kc) return 0;
+      const recall = inter/gc, shapePrecision = inter/kc, dice = (2*inter)/(gc+kc);
+      const profile = (a,b) => {
+        const as=a.reduce((s,v)=>s+v,0)||1, bs=b.reduce((s,v)=>s+v,0)||1;
+        let diff=0;
+        for (let i=0;i<a.length;i++) diff += Math.abs(a[i]/as-b[i]/bs);
+        return Math.max(0,1-diff/2);
+      };
+      const profileScore = (profile(grow,krow)+profile(gcol,kcol))/2;
+      return Math.max(0,Math.min(1,recall*0.32 + shapePrecision*0.25 + dice*0.25 + profileScore*0.18));
     })();
     const coverageScore = Math.min(1, coverage*2.35);
     const raw = traceLevel==="advanced"
-      ? (coverageScore*0.42 + precision*0.26 + boxScore*0.32) * 100
+      ? (shapeMimicScore*0.82 + boxMetrics.proportion*0.18) * 100
       : traceLevel==="medium"
-        ? (coverageScore*0.58 + precision*0.25 + boxScore*0.17) * 100
-        : (coverageScore*0.68 + precision*0.22 + boxScore*0.10) * 100;
+        ? (coverageScore*0.58 + precision*0.25 + boxMetrics.placement*0.17) * 100
+        : (coverageScore*0.68 + precision*0.22 + boxMetrics.placement*0.10) * 100;
     const nextScore = Math.max(0, Math.min(100, Math.round(raw)));
     setScore(nextScore);
-    setFeedback(nextScore>=84 ? (traceLevel==="advanced"?"Strong free writing. The size and shape are matching well.":"Excellent control. Try the next one.")
-      : nextScore>=62 ? (traceLevel==="advanced"?"Good attempt. Match the target size and keep it closer to the baseline.":"Good start. Trace the lighter empty areas again.")
-      : (traceLevel==="advanced"?"Write slower and center the shape near the baseline, then check again.":"Slow down and stay inside the guide. Reset if you want a clean try."));
+    setFeedback(nextScore>=84 ? (traceLevel==="advanced"?"Strong free writing. You caught the letter shape well.":"Excellent control. Try the next one.")
+      : nextScore>=62 ? (traceLevel==="advanced"?"Good attempt. Focus on the letter's proportions, dots, and open/closed shapes.":"Good start. Trace the lighter empty areas again.")
+      : (traceLevel==="advanced"?"Try again slowly. Capture the main body, dots, loops, and direction of the letter.":"Slow down and stay inside the guide. Reset if you want a clean try."));
     if (s && data && setData) {
       const entry = {date:new Date().toISOString(),text,score:nextScore,level:traceLevel};
       setData({...data,students:data.students.map(st=>st.id===s.id?{...st,tracingHistory:[...(st.tracingHistory||[]),entry].slice(-40)}:st)});
