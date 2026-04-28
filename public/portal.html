@@ -4887,8 +4887,8 @@ const TRACE_FONTS = [
 ];
 
 const TRACE_LEVELS = [
-  {id:"beginner",label:"Beginner",short:"Trace",desc:"Strong guide, grid, and generous matching.",guideAlpha:0.5,fillAlpha:0.06,dash:[8,14]},
-  {id:"medium",label:"Medium",short:"Copy",desc:"Faint guide for students who know the shape.",guideAlpha:0.22,fillAlpha:0.018,dash:[4,18]},
+  {id:"beginner",label:"Beginner",short:"Trace",desc:"Strong solid guide, grid, and generous matching.",guideAlpha:0.42,fillAlpha:0.13,dash:[]},
+  {id:"medium",label:"Medium",short:"Copy",desc:"Faint solid guide for students who know the shape.",guideAlpha:0.2,fillAlpha:0.045,dash:[]},
   {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory, then compare.",guideAlpha:0,fillAlpha:0,dash:[]}
 ];
 
@@ -4909,7 +4909,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const [customText, setCustomText] = useState("");
   const [brush, setBrush] = useState(22);
   const [fontId, setFontId] = useState("naskh");
-  const [guideSize, setGuideSize] = useState(84);
+  const [guideSize, setGuideSize] = useState(96);
+  const [letterGap, setLetterGap] = useState(3);
   const [traceLevel, setTraceLevel] = useState("beginner");
   const [showGrid, setShowGrid] = useState(true);
   const [score, setScore] = useState(null);
@@ -4924,6 +4925,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const text = item?.text || "ب";
   const traceFont = TRACE_FONTS.find(f=>f.id===fontId) || TRACE_FONTS[0];
   const level = TRACE_LEVELS.find(l=>l.id===traceLevel) || TRACE_LEVELS[0];
+  const baseLetterCount = Array.from(text).filter(ch=>!/[\s\u064B-\u065F\u0670\u06D6-\u06ED]/.test(ch)).length;
+  const tracking = baseLetterCount > 1 ? letterGap : 0;
   const canvasCssSize = () => {
     const canvas = canvasRef.current;
     const rect = canvas?.getBoundingClientRect?.();
@@ -4948,11 +4951,14 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         ctx.beginPath(); ctx.moveTo(22,h*0.64); ctx.lineTo(w-22,h*0.64); ctx.stroke();
       }
     }
-    let fontSize = text.length <= 1 ? Math.min(174, h*0.54) : text.length <= 6 ? Math.min(118, h*0.4) : Math.min(86, h*0.31);
+    let fontSize = text.length <= 1 ? Math.min(196, h*0.62) : text.length <= 6 ? Math.min(144, h*0.48) : Math.min(112, h*0.37);
     fontSize *= (guideSize/100) * traceFont.scale;
     ctx.direction = "rtl";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.fontKerning = "normal";
+    ctx.textRendering = "geometricPrecision";
+    ctx.letterSpacing = tracking+"px";
     do {
       ctx.font = traceFont.weight+" "+fontSize+"px "+traceFont.stack;
       if (ctx.measureText(text).width < w-48 || fontSize < 30) break;
@@ -4970,6 +4976,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       return;
     }
     if (traceLevel==="advanced") {
+      ctx.letterSpacing = "0px";
       ctx.fillStyle = "rgba(229,201,120,0.72)";
       ctx.font = "800 11px 'DM Sans',sans-serif";
       ctx.textAlign = "right";
@@ -4977,13 +4984,14 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       ctx.fillText("Free write: match the target above without a guide.", w-18, 24);
       return;
     }
-    ctx.lineWidth = Math.max(7, fontSize*traceFont.stroke);
+    ctx.lineWidth = Math.max(4, fontSize*traceFont.stroke*0.62);
     ctx.setLineDash(level.dash);
     ctx.strokeStyle = "rgba(229,201,120,"+level.guideAlpha+")";
     ctx.strokeText(text,x,y);
     ctx.setLineDash([]);
-    ctx.fillStyle = "rgba(247,239,224,"+level.fillAlpha+")";
+    ctx.fillStyle = "rgba(229,201,120,"+level.fillAlpha+")";
     ctx.fillText(text,x,y);
+    ctx.letterSpacing = "0px";
     ctx.fillStyle = "rgba(229,201,120,0.78)";
     ctx.font = "800 11px 'DM Sans',sans-serif";
     ctx.textAlign = "right";
@@ -5033,7 +5041,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     setTimeout(redraw,40);
     document.fonts?.ready?.then(redraw).catch(()=>{});
     return () => window.removeEventListener("resize", onResize);
-  }, [text, showGrid, compact, fontId, guideSize, traceLevel]);
+  }, [text, showGrid, compact, fontId, guideSize, letterGap, traceLevel]);
 
   const point = e => {
     const canvas = canvasRef.current;
@@ -5224,6 +5232,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}><input type="checkbox" checked=${showGrid} onChange=${e=>setShowGrid(e.target.checked)}/> Grid</label>
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Font <select value=${fontId} onChange=${e=>{setFontId(e.target.value);clearInk();}} style=${{background:"var(--sp-surface)",border:"1px solid var(--sp-border)",borderRadius:8,padding:"6px 8px",color:"var(--sp-txt)",fontFamily:"'DM Sans',sans-serif"}}>${TRACE_FONTS.map(f=>h`<option key=${f.id} value=${f.id}>${f.label}</option>`)}</select></label>
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Size <input type="range" min="68" max="110" value=${guideSize} onInput=${e=>{setGuideSize(+e.target.value);clearInk();}} style=${{width:86}}/></label>
+          <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Spacing <input type="range" min="0" max="9" value=${letterGap} onInput=${e=>{setLetterGap(+e.target.value);clearInk();}} style=${{width:76}}/></label>
           <label style=${{fontSize:12,color:"var(--sp-txt2)",display:"flex",gap:6,alignItems:"center"}}>Brush <input type="range" min="12" max="34" value=${brush} onInput=${e=>setBrush(+e.target.value)} style=${{width:90}}/></label>
         </div>
       </div>
@@ -5232,7 +5241,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
           <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1,color:"var(--sp-txt3)"}}>Target</div>
           <div style=${{fontSize:12,color:"var(--sp-txt2)",marginTop:2}}>Write this from memory on the blank canvas.</div>
         </div>
-        <div style=${{fontFamily:traceFont.stack,fontSize:Math.max(28, Math.min(44, text.length<=1?44:34)),direction:"rtl",color:"var(--sp-amber)",lineHeight:1.4}}>${text}</div>
+        <div style=${{fontFamily:traceFont.stack,fontSize:Math.max(28, Math.min(44, text.length<=1?44:34)),direction:"rtl",color:"var(--sp-amber)",lineHeight:1.4,letterSpacing:tracking+"px"}}>${text}</div>
       </div>`}
       <canvas ref=${canvasRef} onPointerDown=${start} onPointerMove=${move} onPointerUp=${stop} onPointerCancel=${stop} onPointerLeave=${stop} style=${{display:"block",width:"100%",borderRadius:14,border:"1px solid var(--sp-border-h)",background:"var(--sp-surface)",touchAction:"none",cursor:"crosshair",boxShadow:"inset 0 1px 0 rgba(255,255,255,.06),0 18px 38px rgba(0,0,0,.22)"}}></canvas>
       <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginTop:12,flexWrap:"wrap"}}>
