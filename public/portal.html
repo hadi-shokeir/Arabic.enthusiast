@@ -4924,6 +4924,13 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const text = item?.text || "ب";
   const traceFont = TRACE_FONTS.find(f=>f.id===fontId) || TRACE_FONTS[0];
   const level = TRACE_LEVELS.find(l=>l.id===traceLevel) || TRACE_LEVELS[0];
+  const canvasCssSize = () => {
+    const canvas = canvasRef.current;
+    const rect = canvas?.getBoundingClientRect?.();
+    const parent = canvas?.parentElement;
+    const w = Math.max(320, Math.floor((rect?.width && rect.width > 10 ? rect.width : parent?.clientWidth) || 680));
+    return {w, h: compact ? 300 : (w < 520 ? 330 : 390)};
+  };
 
   const drawGuide = (ctx, w, h, mask=false) => {
     ctx.clearRect(0,0,w,h);
@@ -4990,13 +4997,13 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     const ink = inkRef.current;
     if (!canvas || !guide || !ink) return;
     const dpr = window.devicePixelRatio || 1;
-    const w = Math.max(320, Math.floor(canvas.parentElement?.clientWidth || 680));
-    const h = compact ? 300 : (w < 520 ? 330 : 390);
+    const {w,h} = canvasCssSize();
     [canvas,guide,ink].forEach(c => {
       if (c.width !== Math.floor(w*dpr) || c.height !== Math.floor(h*dpr)) {
         c.width = Math.floor(w*dpr); c.height = Math.floor(h*dpr);
-        c.style.width = "100%"; c.style.height = h+"px";
       }
+      c.style.width = c === canvas ? "100%" : w+"px";
+      c.style.height = h+"px";
     });
     const ctx = canvas.getContext("2d");
     const gctx = guide.getContext("2d");
@@ -5029,8 +5036,13 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   }, [text, showGrid, compact, fontId, guideSize, traceLevel]);
 
   const point = e => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return {x:e.clientX-rect.left, y:e.clientY-rect.top};
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const cssW = canvas.width / (window.devicePixelRatio || 1);
+    const cssH = canvas.height / (window.devicePixelRatio || 1);
+    const x = ((e.clientX-rect.left) / Math.max(1, rect.width)) * cssW;
+    const y = ((e.clientY-rect.top) / Math.max(1, rect.height)) * cssH;
+    return {x:Math.max(0,Math.min(cssW,x)), y:Math.max(0,Math.min(cssH,y))};
   };
   const drawTo = (p, pressure=0.55, deferRedraw=false) => {
     const ink = inkRef.current;
