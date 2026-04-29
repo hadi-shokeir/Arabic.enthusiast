@@ -4747,6 +4747,7 @@ const SP_NAV = [
   {id:'ai',icon:'🤖',label:'AI Tutor',group:null},
   {id:'studio',icon:'🎓',label:'Learning Studio',group:'LEARN'},
   {id:'trace',icon:'✍️',label:'Trace',group:'LEARN'},
+  {id:'games',icon:'🎮',label:'Games',group:'LEARN'},
   {id:'skills',icon:'⚡',label:'Skills',group:'LEARN'},
   {id:'foundation',icon:'🌿',label:'Foundation',group:'LEARN'},
   {id:'script',icon:'ب',label:'Script',group:'LEARN'},
@@ -4759,6 +4760,7 @@ const SP_NAV = [
 ];
 const SP_NAV_GROUPS = [null,'LEARN','EXPLORE','MY LESSONS'];
 const SP_MORE_NAV = [
+  {id:'games',icon:'G',label:'Arabic Kitchen',desc:'Follow Arabic recipe instructions and drag ingredients to cook.'},
   {id:'skills',icon:'*',label:'Skills Practice',desc:'Reading, writing, listening, and speaking practice.'},
   {id:'foundation',icon:'R',label:'Foundation',desc:'Vocabulary, roots, and grammar basics.'},
   {id:'script',icon:'ب',label:'Arabic Script',desc:'Letters, forms, and script confidence.'},
@@ -5264,6 +5266,222 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   </div>`;
 }
 
+const KITCHEN_LEVELS = [
+  {id:"beginner",label:"Beginner",desc:"Arabic + English labels, fewer distractors.",bonus:0},
+  {id:"medium",label:"Medium",desc:"Arabic labels with light hints and more distractors.",bonus:12},
+  {id:"advanced",label:"Advanced",desc:"Arabic-only pantry and faster decisions.",bonus:24}
+];
+
+const KITCHEN_RECIPES = [
+  {
+    id:"fattoush", title:"Fattoush", titleAr:"فَتّوش", emoji:"🥗", level:"Beginner", theme:"Levantine",
+    goal:"Build a Lebanese salad while learning vegetables and kitchen verbs.",
+    ingredients:[
+      {id:"lettuce",ar:"خَسّ",en:"lettuce",emoji:"🥬"},
+      {id:"tomato",ar:"طَماطِم",en:"tomatoes",emoji:"🍅"},
+      {id:"cucumber",ar:"خِيار",en:"cucumber",emoji:"🥒"},
+      {id:"mint",ar:"نَعْناع",en:"mint",emoji:"🌿"},
+      {id:"lemon",ar:"لَيْمون",en:"lemon",emoji:"🍋"},
+      {id:"bread",ar:"خُبْز",en:"bread",emoji:"🥖"},
+      {id:"sumac",ar:"سُمّاق",en:"sumac",emoji:"🧂"},
+      {id:"sugar",ar:"سُكَّر",en:"sugar",emoji:"🍬",distractor:true},
+      {id:"rice",ar:"أَرُزّ",en:"rice",emoji:"🍚",distractor:true}
+    ],
+    steps:[
+      {target:"lettuce",before:"ضَعِ ",word:"الخَسّ",after:" في الوعاء.",en:"Put the lettuce in the bowl.",verb:"ضَعِ"},
+      {target:"tomato",before:"أَضِفِ ",word:"الطَماطِم",after:" الآن.",en:"Add the tomatoes now.",verb:"أَضِفِ"},
+      {target:"cucumber",before:"قَطِّعِ ",word:"الخِيار",after:" وأَضِفْهُ.",en:"Cut the cucumber and add it.",verb:"قَطِّعِ"},
+      {target:"mint",before:"رُشَّ ",word:"النَعْناع",after:" فوق السَّلَطَة.",en:"Sprinkle the mint over the salad.",verb:"رُشَّ"},
+      {target:"lemon",before:"اِعْصِرِ ",word:"اللَيْمون",after:" على الفَتّوش.",en:"Squeeze the lemon on the fattoush.",verb:"اِعْصِرِ"},
+      {target:"bread",before:"أَضِفِ ",word:"الخُبْز",after:" المُحَمَّص.",en:"Add the toasted bread.",verb:"أَضِفِ"},
+      {target:"sumac",before:"أَخيرًا، رُشَّ ",word:"السُمّاق",after:".",en:"Finally, sprinkle the sumac.",verb:"رُشَّ"}
+    ]
+  },
+  {
+    id:"hummus", title:"Hummus", titleAr:"حُمُّص", emoji:"🧆", level:"Beginner", theme:"Classical + Levantine",
+    goal:"Make hummus while practicing kitchen nouns and imperatives.",
+    ingredients:[
+      {id:"chickpeas",ar:"حُمُّص",en:"chickpeas",emoji:"🫘"},
+      {id:"tahini",ar:"طَحينَة",en:"tahini",emoji:"🥣"},
+      {id:"lemon",ar:"لَيْمون",en:"lemon",emoji:"🍋"},
+      {id:"garlic",ar:"ثوم",en:"garlic",emoji:"🧄"},
+      {id:"oliveoil",ar:"زَيْت زَيْتون",en:"olive oil",emoji:"🫒"},
+      {id:"salt",ar:"مِلْح",en:"salt",emoji:"🧂"},
+      {id:"banana",ar:"مَوْز",en:"banana",emoji:"🍌",distractor:true},
+      {id:"tea",ar:"شاي",en:"tea",emoji:"🍵",distractor:true}
+    ],
+    steps:[
+      {target:"chickpeas",before:"اِطْحَنِ ",word:"الحُمُّص",after:" جيدًا.",en:"Grind the chickpeas well.",verb:"اِطْحَنِ"},
+      {target:"tahini",before:"أَضِفِ ",word:"الطَحينَة",after:" إلى الحُمُّص.",en:"Add tahini to the chickpeas.",verb:"أَضِفِ"},
+      {target:"lemon",before:"اِعْصِرِ ",word:"اللَيْمون",after:".",en:"Squeeze the lemon.",verb:"اِعْصِرِ"},
+      {target:"garlic",before:"ضَعِ ",word:"الثوم",after:" في الخَلّاط.",en:"Put garlic in the blender.",verb:"ضَعِ"},
+      {target:"salt",before:"رُشَّ ",word:"المِلْح",after:".",en:"Sprinkle the salt.",verb:"رُشَّ"},
+      {target:"oliveoil",before:"زَيِّنْهُ بِـ",word:"زَيْت الزَّيْتون",after:".",en:"Decorate it with olive oil.",verb:"زَيِّنْ"}
+    ]
+  },
+  {
+    id:"tea", title:"Mint Tea", titleAr:"شاي بالنَعْناع", emoji:"🍵", level:"Easy", theme:"Everyday Arabic",
+    goal:"Prepare tea while learning common drink vocabulary.",
+    ingredients:[
+      {id:"water",ar:"ماء",en:"water",emoji:"💧"},
+      {id:"tea",ar:"شاي",en:"tea",emoji:"🍵"},
+      {id:"mint",ar:"نَعْناع",en:"mint",emoji:"🌿"},
+      {id:"sugar",ar:"سُكَّر",en:"sugar",emoji:"🍬"},
+      {id:"cup",ar:"كوب",en:"cup",emoji:"☕"},
+      {id:"tomato",ar:"طَماطِم",en:"tomatoes",emoji:"🍅",distractor:true},
+      {id:"salt",ar:"مِلْح",en:"salt",emoji:"🧂",distractor:true}
+    ],
+    steps:[
+      {target:"water",before:"اِغْلِ ",word:"الماء",after:" أولًا.",en:"Boil the water first.",verb:"اِغْلِ"},
+      {target:"tea",before:"ضَعِ ",word:"الشاي",after:" في الماء.",en:"Put the tea in the water.",verb:"ضَعِ"},
+      {target:"mint",before:"أَضِفِ ",word:"النَعْناع",after:".",en:"Add the mint.",verb:"أَضِفِ"},
+      {target:"sugar",before:"أَضِفِ ",word:"السُكَّر",after:" إذا تُحِبّ.",en:"Add sugar if you like.",verb:"أَضِفِ"},
+      {target:"cup",before:"صُبَّ الشاي في ",word:"الكوب",after:".",en:"Pour the tea in the cup.",verb:"صُبَّ"}
+    ]
+  }
+];
+
+function ArabicKitchenGame({student:s, data, setData}) {
+  const [recipeId, setRecipeId] = useState("fattoush");
+  const [levelId, setLevelId] = useState("beginner");
+  const [stepIdx, setStepIdx] = useState(0);
+  const [added, setAdded] = useState([]);
+  const [mistakes, setMistakes] = useState(0);
+  const [feedback, setFeedback] = useState("");
+  const [dragging, setDragging] = useState("");
+  const recipe = KITCHEN_RECIPES.find(r=>r.id===recipeId) || KITCHEN_RECIPES[0];
+  const level = KITCHEN_LEVELS.find(l=>l.id===levelId) || KITCHEN_LEVELS[0];
+  const step = recipe.steps[stepIdx] || recipe.steps[0];
+  const done = stepIdx >= recipe.steps.length;
+  const neededIds = recipe.steps.map(st=>st.target);
+  const pantry = recipe.ingredients.filter(ing => neededIds.includes(ing.id) || levelId!=="beginner" || !ing.distractor);
+  const findIng = id => recipe.ingredients.find(ing=>ing.id===id) || pantry[0];
+  const score = Math.max(0, recipe.steps.length*10 + level.bonus - mistakes*4);
+  const progress = Math.round((Math.min(stepIdx,recipe.steps.length)/recipe.steps.length)*100);
+  const reset = (nextRecipe=recipeId) => { setRecipeId(nextRecipe); setStepIdx(0); setAdded([]); setMistakes(0); setFeedback(""); setDragging(""); };
+  const saveFinish = (finalScore, finalMistakes) => {
+    if (!s || !data || !setData) return;
+    const entry = {date:new Date().toISOString(),recipe:recipe.titleAr,recipeId:recipe.id,score:finalScore,mistakes:finalMistakes,level:levelId};
+    setData({...data,students:data.students.map(st=>st.id===s.id?{...st,kitchenHistory:[...(st.kitchenHistory||[]),entry].slice(-30)}:st)});
+  };
+  const choose = id => {
+    if (done || !id || added.includes(id)) return;
+    const ing = findIng(id);
+    if (id === step.target) {
+      const nextAdded = [...added,id];
+      const final = stepIdx === recipe.steps.length-1;
+      setAdded(nextAdded);
+      setFeedback("صَحيح! "+ing.ar+" - "+ing.en);
+      if (final) {
+        const finalScore = Math.max(0, recipe.steps.length*10 + level.bonus - mistakes*4);
+        setStepIdx(recipe.steps.length);
+        saveFinish(finalScore,mistakes);
+      } else {
+        setTimeout(()=>{ setStepIdx(i=>i+1); setFeedback(""); }, 520);
+      }
+    } else {
+      const nextMistakes = mistakes + 1;
+      setMistakes(nextMistakes);
+      setFeedback("Not this one. Look for: "+step.word+" ("+findIng(step.target).en+").");
+    }
+  };
+  const speak = () => {
+    try {
+      const u = new SpeechSynthesisUtterance((step.before||"")+step.word+(step.after||""));
+      u.lang = "ar"; u.rate = 0.82;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch {}
+  };
+
+  return h`<div>
+    <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:14,flexWrap:"wrap",marginBottom:16}}>
+      <div>
+        <div class="sp2-nav-grp" style=${{padding:0,marginBottom:6}}>Playable Arabic</div>
+        <h2 style=${{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:600,color:"var(--sp-txt)",margin:0}}>Arabic Kitchen</h2>
+        <p style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.7,marginTop:6}}>Read the Arabic instruction, find the highlighted ingredient, then drag or tap it into the dish.</p>
+      </div>
+      <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <span class="sp2-badge sp2-badge-a">Score ${score}</span>
+        <span class="sp2-badge sp2-badge-t">${progress}% cooked</span>
+      </div>
+    </div>
+
+    <div class="sp2-tabs" style=${{marginBottom:12}}>
+      ${KITCHEN_RECIPES.map(r=>h`<button key=${r.id} class=${"sp2-tab "+(recipeId===r.id?"on":"")} onClick=${()=>reset(r.id)}>${r.emoji} ${r.titleAr}</button>`)}
+    </div>
+    <div class="sp2-tabs" style=${{marginBottom:16}}>
+      ${KITCHEN_LEVELS.map(l=>h`<button key=${l.id} class=${"sp2-tab "+(levelId===l.id?"on":"")} onClick=${()=>{setLevelId(l.id);reset(recipeId);}}>${l.label}</button>`)}
+    </div>
+
+    <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16}}>
+      <div class="sp2-card" style=${{padding:18}}>
+        <div style=${{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
+          <div style=${{fontSize:44,width:62,height:62,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)"}}>${recipe.emoji}</div>
+          <div>
+            <div style=${{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"var(--sp-txt)"}}>${recipe.title}</div>
+            <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:22,direction:"rtl",color:"var(--sp-amber)",lineHeight:1.5}}>${recipe.titleAr}</div>
+            <div style=${{fontSize:12,color:"var(--sp-txt3)"}}>${recipe.theme} · ${level.desc}</div>
+          </div>
+        </div>
+
+        ${!done ? h`<div>
+          <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:8}}>Instruction ${stepIdx+1} / ${recipe.steps.length}</div>
+          <div style=${{border:"1px solid var(--sp-border-h)",borderRadius:16,padding:"18px 16px",background:"var(--sp-glow)",marginBottom:12}}>
+            <div dir="rtl" style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:30,lineHeight:2.1,textAlign:"right",color:"var(--sp-txt)"}}>
+              ${step.before}<span style=${{color:"var(--sp-amber)",background:"rgba(201,162,74,.18)",border:"1px solid rgba(201,162,74,.32)",borderRadius:10,padding:"1px 10px",whiteSpace:"nowrap"}}>${step.word}</span>${step.after}
+            </div>
+            ${levelId!=="advanced"&&h`<div style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.6,marginTop:8}}>${step.en}</div>`}
+          </div>
+          <div style=${{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
+            <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${speak}>Listen</button>
+            <span class="sp2-badge sp2-badge-g">Verb: ${step.verb}</span>
+            ${levelId==="beginner"&&h`<span class="sp2-badge sp2-badge-a">Find: ${findIng(step.target).emoji} ${findIng(step.target).en}</span>`}
+          </div>
+        </div>` : h`<div style=${{textAlign:"center",padding:"28px 12px"}}>
+          <div style=${{fontSize:64,marginBottom:8}}>${recipe.emoji}</div>
+          <div style=${{fontFamily:"'Playfair Display',serif",fontSize:28,color:"var(--sp-txt)",fontWeight:800}}>Recipe complete</div>
+          <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:28,color:"var(--sp-amber)",direction:"rtl",marginTop:4}}>صَحَّة وعافِيَة!</div>
+          <p style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.7,margin:"12px auto",maxWidth:440}}>You finished ${recipe.titleAr} with score ${score}. Try a harder level to remove English hints and add distractors.</p>
+          <button class="sp2-btn sp2-btn-p" onClick=${()=>reset(recipeId)}>Cook again</button>
+        </div>`}
+
+        <div onDragOver=${e=>e.preventDefault()} onDrop=${e=>{e.preventDefault(); choose(e.dataTransfer.getData("text/plain")||dragging);}} style=${{minHeight:150,border:"2px dashed var(--sp-border-h)",borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"linear-gradient(180deg,var(--sp-surface),var(--sp-card))",marginTop:8}}>
+          <div style=${{textAlign:"center",width:"100%"}}>
+            <div style=${{fontSize:46,marginBottom:8}}>🥣</div>
+            <div style=${{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:1.3,color:"var(--sp-txt3)",marginBottom:10}}>Dish</div>
+            <div style=${{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",minHeight:34}}>
+              ${added.length?added.map(id=>{const ing=findIng(id);return h`<span key=${id} class="sp2-badge sp2-badge-a" style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:14}}>${ing.emoji} ${ing.ar}</span>`;}):h`<span style=${{fontSize:13,color:"var(--sp-txt3)"}}>Drop the highlighted ingredient here</span>`}
+            </div>
+          </div>
+        </div>
+        ${feedback&&h`<div style=${{marginTop:12,fontSize:13,color:feedback.startsWith("Not")?"var(--sp-red)":"var(--sp-green)",fontWeight:800,lineHeight:1.6}}>${feedback}</div>`}
+      </div>
+
+      <div class="sp2-card" style=${{padding:16}}>
+        <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:12}}>Pantry</div>
+        <div style=${{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+          ${pantry.map(ing=>{
+            const used = added.includes(ing.id);
+            const target = !done && ing.id===step.target && levelId==="beginner";
+            return h`<button key=${ing.id} draggable=${!used} onDragStart=${e=>{setDragging(ing.id);e.dataTransfer.setData("text/plain",ing.id);}} onClick=${()=>choose(ing.id)} disabled=${used} class="sp2-card sp2-card-h" style=${{padding:12,textAlign:"center",border:"1px solid "+(target?"var(--sp-amber)":"var(--sp-border)"),opacity:used?0.42:1,cursor:used?"default":"grab",fontFamily:"'DM Sans',sans-serif",background:target?"var(--sp-glow)":"var(--sp-card)"}}>
+              <div style=${{fontSize:30,marginBottom:6}}>${ing.emoji}</div>
+              <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:19,direction:"rtl",color:"var(--sp-txt)",lineHeight:1.45}}>${ing.ar}</div>
+              ${levelId!=="advanced"&&h`<div style=${{fontSize:11,color:"var(--sp-txt3)",marginTop:2}}>${ing.en}</div>`}
+            </button>`;
+          })}
+        </div>
+      </div>
+    </div>
+
+    ${s?.kitchenHistory?.length?h`<div class="sp2-card" style=${{padding:14,marginTop:16}}>
+      <div style=${{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:10}}>Recent cooking</div>
+      <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+        ${s.kitchenHistory.slice(-8).reverse().map((r,i)=>h`<span key=${i} class="sp2-badge sp2-badge-g">${r.recipe} · ${r.score} · ${r.level}</span>`)}
+      </div>
+    </div>`:null}
+  </div>`;
+}
+
 function StudentLearningStudio({student: s, data, setData}) {
   const [filter, setFilter] = useState("All");
   const [opened, setOpened] = useState(null);
@@ -5493,13 +5711,14 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
     {...navById('home'),group:null},
     {...navById('ai'),group:null},
     {...navById('trace'),group:null},
+    {...navById('games'),group:null},
     {...navById('studio'),group:null},
     {...navById('book'),label:'Book',group:null},
     {...navById('library'),label:'Resources',group:null},
     {id:'more',icon:'...',label:'More',group:null}
   ];
   const studentNavGroups = [null];
-  const navActiveId = SP_MORE_NAV.some(item=>item.id===spTab) ? 'more' : spTab;
+  const navActiveId = spTab==='games' ? 'games' : SP_MORE_NAV.some(item=>item.id===spTab) ? 'more' : spTab;
 
   // Tab content
   const renderContent = () => {
@@ -5893,6 +6112,7 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
     </div>`;
 
     if(spTab==='trace') return h`<${ArabicTracingLab} student=${s} data=${data} setData=${setData}/>`;
+    if(spTab==='games') return h`<${ArabicKitchenGame} student=${s} data=${data} setData=${setData}/>`;
     if(spTab==='studio') return h`<${StudentLearningStudio} student=${s} data=${data} setData=${setData}/>`;
     if(spTab==='library') return h`<${StudentLibraryTab} student=${s} data=${data} setData=${setData} initialTopic=${jumpTopic}/>`;
 
