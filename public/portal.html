@@ -636,6 +636,51 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
   box-shadow:0 4px 9px rgba(0,0,0,0.16),inset 0 1px 0 rgba(255,255,255,0.12);
   border-radius:6px;
 }
+.kit-root{--kit-red:#d9534f;--kit-green:#2f9d68;--kit-mint:#6fd2a3;--kit-cream:#fff6df;--kit-ink:#27190f}
+.kit-hero{position:relative;overflow:hidden;border:1px solid var(--sp-border-h);border-radius:18px;padding:20px;margin-bottom:16px;background:linear-gradient(135deg,rgba(217,83,79,.18),rgba(47,157,104,.14) 48%,rgba(229,201,120,.16)),var(--sp-card);box-shadow:0 24px 46px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.12)}
+.kit-hero:before{content:"";position:absolute;inset:0;opacity:.12;background-image:linear-gradient(45deg,currentColor 25%,transparent 25%,transparent 75%,currentColor 75%),linear-gradient(45deg,currentColor 25%,transparent 25%,transparent 75%,currentColor 75%);background-size:38px 38px;background-position:0 0,19px 19px;color:var(--sp-amber);pointer-events:none}
+.kit-hero-inner{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.kit-kicker{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.6px;color:var(--sp-amber);margin-bottom:6px}
+.kit-title{font-family:'Playfair Display',serif;font-size:34px;font-weight:800;color:var(--sp-txt);margin:0;line-height:1.05}
+.kit-sub{font-size:13px;color:var(--sp-txt2);line-height:1.7;margin-top:8px;max-width:620px}
+.kit-stats{display:flex;gap:8px;flex-wrap:wrap}
+.kit-board{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(286px,.62fr);gap:16px;align-items:start}
+.kit-card{border-radius:18px!important;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.02)),var(--sp-card)!important}
+.kit-recipe-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:12px;border-radius:16px;background:var(--sp-glow);border:1px solid var(--sp-border)}
+.kit-recipe-icon{width:70px;height:70px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:44px;background:linear-gradient(145deg,rgba(255,246,223,.18),rgba(47,157,104,.16));border:1px solid var(--sp-border-h);box-shadow:0 18px 28px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.18);animation:kitFloat 3.2s ease-in-out infinite}
+.kit-progress{height:9px;background:var(--sp-surface);border:1px solid var(--sp-border);border-radius:999px;overflow:hidden;margin:8px 0 16px}
+.kit-progress-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--kit-red),var(--sp-amber),var(--kit-green));box-shadow:0 0 18px rgba(111,210,163,.36);transition:width .32s ease}
+.kit-step-dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.kit-step-dot{height:8px;flex:1 1 22px;min-width:18px;border-radius:999px;background:var(--sp-surface);border:1px solid var(--sp-border)}
+.kit-step-dot.done{background:var(--kit-green);border-color:var(--kit-green)}
+.kit-step-dot.now{background:var(--sp-amber);border-color:var(--sp-amber);box-shadow:0 0 0 4px rgba(201,162,74,.14)}
+.kit-instruction{position:relative;border:1px solid var(--sp-border-h);border-radius:18px;padding:18px 16px;background:linear-gradient(180deg,rgba(255,246,223,.08),rgba(47,157,104,.05));margin-bottom:12px}
+.kit-instruction:before{content:"";position:absolute;top:0;bottom:0;right:14px;width:3px;border-radius:999px;background:linear-gradient(180deg,var(--kit-red),var(--sp-amber),var(--kit-green));opacity:.8}
+.kit-ar{font-family:'Noto Naskh Arabic','Amiri',serif;font-size:31px;line-height:2.05;text-align:right;direction:rtl;color:var(--sp-txt)}
+.kit-word{color:var(--sp-amber);background:rgba(201,162,74,.2);border:1px solid rgba(201,162,74,.38);border-radius:12px;padding:2px 12px;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.kit-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.kit-drop{min-height:178px;border:2px dashed var(--sp-border-h);border-radius:22px;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(180deg,rgba(111,210,163,.08),transparent 42%),linear-gradient(180deg,var(--sp-surface),var(--sp-card));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 32px rgba(0,0,0,.14);transition:transform .18s,border-color .18s,background .18s}
+.kit-drop:hover{transform:translateY(-1px);border-color:var(--sp-amber)}
+.kit-dish{font-size:54px;margin-bottom:8px;position:relative;display:inline-block;filter:drop-shadow(0 14px 16px rgba(0,0,0,.2))}
+.kit-dish:before,.kit-dish:after{content:"";position:absolute;left:50%;bottom:72%;width:5px;height:24px;border-radius:999px;background:linear-gradient(180deg,transparent,rgba(229,201,120,.45),transparent);animation:kitSteam 2.4s ease-in-out infinite}
+.kit-dish:before{--x:-18px;transform:translateX(-18px);animation-delay:.3s}.kit-dish:after{--x:14px;transform:translateX(14px);animation-delay:.8s}
+.kit-added{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:34px}
+.kit-chip{font-family:'Noto Naskh Arabic','Amiri',serif!important;font-size:15px!important;padding:7px 10px!important;animation:kitPop .24s ease both}
+.kit-pantry{border-radius:18px!important;background:linear-gradient(180deg,rgba(47,157,104,.08),rgba(201,162,74,.06)),var(--sp-card)!important}
+.kit-shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.kit-ingredient{position:relative;min-height:126px;border-radius:17px!important;padding:12px!important;text-align:center;border:1px solid var(--sp-border)!important;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(0,0,0,.025)),var(--sp-card)!important;cursor:grab;font-family:'DM Sans',sans-serif!important;transition:transform .16s,box-shadow .16s,border-color .16s,opacity .16s}
+.kit-ingredient:hover{transform:translateY(-3px) rotate(-.4deg);border-color:var(--sp-amber)!important}
+.kit-ingredient.target{border-color:var(--sp-amber)!important;background:linear-gradient(180deg,rgba(201,162,74,.22),rgba(47,157,104,.08)),var(--sp-card)!important;animation:kitPulse 1.4s ease-in-out infinite}
+.kit-ingredient.used{opacity:.42;cursor:default;filter:saturate(.55)}
+.kit-ing-emoji{font-size:38px;margin-bottom:7px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.18))}
+.kit-ing-ar{font-family:'Noto Naskh Arabic','Amiri',serif;font-size:20px;direction:rtl;color:var(--sp-txt);line-height:1.35}
+.kit-feedback{margin-top:12px;font-size:13px;font-weight:900;line-height:1.6;padding:10px 12px;border-radius:12px;border:1px solid var(--sp-border);background:var(--sp-surface)}
+.kit-feedback.ok{color:var(--sp-green);border-color:rgba(76,175,125,.36)}.kit-feedback.no{color:var(--sp-red);border-color:rgba(207,71,68,.36)}
+.kit-complete{text-align:center;padding:30px 12px;background:linear-gradient(180deg,rgba(111,210,163,.12),transparent);border-radius:18px}
+@keyframes kitFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes kitSteam{0%,100%{opacity:.15;transform:translateY(4px) translateX(var(--x,0))}50%{opacity:.75;transform:translateY(-8px) translateX(var(--x,0))}}
+@keyframes kitPop{from{opacity:0;transform:scale(.75) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes kitPulse{0%,100%{box-shadow:0 18px 34px rgba(31,24,12,.12),0 0 0 0 rgba(201,162,74,.24)}50%{box-shadow:0 22px 42px rgba(31,24,12,.16),0 0 0 6px rgba(201,162,74,.08)}}
 @keyframes sp2Up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ae-draw-arc{from{stroke-dashoffset:352}to{stroke-dashoffset:0}}
 @keyframes ae-fade-letter{0%,50%{opacity:0;transform:scale(0.7) translateY(4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
@@ -677,6 +722,15 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
   .assessment-skill-body{grid-template-columns:1fr}
   .assessment-skill-rows{grid-template-columns:1fr}
   .assessment-section-tab{padding:8px 11px;font-size:11px}
+  .kit-hero{padding:16px;border-radius:16px}
+  .kit-title{font-size:29px}
+  .kit-board{grid-template-columns:1fr;gap:12px}
+  .kit-ar{font-size:25px;line-height:2}
+  .kit-shelf{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kit-ingredient{min-height:112px;padding:10px!important}
+  .kit-ing-emoji{font-size:32px}
+  .kit-ing-ar{font-size:18px}
+  .kit-drop{min-height:148px;border-radius:18px}
 }
 @media(max-width:420px){
   .sp2-content{padding-left:10px;padding-right:10px}
@@ -690,6 +744,8 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
   .stat .vl{font-size:26px!important}
   .sp2-mob-it{min-width:54px;font-size:9px}
   .sp2-mob-it svg{width:17px;height:17px}
+  .kit-shelf{grid-template-columns:1fr}
+  .kit-actions .sp2-badge{font-size:10px}
 }
 </style>
 </head>
@@ -5393,17 +5449,19 @@ function ArabicKitchenGame({student:s, data, setData}) {
     } catch {}
   };
 
-  return h`<div>
-    <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:14,flexWrap:"wrap",marginBottom:16}}>
+  return h`<div class="kit-root">
+    <div class="kit-hero">
+    <div class="kit-hero-inner">
       <div>
-        <div class="sp2-nav-grp" style=${{padding:0,marginBottom:6}}>Playable Arabic</div>
-        <h2 style=${{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:600,color:"var(--sp-txt)",margin:0}}>Arabic Kitchen</h2>
-        <p style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.7,marginTop:6}}>Read the Arabic instruction, find the highlighted ingredient, then drag or tap it into the dish.</p>
+        <div class="kit-kicker">Playable Arabic · Kitchen Mission</div>
+        <h2 class="kit-title">Arabic Kitchen</h2>
+        <p class="kit-sub">Read the Arabic instruction, spot the highlighted ingredient, then drag or tap it into the dish. Students learn food words by actually using them.</p>
       </div>
-      <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
+      <div class="kit-stats">
         <span class="sp2-badge sp2-badge-a">Score ${score}</span>
         <span class="sp2-badge sp2-badge-t">${progress}% cooked</span>
       </div>
+    </div>
     </div>
 
     <div class="sp2-tabs" style=${{marginBottom:12}}>
@@ -5413,31 +5471,33 @@ function ArabicKitchenGame({student:s, data, setData}) {
       ${KITCHEN_LEVELS.map(l=>h`<button key=${l.id} class=${"sp2-tab "+(levelId===l.id?"on":"")} onClick=${()=>{setLevelId(l.id);reset(recipeId);}}>${l.label}</button>`)}
     </div>
 
-    <div style=${{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:16}}>
-      <div class="sp2-card" style=${{padding:18}}>
-        <div style=${{display:"flex",alignItems:"center",gap:14,marginBottom:14}}>
-          <div style=${{fontSize:44,width:62,height:62,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)"}}>${recipe.emoji}</div>
+    <div class="kit-board">
+      <div class="sp2-card kit-card" style=${{padding:18}}>
+        <div class="kit-recipe-head">
+          <div class="kit-recipe-icon">${recipe.emoji}</div>
           <div>
             <div style=${{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"var(--sp-txt)"}}>${recipe.title}</div>
             <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:22,direction:"rtl",color:"var(--sp-amber)",lineHeight:1.5}}>${recipe.titleAr}</div>
             <div style=${{fontSize:12,color:"var(--sp-txt3)"}}>${recipe.theme} · ${level.desc}</div>
           </div>
         </div>
+        <div class="kit-progress"><div class="kit-progress-fill" style=${{width:progress+"%"}}></div></div>
+        <div class="kit-step-dots">${recipe.steps.map((_,i)=>h`<span key=${i} class=${"kit-step-dot "+(i<stepIdx?"done":i===stepIdx&&!done?"now":"")}></span>`)}</div>
 
         ${!done ? h`<div>
           <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:8}}>Instruction ${stepIdx+1} / ${recipe.steps.length}</div>
-          <div style=${{border:"1px solid var(--sp-border-h)",borderRadius:16,padding:"18px 16px",background:"var(--sp-glow)",marginBottom:12}}>
-            <div dir="rtl" style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:30,lineHeight:2.1,textAlign:"right",color:"var(--sp-txt)"}}>
-              ${step.before}<span style=${{color:"var(--sp-amber)",background:"rgba(201,162,74,.18)",border:"1px solid rgba(201,162,74,.32)",borderRadius:10,padding:"1px 10px",whiteSpace:"nowrap"}}>${step.word}</span>${step.after}
+          <div class="kit-instruction">
+            <div dir="rtl" class="kit-ar">
+              ${step.before}<span class="kit-word">${step.word}</span>${step.after}
             </div>
             ${levelId!=="advanced"&&h`<div style=${{fontSize:13,color:"var(--sp-txt2)",lineHeight:1.6,marginTop:8}}>${step.en}</div>`}
           </div>
-          <div style=${{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
+          <div class="kit-actions">
             <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${speak}>Listen</button>
             <span class="sp2-badge sp2-badge-g">Verb: ${step.verb}</span>
             ${levelId==="beginner"&&h`<span class="sp2-badge sp2-badge-a">Find: ${findIng(step.target).emoji} ${findIng(step.target).en}</span>`}
           </div>
-        </div>` : h`<div style=${{textAlign:"center",padding:"28px 12px"}}>
+        </div>` : h`<div class="kit-complete">
           <div style=${{fontSize:64,marginBottom:8}}>${recipe.emoji}</div>
           <div style=${{fontFamily:"'Playfair Display',serif",fontSize:28,color:"var(--sp-txt)",fontWeight:800}}>Recipe complete</div>
           <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:28,color:"var(--sp-amber)",direction:"rtl",marginTop:4}}>صَحَّة وعافِيَة!</div>
@@ -5445,27 +5505,27 @@ function ArabicKitchenGame({student:s, data, setData}) {
           <button class="sp2-btn sp2-btn-p" onClick=${()=>reset(recipeId)}>Cook again</button>
         </div>`}
 
-        <div onDragOver=${e=>e.preventDefault()} onDrop=${e=>{e.preventDefault(); choose(e.dataTransfer.getData("text/plain")||dragging);}} style=${{minHeight:150,border:"2px dashed var(--sp-border-h)",borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",padding:16,background:"linear-gradient(180deg,var(--sp-surface),var(--sp-card))",marginTop:8}}>
+        <div class="kit-drop" onDragOver=${e=>e.preventDefault()} onDrop=${e=>{e.preventDefault(); choose(e.dataTransfer.getData("text/plain")||dragging);}}>
           <div style=${{textAlign:"center",width:"100%"}}>
-            <div style=${{fontSize:46,marginBottom:8}}>🥣</div>
+            <div class="kit-dish">🥣</div>
             <div style=${{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:1.3,color:"var(--sp-txt3)",marginBottom:10}}>Dish</div>
-            <div style=${{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center",minHeight:34}}>
-              ${added.length?added.map(id=>{const ing=findIng(id);return h`<span key=${id} class="sp2-badge sp2-badge-a" style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:14}}>${ing.emoji} ${ing.ar}</span>`;}):h`<span style=${{fontSize:13,color:"var(--sp-txt3)"}}>Drop the highlighted ingredient here</span>`}
+            <div class="kit-added">
+              ${added.length?added.map(id=>{const ing=findIng(id);return h`<span key=${id} class="sp2-badge sp2-badge-a kit-chip">${ing.emoji} ${ing.ar}</span>`;}):h`<span style=${{fontSize:13,color:"var(--sp-txt3)"}}>Drop the highlighted ingredient here</span>`}
             </div>
           </div>
         </div>
-        ${feedback&&h`<div style=${{marginTop:12,fontSize:13,color:feedback.startsWith("Not")?"var(--sp-red)":"var(--sp-green)",fontWeight:800,lineHeight:1.6}}>${feedback}</div>`}
+        ${feedback&&h`<div class=${"kit-feedback "+(feedback.startsWith("Not")?"no":"ok")}>${feedback}</div>`}
       </div>
 
-      <div class="sp2-card" style=${{padding:16}}>
+      <div class="sp2-card kit-pantry" style=${{padding:16}}>
         <div style=${{fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:12}}>Pantry</div>
-        <div style=${{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+        <div class="kit-shelf">
           ${pantry.map(ing=>{
             const used = added.includes(ing.id);
             const target = !done && ing.id===step.target && levelId==="beginner";
-            return h`<button key=${ing.id} draggable=${!used} onDragStart=${e=>{setDragging(ing.id);e.dataTransfer.setData("text/plain",ing.id);}} onClick=${()=>choose(ing.id)} disabled=${used} class="sp2-card sp2-card-h" style=${{padding:12,textAlign:"center",border:"1px solid "+(target?"var(--sp-amber)":"var(--sp-border)"),opacity:used?0.42:1,cursor:used?"default":"grab",fontFamily:"'DM Sans',sans-serif",background:target?"var(--sp-glow)":"var(--sp-card)"}}>
-              <div style=${{fontSize:30,marginBottom:6}}>${ing.emoji}</div>
-              <div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:19,direction:"rtl",color:"var(--sp-txt)",lineHeight:1.45}}>${ing.ar}</div>
+            return h`<button key=${ing.id} draggable=${!used} onDragStart=${e=>{setDragging(ing.id);e.dataTransfer.setData("text/plain",ing.id);}} onClick=${()=>choose(ing.id)} disabled=${used} class=${"kit-ingredient "+(used?"used ":"")+(target?"target":"")}>
+              <div class="kit-ing-emoji">${ing.emoji}</div>
+              <div class="kit-ing-ar">${ing.ar}</div>
               ${levelId!=="advanced"&&h`<div style=${{fontSize:11,color:"var(--sp-txt3)",marginTop:2}}>${ing.en}</div>`}
             </button>`;
           })}
