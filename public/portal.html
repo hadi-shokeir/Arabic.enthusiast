@@ -349,7 +349,7 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 /* Quiz option buttons */
 .qz-opt{padding:12px 16px;border:2px solid #e0e0e0;border-radius:8px;background:#fff;font-family:var(--fb);font-size:14px;font-weight:700;cursor:pointer;text-align:left;transition:all .15s;width:100%;line-height:1.5}
 .qz-opt:hover{border-color:#999;background:#fafafa}
-.qz-opt.qz-correct{border-color:#4caf50;background:#e8f5e9;color:#2e7d32}
+.qz-opt.qz-correct{border-color:rgba(76,175,125,.52);background:linear-gradient(180deg,rgba(76,175,125,.15),rgba(76,175,125,.07));color:#256c45;box-shadow:0 10px 22px rgba(76,175,125,.12),inset 0 1px 0 rgba(255,255,255,.55)}
 .qz-opt.qz-wrong{border-color:#f44336;background:#fce4ec;color:#c62828}
 .qz-opt.qz-missed{border-color:#ff9800;background:#fff8e1}
 .qz-ar{font-family:'Amiri',serif;direction:rtl;font-size:22px;font-weight:700;text-align:center;line-height:1.8;color:#111}
@@ -693,7 +693,7 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
 .kit-ing-emoji{font-size:38px;margin-bottom:7px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.18))}
 .kit-ing-ar{font-family:'Noto Naskh Arabic','Amiri',serif;font-size:20px;direction:rtl;color:var(--sp-txt);line-height:1.35}
 .kit-feedback{margin-top:12px;font-size:13px;font-weight:900;line-height:1.6;padding:10px 12px;border-radius:12px;border:1px solid var(--sp-border);background:var(--sp-surface)}
-.kit-feedback.ok{color:var(--sp-green);border-color:rgba(76,175,125,.36)}.kit-feedback.no{color:var(--sp-red);border-color:rgba(207,71,68,.36)}
+.kit-feedback.ok{color:var(--sp-green);border-color:rgba(76,175,125,.42);background:linear-gradient(180deg,rgba(76,175,125,.14),rgba(76,175,125,.07));box-shadow:0 12px 24px rgba(76,175,125,.12),inset 0 1px 0 rgba(255,255,255,.12)}.kit-feedback.no{color:var(--sp-red);border-color:rgba(207,71,68,.36)}
 .kit-complete{text-align:center;padding:30px 12px;background:linear-gradient(180deg,rgba(111,210,163,.12),transparent);border-radius:18px}
 .quest-root{--quest-sky:#3f8dbf;--quest-violet:#8b5cf6;--quest-coral:#d9534f;--quest-mint:#2f9d68}
 .quest-hero{position:relative;overflow:hidden;border:1px solid var(--sp-border-h);border-radius:22px;padding:22px;margin-bottom:16px;background:radial-gradient(circle at 16% 22%,rgba(82,196,184,.18),transparent 28%),radial-gradient(circle at 82% 18%,rgba(217,83,79,.17),transparent 30%),linear-gradient(135deg,rgba(201,162,74,.18),rgba(63,141,191,.12)),var(--sp-card);box-shadow:0 28px 56px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.12)}
@@ -718,7 +718,7 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
 .quest-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
 .quest-choice{border:1px solid var(--sp-border);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.02)),var(--sp-card);padding:12px;text-align:left;color:var(--sp-txt);font-family:'DM Sans',sans-serif;cursor:pointer;transition:transform .16s,border-color .16s}
 .quest-choice:hover{transform:translateY(-2px);border-color:var(--sp-border-h)}
-.quest-choice.good{border-color:rgba(76,175,125,.7);background:rgba(76,175,125,.14)}
+.quest-choice.good{border-color:rgba(76,175,125,.46);background:linear-gradient(180deg,rgba(76,175,125,.15),rgba(76,175,125,.07));color:var(--sp-green);box-shadow:0 14px 26px rgba(76,175,125,.13),inset 0 1px 0 rgba(255,255,255,.1)}
 .quest-choice.bad{border-color:rgba(207,71,68,.68);background:rgba(207,71,68,.13)}
 .quest-art{border-radius:18px;border:1px solid var(--sp-border);background:linear-gradient(180deg,rgba(82,196,184,.14),rgba(201,162,74,.08)),var(--sp-card);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
 .quest-art-main{font-size:70px;filter:drop-shadow(0 18px 20px rgba(0,0,0,.22));animation:kitFloat 3.2s ease-in-out infinite}
@@ -3846,17 +3846,18 @@ function DictationTab({student: s, data, setData}) {
         style=${{
           width:"100%", boxSizing:"border-box",
           fontFamily:"'Amiri',serif", fontSize:26, direction:"rtl", textAlign:"center",
-          padding:"14px 16px", border:"2px solid "+(isCorrect?"#4caf50":isWrong?"#f44336":"#ddd"),
-          borderRadius:12, outline:"none", background:isCorrect?"#f1fff5":isWrong?"#fff5f5":"#fff",
+          padding:"14px 16px", border:"2px solid "+(isCorrect?"rgba(76,175,125,.52)":isWrong?"#f44336":"#ddd"),
+          borderRadius:12, outline:"none", background:isCorrect?"linear-gradient(180deg,rgba(76,175,125,.14),rgba(76,175,125,.06))":isWrong?"#fff5f5":"#fff",
+          boxShadow:isCorrect?"0 12px 24px rgba(76,175,125,.12), inset 0 1px 0 rgba(255,255,255,.65)":"none",
           color:"#111"
         }}
       />
 
-      ${revealed&&h`<div style=${{marginTop:16,padding:"12px 16px",borderRadius:10,background:isCorrect?"#e8f5e9":"#ffebee",border:"1px solid "+(isCorrect?"#a5d6a7":"#ef9a9a"),textAlign:"right"}}>
-        <div style=${{fontFamily:"'Amiri',serif",fontSize:28,direction:"rtl",color:isCorrect?"#2e7d32":"#c62828",marginBottom:4}}>${current.ar}</div>
+      ${revealed&&h`<div style=${{marginTop:16,padding:"12px 16px",borderRadius:10,background:isCorrect?"linear-gradient(180deg,rgba(76,175,125,.14),rgba(76,175,125,.06))":"#ffebee",border:"1px solid "+(isCorrect?"rgba(76,175,125,.42)":"#ef9a9a"),boxShadow:isCorrect?"0 12px 24px rgba(76,175,125,.12), inset 0 1px 0 rgba(255,255,255,.5)":"none",textAlign:"right"}}>
+        <div style=${{fontFamily:"'Amiri',serif",fontSize:28,direction:"rtl",color:isCorrect?"#256c45":"#c62828",marginBottom:4}}>${current.ar}</div>
         <div style=${{fontSize:13,color:"#666",textAlign:"left"}}>${current.en}${current.translit?h`<span style=${{fontStyle:"italic",color:"#aaa",marginLeft:8}}>${current.translit}</span>`:null}</div>
         ${isCorrect
-          ? h`<div style=${{marginTop:8,fontSize:12,fontWeight:700,color:"#2e7d32"}}>✅ Correct! +5 XP</div>`
+          ? h`<div style=${{marginTop:8,fontSize:12,fontWeight:800,color:"#256c45"}}>✅ Correct! +5 XP</div>`
           : h`<div style=${{marginTop:8,fontSize:12,color:"#c62828"}}>The correct spelling is shown above. +1 XP for trying.</div>`}
       </div>`}
     </div>
@@ -6529,7 +6530,7 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
               <div style=${{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--sp-txt3)",marginBottom:14}}>Comprehension Questions</div>
               ${p.quiz.map((q,qi)=>h`<div key=${qi} style=${{marginBottom:14}}>
                 <div style=${{fontWeight:700,color:"var(--sp-txt)",marginBottom:8,fontSize:14}}>${qi+1}. ${q.q}</div>
-                ${q.opts.map((opt,oi)=>{const answered=readAnswers[qi]!==undefined;const chosen=readAnswers[qi]===oi;const correct=oi===q.ans;return h`<button key=${oi} onClick=${()=>!answered&&setReadAnswers({...readAnswers,[qi]:oi})} style=${{display:"block",width:"100%",textAlign:"left",padding:"9px 14px",margin:"4px 0",borderRadius:8,border:"1px solid "+(answered?correct?"var(--sp-green)":chosen?"var(--sp-red)":"var(--sp-border)":"var(--sp-border)"),background:answered?(correct?"rgba(76,175,125,0.1)":chosen?"rgba(207,71,68,0.1)":"transparent"):"transparent",color:"var(--sp-txt)",cursor:answered?"default":"pointer",fontFamily:"inherit",fontSize:13,transition:"all 0.15s"}}>${answered&&correct?"✓ ":""}${opt}</button>`;})}
+                ${q.opts.map((opt,oi)=>{const answered=readAnswers[qi]!==undefined;const chosen=readAnswers[qi]===oi;const correct=oi===q.ans;return h`<button key=${oi} onClick=${()=>!answered&&setReadAnswers({...readAnswers,[qi]:oi})} style=${{display:"block",width:"100%",textAlign:"left",padding:"9px 14px",margin:"4px 0",borderRadius:8,border:"1px solid "+(answered?correct?"rgba(76,175,125,.46)":chosen?"var(--sp-red)":"var(--sp-border)":"var(--sp-border)"),background:answered?(correct?"linear-gradient(180deg,rgba(76,175,125,.14),rgba(76,175,125,.06))":chosen?"rgba(207,71,68,0.1)":"transparent"):"transparent",color:answered&&correct?"var(--sp-green)":"var(--sp-txt)",boxShadow:answered&&correct?"0 10px 22px rgba(76,175,125,.11), inset 0 1px 0 rgba(255,255,255,.08)":"none",cursor:answered?"default":"pointer",fontFamily:"inherit",fontSize:13,transition:"all 0.15s"}}>${answered&&correct?"✓ ":""}${opt}</button>`;})}
               </div>`)}
             </div>
           </div>`})()}
