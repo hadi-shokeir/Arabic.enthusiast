@@ -76,6 +76,22 @@ export default async function handler(req, res) {
           const newItems = (data.homework || []).filter(hw => myId && hw.studentId === myId && !existingIds.has(hw.id));
           return [...merged, ...newItems];
         })(),
+        lessonRequests: (() => {
+          const myStudent = (current.students || []).find(s => s.email && s.email.toLowerCase() === studentEmail.toLowerCase());
+          const myId = myStudent?.id;
+          const existing = current.lessonRequests || [];
+          const incoming = data.lessonRequests || [];
+          const merged = existing.map(req => {
+            if (myId && req.studentId === myId) {
+              const updated = incoming.find(x => x.id === req.id);
+              return updated ? updated : req;
+            }
+            return req;
+          });
+          const existingIds = new Set(existing.map(req => req.id));
+          const newItems = incoming.filter(req => myId && req.studentId === myId && !existingIds.has(req.id));
+          return [...merged, ...newItems];
+        })(),
         lessons: (current.lessons || []).map(l => {
           // Only allow status updates to this student's own lessons (e.g. cancellation)
           const myStudent = (current.students || []).find(s => s.email && s.email.toLowerCase() === studentEmail.toLowerCase());

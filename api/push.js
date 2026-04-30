@@ -19,6 +19,11 @@ async function getSessions() {
   return raw ? JSON.parse(raw) : {};
 }
 
+async function getUsers() {
+  const raw = await kv(['GET', 'users']);
+  return raw ? JSON.parse(raw) : [];
+}
+
 async function sendToEmail(email, payload) {
   const raw = await kv(['GET', `push_sub_${email}`]);
   if (!raw) return { sent: false, reason: 'no_subscription' };
@@ -57,7 +62,7 @@ export default async function handler(req, res) {
       process.env.VAPID_PRIVATE_KEY
     );
 
-    const { token, email, to, title, body, tag } = req.body;
+    const { token, email, to, title, body, tag, url } = req.body;
 
     const sessions = await getSessions();
     const session = sessions[token];
@@ -66,14 +71,17 @@ export default async function handler(req, res) {
     // Student → Tutor: any authenticated user can notify the tutor
     if (to === 'tutor') {
       const tutorSession = Object.values(sessions).find(s => s.role === 'tutor');
-      if (!tutorSession) return res.json({ sent: false, reason: 'no_tutor_session' });
-      const result = await sendToEmail(tutorSession.email, { title, body, tag: tag || 'arabic-notif' });
+      const users = tutorSession ? [] : await getUsers();
+      const tutorUser = users.find(u => u.role === 'tutor' && u.status !== 'rejected');
+      const tutorEmail = tutorSession?.email || tutorUser?.email || process.env.TUTOR_EMAIL;
+      if (!tutorEmail) return res.json({ sent: false, reason: 'no_tutor_email' });
+      const result = await sendToEmail(tutorEmail, { title, body, tag: tag || 'arabic-notif', url: url || '/portal' });
       return res.json(result);
     }
 
     // Tutor → Student: only tutor can send to a specific student email
     if (session.role !== 'tutor') return res.status(403).json({ error: 'Unauthorized' });
-    const result = await sendToEmail(email, { title, body, tag: tag || 'arabic-notif' });
+    const result = await sendToEmail(email, { title, body, tag: tag || 'arabic-notif', url: url || '/portal' });
     return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: err.message });

@@ -25,6 +25,31 @@ async function getStudentData()     { const r = await kv(['GET','student_data'])
 async function saveStudentData(v)   { await kv(['SET','student_data', JSON.stringify(v)]); await kv(['SET','student_data_saved_at', new Date().toISOString()]); }
 async function getSessions()        { const r = await kv(['GET','sessions']);          return r ? JSON.parse(r) : {}; }
 
+async function upsertBookingNotice(studentData, slot, student, status = 'booked') {
+  if (!studentData || !slot || !student) return;
+  const noticeId = `booking_${slot.id}`;
+  const now = new Date().toISOString();
+  const requests = Array.isArray(studentData.lessonRequests) ? studentData.lessonRequests : [];
+  const notice = {
+    id: noticeId,
+    slotId: slot.id,
+    source: 'scheduler',
+    studentId: student.id,
+    preferredDate: slot.date,
+    preferredTime: slot.time,
+    duration: slot.duration || 60,
+    message: status === 'cancelled' ? 'Student cancelled this booking.' : 'Booked directly by student.',
+    status,
+    requestedAt: slot.bookedAt || now,
+    bookedAt: slot.bookedAt || now,
+    updatedAt: now
+  };
+  studentData.lessonRequests = requests.some(r => r.id === noticeId || r.slotId === slot.id)
+    ? requests.map(r => (r.id === noticeId || r.slotId === slot.id) ? { ...r, ...notice, id: r.id || noticeId } : r)
+    : [...requests, notice];
+  await saveStudentData(studentData);
+}
+
 // ── Google Calendar JWT auth ─────────────────────────────────────────────────
 async function getGoogleToken() {
   if (!GCAL_SA) return null;
@@ -299,7 +324,15 @@ export default async function handler(req, res) {
 
       const updated = { ...slot, status: 'booked', studentId: student.id, studentName: student.name, bookedAt: new Date().toISOString(), gcEventId };
       await saveSlots(slots.map((s, i) => i === slotIdx ? updated : s));
-      return res.json({ ok: true, slot: updated, ...(calendarWarning ? { calendarWarning } : {}) });
+
+      let noticeWarning = null;
+      try {
+        await upsertBookingNotice(studentData, updated, student, 'booked');
+      } catch (noticeErr) {
+        noticeWarning = 'Booking saved, but the tutor inbox notice could not be updated: ' + noticeErr.message;
+      }
+
+      return res.json({ ok: true, slot: updated, ...(calendarWarning ? { calendarWarning } : {}), ...(noticeWarning ? { noticeWarning } : {}) });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -327,6 +360,10 @@ export default async function handler(req, res) {
       }
 
       await saveSlots(slots.map((s, i) => i === slotIdx ? { ...s, status: 'open', studentId: null, studentName: null, bookedAt: null, gcEventId: null } : s));
+      const student = (studentData?.students || []).find(st => st.id === slot.studentId);
+      try {
+        await upsertBookingNotice(studentData, slot, student, 'cancelled');
+      } catch {}
       return res.json({ ok: true });
     }
 

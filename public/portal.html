@@ -805,8 +805,8 @@ async function apiPost(endpoint, body) {
 }
 
 // Push notification helpers — fire-and-forget, never throw
-async function notifyTutor(token, title, body, tag) {
-  try { await apiPost('/api/push', {token, to:'tutor', title, body, tag: tag||'arabic-notif'}); } catch {}
+async function notifyTutor(token, title, body, tag, url) {
+  try { await apiPost('/api/push', {token, to:'tutor', title, body, tag: tag||'arabic-notif', url: url||'/portal'}); } catch {}
 }
 async function notifyStudent(token, email, title, body, tag) {
   if (!email) return;
@@ -2660,9 +2660,9 @@ function StudentScheduler({student, data, setData, auth}) {
       } else {
         setBookedSlots(prev => [...(prev||[]), r.slot]);
         setView("cal"); setSelDate(null); setSelSlot(null);
-        flash(r.calendarWarning ? "Booked! (Note: " + r.calendarWarning + ")" : "Booked! See you at your lesson.");
+        flash(r.calendarWarning || r.noticeWarning ? "Booked! " + [r.calendarWarning, r.noticeWarning].filter(Boolean).join(" ") : "Booked! See you at your lesson.");
         const {dayName,dateLabel,timeLabel} = fmtDateTime(selSlot.date, selSlot.time);
-        notifyTutor(auth.token, "📅 Lesson booked!", `${student.name} booked ${dayName} ${dateLabel} at ${timeLabel}`, "booking");
+        notifyTutor(auth.token, "📅 Lesson booked!", `${student.name} booked ${dayName} ${dateLabel} at ${timeLabel}`, "booking", "/portal");
       }
     } catch(e) { setErr(e.message); }
     setBusy(false);
@@ -2674,7 +2674,11 @@ function StudentScheduler({student, data, setData, auth}) {
     try {
       const r = await apiPost("/api/schedule", {token:auth.token, action:"cancelBooking", slotId});
       if (r.error) flash(r.error, true);
-      else setBookedSlots(prev => (prev||[]).map(s => s.id===slotId ? {...s,status:"open",studentId:null,studentName:null} : s));
+      else {
+        const cancelled = (bookedSlots||[]).find(s => s.id === slotId);
+        setBookedSlots(prev => (prev||[]).map(s => s.id===slotId ? {...s,status:"open",studentId:null,studentName:null} : s));
+        if (auth?.token && cancelled) notifyTutor(auth.token, "Lesson cancelled", `${student.name} cancelled ${cancelled.date} at ${cancelled.time}`, "booking-cancelled", "/portal");
+      }
     } catch(e) { flash(e.message, true); }
     setBusy(false);
   };
@@ -7304,7 +7308,16 @@ function Students({data, setData, onProfile, auth}) {
 // SCHEDULING — Admin slot management
 // ════════════════════════════════════════
 function Scheduling({data, setData, auth}) {
-  const [tab, setTab] = useState("availability");
+  const [tab, setTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ae_schedule_tab');
+      if (["availability","slots","credits","log"].includes(saved)) {
+        localStorage.removeItem('ae_schedule_tab');
+        return saved;
+      }
+    } catch {}
+    return "slots";
+  });
   const [slots, setSlots] = useState(null);
   const [deductions, setDeductions] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -7481,6 +7494,7 @@ function Scheduling({data, setData, auth}) {
 
   // Active students with credits
   const activeStudents = (data.students||[]).filter(s => s.active);
+  const upcomingBookedCount = (slots||[]).filter(s => s.status === "booked" && s.date >= today2).length;
 
   return h`<div>
     <!-- Flash messages -->
@@ -7489,7 +7503,7 @@ function Scheduling({data, setData, auth}) {
 
     <!-- Tabs -->
     <div class="tabs" style=${{marginBottom:20}}>
-      ${[["availability","Availability"],["slots","Bookings"],["credits","Credits"],["log","Deduction Log"]].map(([id,label]) =>
+      ${[["availability","Availability"],["slots",upcomingBookedCount ? `Bookings (${upcomingBookedCount})` : "Bookings"],["credits","Credits"],["log","Deduction Log"]].map(([id,label]) =>
         h`<div key=${id} class=${"tab"+(tab===id?" on":"")} onClick=${()=>setTab(id)}>${label}</div>`
       )}
     </div>
@@ -9289,7 +9303,7 @@ function StudentsAndGroups({data, setData, onProfile, auth}) {
 // ════════════════════════════════════════
 // REQUESTS INBOX — unified notifications
 // ════════════════════════════════════════
-function RequestsInbox({auth, data, setData, onProfile}) {
+function RequestsInbox({auth, data, setData, onProfile, onSchedule}) {
   const [users, setUsers] = useState([]);
   const [tab, setTab] = useState("all");
   const [createForm, setCreateForm] = useState({name:"",email:"",password:"",role:"student",phone:"",gender:"female",timezone:"",learnType:"Levantine"});
@@ -9382,6 +9396,9 @@ function RequestsInbox({auth, data, setData, onProfile}) {
   const pending = users.filter(u=>u.status==="pending");
   const approved = users.filter(u=>u.status==="approved");
   const pendingReqs = (data.lessonRequests||[]).filter(r=>r.status==="pending");
+  const bookedReqs = (data.lessonRequests||[])
+    .filter(r=>r.source==="scheduler" && r.status==="booked")
+    .sort((a,b)=>((a.preferredDate||"")+(a.preferredTime||"")) < ((b.preferredDate||"")+(b.preferredTime||"")) ? -1 : 1);
   const studentNotes = (data.students||[]).filter(s=>s.studentNote&&s.studentNote.trim());
   const submittedHw = (data.homework||[]).filter(hw=>hw.status==="submitted");
 
@@ -9402,9 +9419,16 @@ function RequestsInbox({auth, data, setData, onProfile}) {
     }
   };
   const declineReq = req => { setData({...data, lessonRequests:(data.lessonRequests||[]).map(r=>r.id===req.id?{...r,status:"declined"}:r)}); };
+  const acknowledgeBooking = req => {
+    setData({...data, lessonRequests:(data.lessonRequests||[]).map(r=>r.id===req.id?{...r,status:"seen",seenAt:new Date().toISOString()}:r)});
+  };
+  const openSchedule = () => {
+    try { localStorage.setItem('ae_schedule_tab', 'slots'); } catch {}
+    if (onSchedule) onSchedule();
+  };
   const clearNote = sid => setData({...data, students:data.students.map(s=>s.id===sid?{...s,studentNote:""}:s)});
 
-  const totalBadge = pending.length + pendingReqs.length + studentNotes.length + submittedHw.length;
+  const totalBadge = pending.length + pendingReqs.length + bookedReqs.length + studentNotes.length + submittedHw.length;
   const badge = n => n>0 ? h`<span style=${{marginLeft:5,background:"#e53935",color:"#fff",borderRadius:10,padding:"1px 7px",fontSize:10,fontWeight:800}}>${n}</span>` : null;
 
   return h`<div>
@@ -9448,6 +9472,22 @@ function RequestsInbox({auth, data, setData, onProfile}) {
           <div style=${{display:"flex",gap:6,flexShrink:0}}>
             <button class="btn btn-p btn-sm" onClick=${()=>confirmReq(req)}>✓ Confirm</button>
             <button class="btn btn-sm" style=${{color:"var(--bd)",borderColor:"var(--bd)"}} onClick=${()=>declineReq(req)}>✗ Decline</button>
+          </div>
+        </div>`;})}
+      </div>`}
+
+      ${bookedReqs.length>0 && h`<div class="card" style=${{borderLeftColor:"#00897b",borderLeftWidth:4}}>
+        <h3 style=${{color:"#00897b",marginBottom:12}}>✅ New Student Bookings (${bookedReqs.length})</h3>
+        ${bookedReqs.map(req=>{const st=(data.students||[]).find(s=>s.id===req.studentId);return h`<div key=${req.id} style=${{display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid var(--g100)",flexWrap:"wrap"}}>
+          <div style=${{flex:"1 1 220px"}}>
+            <div style=${{fontWeight:800}}>${st?.name||"Unknown student"}</div>
+            <div style=${{fontSize:12,color:"var(--g500)",marginTop:2}}>${req.preferredDate||"No date"} at ${req.preferredTime||"—"} · ${req.duration||60} min</div>
+            <div style=${{fontSize:11,color:"#00897b",fontWeight:700,marginTop:4}}>Already booked and blocked on your schedule</div>
+          </div>
+          <div style=${{display:"flex",gap:6,flexShrink:0,flexWrap:"wrap"}}>
+            ${st?.id&&h`<button class="btn btn-sm" onClick=${()=>onProfile(st.id)}>Profile</button>`}
+            <button class="btn btn-p btn-sm" onClick=${openSchedule}>Open Schedule</button>
+            <button class="btn btn-sm" onClick=${()=>acknowledgeBooking(req)}>Got it</button>
           </div>
         </div>`;})}
       </div>`}
@@ -9800,6 +9840,62 @@ function App() {
       .catch(()=>{});
   }, [data, auth]);
 
+  const refreshIncomingFromCloud = useCallback(async () => {
+    if (!auth?.token || auth.role !== "tutor") return;
+    try {
+      const r = await apiPost("/api/data", {token: auth.token, action:"restore"});
+      if (!r.data) return;
+      const cloud = migrateData(r.data);
+      setData(prev => {
+        if (!prev) return prev;
+        const mergeById = (local = [], remote = []) => {
+          const map = new Map(local.map(item => [item.id, item]));
+          remote.forEach(item => {
+            if (!item?.id) return;
+            const existing = map.get(item.id);
+            if (existing && ["seen","confirmed","declined"].includes(existing.status) && ["pending","booked"].includes(item.status)) {
+              return;
+            }
+            map.set(item.id, existing ? {...existing, ...item} : item);
+          });
+          return Array.from(map.values());
+        };
+        const cloudHomework = cloud.homework || [];
+        const localHomework = prev.homework || [];
+        const homeworkIds = new Set(localHomework.map(hw => hw.id));
+        const mergedHomework = localHomework.map(hw => {
+          const incoming = cloudHomework.find(x => x.id === hw.id);
+          return incoming && incoming.status === "submitted" ? {...hw, ...incoming} : hw;
+        });
+        const newSubmitted = cloudHomework.filter(hw => hw?.id && !homeworkIds.has(hw.id) && hw.status === "submitted");
+        const cloudStudents = cloud.students || [];
+        const mergedStudents = (prev.students || []).map(st => {
+          const incoming = cloudStudents.find(x => x.id === st.id);
+          return incoming?.studentNote ? {...st, studentNote: incoming.studentNote} : st;
+        });
+        const nextRequests = mergeById(prev.lessonRequests || [], cloud.lessonRequests || []);
+        const nextHomework = [...mergedHomework, ...newSubmitted];
+        const sameRequests = JSON.stringify(nextRequests) === JSON.stringify(prev.lessonRequests || []);
+        const sameHomework = JSON.stringify(nextHomework) === JSON.stringify(prev.homework || []);
+        const sameStudents = JSON.stringify(mergedStudents) === JSON.stringify(prev.students || []);
+        if (sameRequests && sameHomework && sameStudents) return prev;
+        return {
+          ...prev,
+          lessonRequests: nextRequests,
+          homework: nextHomework,
+          students: mergedStudents
+        };
+      });
+    } catch {}
+  }, [auth?.token, auth?.role]);
+
+  useEffect(() => {
+    if (!auth?.token || auth.role !== "tutor") return;
+    refreshIncomingFromCloud();
+    const id = setInterval(refreshIncomingFromCloud, 30000);
+    return () => clearInterval(id);
+  }, [auth?.token, auth?.role, refreshIncomingFromCloud]);
+
   const [syncStatus, setSyncStatus] = useState(""); // "", "syncing", "ok", "err"
   const manualSync = async () => {
     if (!data || !auth?.token) return;
@@ -9848,12 +9944,13 @@ function App() {
   const S = data ? data.settings : null;
   const submittedHw = data ? (data.homework||[]).filter(hw=>hw.status==="submitted").length : 0;
   const pendingLessonReqs = data ? (data.lessonRequests||[]).filter(r=>r.status==="pending").length : 0;
+  const bookedLessonReqs = data ? (data.lessonRequests||[]).filter(r=>r.source==="scheduler" && r.status==="booked").length : 0;
   const studentNoteCount = data ? data.students.filter(s=>s.studentNote&&s.studentNote.trim()).length : 0;
-  const totalRequestsBadge = pendingUsers + pendingLessonReqs + studentNoteCount;
+  const totalRequestsBadge = pendingUsers + pendingLessonReqs + bookedLessonReqs + studentNoteCount + submittedHw;
   const badges = {
     students: 0,
     homework: submittedHw,
-    lessons: pendingLessonReqs,
+    lessons: pendingLessonReqs + bookedLessonReqs,
     settings: pushNeedsSetup() ? 1 : 0,
   };
 
@@ -9892,7 +9989,7 @@ function App() {
     ${view==="studio" && h`<${StudioAdmin} data=${data} setData=${update}/>`}
     ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
     ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
-    ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile}/>`}
+    ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile} onSchedule=${()=>goNav("lessons")}/>`}
     ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
   `;
 
@@ -9991,7 +10088,7 @@ function App() {
         ${view==="website" && h`<${WebsiteControl} data=${data} setData=${update} auth=${auth}/>`}
         ${view==="practice" && h`<${PracticeAdmin} data=${data} onProfile=${openProfile}/>`}
         ${view==="homework" && h`<${HomeworkView} data=${data} onProfile=${openProfile}/>`}
-        ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile}/>`}
+        ${view==="requests" && h`<${RequestsInbox} auth=${auth} data=${data} setData=${update} onProfile=${openProfile} onSchedule=${()=>goNav("lessons")}/>`}
         ${view==="settings" && h`<${Settings} data=${data} setData=${update}/>`}
       </div>
       <nav class="mob-nav">
