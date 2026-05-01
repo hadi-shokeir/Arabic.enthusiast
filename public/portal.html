@@ -3761,7 +3761,7 @@ function StudentLibraryTab({student: s, data, setData, initialTopic}) {
 // ════════════════════════════════════════
 const QUIZ_TOPICS = ["Greetings","Numbers & Time","Food & Dining","Family","Travel","Religion & Quran","Verbs","Nouns & Plurals","Everyday Conversation","Grammar","Sentence Structure","Common Vocabulary"];
 const LABEL_STYLE = {Easy:{bg:"#e8f5e9",color:"#2e7d32",border:"#a5d6a7"},Intermediate:{bg:"#fff3e0",color:"#e65100",border:"#ffcc80"},Hard:{bg:"#ffebee",color:"#c62828",border:"#ef9a9a"}};
-const DIALECT_STYLE = {classical:{bg:"#e3f2fd",color:"#1565c0"},quranic:{bg:"#f3e5f5",color:"#6a1b9a"},levantine:{bg:"#e0f7fa",color:"#00695c"},general:{bg:"#f5f5f5",color:"#555"}};
+const DIALECT_STYLE = {classical:{bg:"#e3f2fd",color:"#1565c0"},quranic:{bg:"#f3e5f5",color:"#6a1b9a"},levantine:{bg:"#e3f2fd",color:"#1565c0"},general:{bg:"#f5f5f5",color:"#555"}};
 
 function QuizBadge({label, style$}) {
   const ls = LABEL_STYLE[label]||LABEL_STYLE.Intermediate;
@@ -3769,7 +3769,7 @@ function QuizBadge({label, style$}) {
 }
 function DialectBadge({dialect}) {
   const ds = DIALECT_STYLE[dialect]||DIALECT_STYLE.general;
-  const labels = {classical:"Classical",quranic:"Quranic",levantine:"Levantine",general:"General"};
+  const labels = {classical:"MSA",quranic:"Quranic",levantine:"MSA",general:"MSA"};
   return h`<span style=${{background:ds.bg,color:ds.color,borderRadius:20,padding:"2px 10px",fontSize:10,fontWeight:700}}>${labels[dialect]||"General"}</span>`;
 }
 
@@ -3954,7 +3954,7 @@ function StudentQuizTab({student: s, data, setData, initialTopic, onGoFlashcards
     const lp = s.learningProfile||{};
     try {
       const d = await apiPost("/api/ai", {type:"student_quiz", context:{
-        name:s.name, level:genLevel, type:s.type||"Classical Arabic",
+        name:s.name, level:genLevel, type:"Classical Arabic / MSA",
         skillReading:s.skillReading||3, skillWriting:s.skillWriting||3,
         skillListening:s.skillListening||3, skillSpeaking:s.skillSpeaking||3,
         topic: topic||"", goals:s.goals||"",
@@ -3969,7 +3969,7 @@ function StudentQuizTab({student: s, data, setData, initialTopic, onGoFlashcards
       else if (arrStart!==-1) raw = raw.slice(arrStart);
       const parsed = JSON.parse(raw);
       const questions = Array.isArray(parsed) ? parsed : (parsed.questions||[]);
-      const dialect = parsed.dialect||"general";
+      const dialect = "classical";
       const labelMap = {beginner:"Easy",intermediate:"Intermediate",advanced:"Hard"};
       const newQuiz = {
         id:uid(), savedAt:new Date().toISOString(),
@@ -5493,8 +5493,8 @@ const KITCHEN_LEVELS = [
 
 const KITCHEN_RECIPES = [
   {
-    id:"fattoush", title:"Fattoush", titleAr:"فَتّوش", emoji:"🥗", level:"Beginner", theme:"Levantine",
-    goal:"Build a Lebanese salad while learning vegetables and kitchen verbs.",
+    id:"fattoush", title:"Fattoush", titleAr:"فَتّوش", emoji:"🥗", level:"Beginner", theme:"MSA practice",
+    goal:"Build a salad while learning MSA vegetables and kitchen verbs.",
     ingredients:[
       {id:"lettuce",ar:"خَسّ",en:"lettuce",emoji:"🥬"},
       {id:"tomato",ar:"طَماطِم",en:"tomatoes",emoji:"🍅"},
@@ -5517,7 +5517,7 @@ const KITCHEN_RECIPES = [
     ]
   },
   {
-    id:"hummus", title:"Hummus", titleAr:"حُمُّص", emoji:"🧆", level:"Beginner", theme:"Classical + Levantine",
+    id:"hummus", title:"Hummus", titleAr:"حُمُّص", emoji:"🧆", level:"Beginner", theme:"MSA practice",
     goal:"Make hummus while practicing kitchen nouns and imperatives.",
     ingredients:[
       {id:"chickpeas",ar:"حُمُّص",en:"chickpeas",emoji:"🫘"},
@@ -5562,11 +5562,11 @@ const KITCHEN_RECIPES = [
 
 const KITCHEN_EXTRA_RECIPES = [
   {
-    id:"tabbouleh", title:"Tabbouleh", titleAr:"تَبّولَة", emoji:"🥗", level:"Intermediate", theme:"Levantine salad",
+    id:"tabbouleh", title:"Tabbouleh", titleAr:"تَبّولَة", emoji:"🥗", level:"Intermediate", theme:"MSA salad",
     goal:"Chop herbs finely, soak bulgur, and recycle vegetables from fattoush.",
-    pattern:"اليوم رح نعمل...",
+    pattern:"اليوم سنحضّر...",
     newNouns:["parsley","bulgur","greenonion","bowl","plate"],
-    newVerbs:["يفرم / بيفرم","ينقع / بينقع","يخلط / بيخلط"],
+    newVerbs:["يَفْرُم","يَنْقَع","يَخْلِط"],
     ingredients:[
       {id:"parsley",ar:"بَقْدونِس",en:"parsley",emoji:"🌿"},
       {id:"bulgur",ar:"بُرْغُل",en:"bulgur",emoji:"🌾"},
@@ -5595,7 +5595,7 @@ const KITCHEN_EXTRA_RECIPES = [
     goal:"Cook lentils and rice, then finish with onions.",
     pattern:"اِطْبَخْ... ثُمَّ أَضِفْ...",
     newNouns:["lentils","rice","onion","cumin","pot"],
-    newVerbs:["يسلق / بيسلق","يقلي / بيقلي","يطبخ / بيطبخ"],
+    newVerbs:["يَسْلُق","يَقْلِي","يَطْبُخ"],
     ingredients:[
       {id:"lentils",ar:"عَدَس",en:"lentils",emoji:"🫘"},
       {id:"rice",ar:"أَرُزّ",en:"rice",emoji:"🍚"},
@@ -5622,7 +5622,7 @@ const KITCHEN_EXTRA_RECIPES = [
     goal:"Marinate chicken, skewer it, and grill with a richer command sequence.",
     pattern:"خَلِّطْ... واتْرُكْهُ...",
     newNouns:["chicken","yogurt","spices","skewer","grill"],
-    newVerbs:["يتبّل / بيتبّل","يشوي / بيشوي","يترك / بيترك"],
+    newVerbs:["يُتَبِّل","يَشْوِي","يَتْرُك"],
     ingredients:[
       {id:"chicken",ar:"دَجاج",en:"chicken",emoji:"🍗"},
       {id:"yogurt",ar:"لَبَن",en:"yogurt",emoji:"🥛"},
@@ -5725,13 +5725,13 @@ function kitchenShuffle(list, seed) {
 function kitchenLang(item, register, harakat) {
   const meta = KITCHEN_WORD_BANK[item.id];
   if (!meta) return item.ar;
-  const lang = register === "levantine" ? meta.levantine : meta.msa;
+  const lang = meta.msa;
   if (harakat === "none") return lang.word;
   if (harakat === "partial") return lang.harakat || lang.word;
   return lang.harakat || lang.word;
 }
 function kitchenToolLabel(tool, register) {
-  return register === "levantine" ? tool.lev : tool.msa;
+  return tool.msa;
 }
 function kitchenStepTool(step) {
   if (step.tool) return step.tool;
@@ -5752,14 +5752,14 @@ function kitchenStepZone(step) {
 }
 function kitchenCommandText(step, register) {
   const cmd = step.command || ((step.verb||"") + " " + (step.word||"")).trim();
-  return register === "levantine" ? (KITCHEN_LEVANTINE_COMMANDS[cmd] || cmd.replace("أَضِفِ","زيد").replace("ضَعِ","حطّ").replace("قَطِّعِ","قطّع")) : cmd;
+  return cmd;
 }
 
 function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
   const recipes = KITCHEN_RECIPE_ORDER.map(id=>KITCHEN_GAME_RECIPES.find(r=>r.id===id)).filter(Boolean);
   const [recipeId, setRecipeId] = useState("tea");
   const [levelId, setLevelId] = useState("beginner");
-  const [register, setRegister] = useState(() => { try { return localStorage.getItem("ae_kit_register") || "levantine"; } catch { return "levantine"; } });
+  const register = "msa";
   const [harakat, setHarakat] = useState(() => { try { return localStorage.getItem("ae_kit_harakat") || "full"; } catch { return "full"; } });
   const [glossMode, setGlossMode] = useState(() => { try { return localStorage.getItem("ae_kit_gloss") || "always"; } catch { return "always"; } });
   const [audioAuto, setAudioAuto] = useState(() => { try { return localStorage.getItem("ae_kit_audio") !== "off"; } catch { return true; } });
@@ -5797,7 +5797,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
   const journalMap = new Map();
   unlockedRecipes.forEach(r => (r.ingredients||[]).filter(x=>!x.distractor).forEach(ing=>{ if(!journalMap.has(ing.id)) journalMap.set(ing.id,{...ing, recipe:r.titleAr}); }));
   const journalItems = [...journalMap.values()];
-  const stepLine = !done && register==="levantine" ? correctCommand : !done ? (step.before||"")+step.word+(step.after||"") : "صَحَّة وعافِيَة!";
+  const stepLine = !done ? (step.before||"")+step.word+(step.after||"") : "صَحَّة وعافِيَة!";
   const targetIngredient = !done ? findIng(step.target) : null;
   const speakText = txt => {
     try {
@@ -5811,11 +5811,11 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
     setRecipeId(nextRecipe); setStepIdx(0); setAdded([]); setMistakes(0); setFeedback(""); setDragging("");
     setPantrySeed(x=>x+1); setActiveTool("spoon"); setActiveZone("counter"); setCommandOk(levelId==="beginner");
   };
-  useEffect(() => { try { localStorage.setItem("ae_kit_register", register); localStorage.setItem("ae_kit_harakat", harakat); localStorage.setItem("ae_kit_gloss", glossMode); localStorage.setItem("ae_kit_audio", audioAuto ? "on" : "off"); } catch {} }, [register, harakat, glossMode, audioAuto]);
-  useEffect(() => { setCommandOk(levelId === "beginner"); setFeedback(""); }, [recipeId, stepIdx, levelId, register]);
+  useEffect(() => { try { localStorage.setItem("ae_kit_harakat", harakat); localStorage.setItem("ae_kit_gloss", glossMode); localStorage.setItem("ae_kit_audio", audioAuto ? "on" : "off"); } catch {} }, [harakat, glossMode, audioAuto]);
+  useEffect(() => { setCommandOk(levelId === "beginner"); setFeedback(""); }, [recipeId, stepIdx, levelId]);
   const saveFinish = (finalScore, finalMistakes) => {
     if (!s || !data || !setData) return;
-    const entry = {date:new Date().toISOString(),recipe:recipe.titleAr,recipeId:recipe.id,score:finalScore,mistakes:finalMistakes,level:levelId,register};
+    const entry = {date:new Date().toISOString(),recipe:recipe.titleAr,recipeId:recipe.id,score:finalScore,mistakes:finalMistakes,level:levelId,register:"msa"};
     const extraPatch = st => ({kitchenHistory:[...(st.kitchenHistory||[]),entry].slice(-40)});
     if (onQuestComplete) { onQuestComplete({score:finalScore, mistakes:finalMistakes, label:recipe.title, xp:38, extraPatch}); return; }
     setData({...data,students:data.students.map(st=>st.id===s.id?{...st,...extraPatch(st)}:st)});
@@ -5867,12 +5867,12 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
         <div>
           <div class="kit-kicker">المطبخ · The Kitchen</div>
           <h2 class="kit-title">المطبخ — The Kitchen</h2>
-          <p class="kit-sub">Cook real Levantine and Middle Eastern dishes in a warm Beirut kitchen. Pick the right zone, tool, ingredient, and Arabic command to make the dish.</p>
+          <p class="kit-sub">Cook Middle Eastern dishes in a warm kitchen using MSA Arabic only. Pick the right zone, tool, ingredient, and Arabic command to make the dish.</p>
         </div>
         <div class="kit-stats">
           <span class="sp2-badge sp2-badge-a">Score ${score}</span>
           <span class="sp2-badge sp2-badge-t">${progress}% cooked</span>
-          <span class="sp2-badge sp2-badge-g">${register==="msa"?"MSA":"Levantine"}</span>
+          <span class="sp2-badge sp2-badge-g">MSA only</span>
         </div>
       </div>
     </div>
@@ -5885,7 +5885,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
         ${KITCHEN_LEVELS.map(l=>h`<button key=${l.id} class=${"sp2-tab "+(levelId===l.id?"on":"")} onClick=${()=>{setLevelId(l.id);reset(recipeId);}}>${l.label}</button>`)}
       </div>
       <div class="kit-settings">
-        <div class="kit-setting"><div class="kit-setting-label">Register</div><div class="sp2-tabs" style=${{marginBottom:0}}><button class=${"sp2-tab "+(register==="levantine"?"on":"")} onClick=${()=>setRegister("levantine")}>Levantine</button><button class=${"sp2-tab "+(register==="msa"?"on":"")} onClick=${()=>setRegister("msa")}>MSA</button></div></div>
+        <div class="kit-setting"><div class="kit-setting-label">Language</div><div style=${{fontSize:13,fontWeight:900,color:"var(--sp-txt)"}}>MSA only</div><div style=${{fontSize:11,color:"var(--sp-txt3)",lineHeight:1.5,marginTop:3}}>All game commands and labels use الفصحى.</div></div>
         <div class="kit-setting"><div class="kit-setting-label">Harakat</div><div class="sp2-tabs" style=${{marginBottom:0}}>${["full","partial","none"].map(x=>h`<button key=${x} class=${"sp2-tab "+(harakat===x?"on":"")} onClick=${()=>setHarakat(x)}>${x}</button>`)}</div></div>
         <div class="kit-setting"><div class="kit-setting-label">Gloss</div><div class="sp2-tabs" style=${{marginBottom:0}}>${["always","hover","off"].map(x=>h`<button key=${x} class=${"sp2-tab "+(glossMode===x?"on":"")} onClick=${()=>setGlossMode(x)}>${x}</button>`)}</div></div>
         <div class="kit-setting"><div class="kit-setting-label">Audio</div><button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${()=>setAudioAuto(!audioAuto)}>${audioAuto?"Autoplay on":"Autoplay off"}</button></div>
@@ -5907,7 +5907,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
         <div class="kit-chef-face">👨‍🍳</div>
         <div>
           <div style=${{fontFamily:"'Playfair Display',serif",fontSize:19,fontWeight:800,color:"var(--sp-txt)"}}>الشيف Hadi</div>
-          <div style=${{fontSize:12,color:"var(--sp-txt2)",lineHeight:1.55}}>Today: ${register==="msa"?"اليوم سنحضّر ":"اليوم رح نعمل "}<b>${recipe.titleAr}</b>. The English support fades as the level gets harder.</div>
+          <div style=${{fontSize:12,color:"var(--sp-txt2)",lineHeight:1.55}}>Today: اليوم سنحضّر <b>${recipe.titleAr}</b>. The English support fades as the level gets harder.</div>
         </div>
       </div>
 
@@ -5920,7 +5920,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
           </div>
           <div style=${{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
             <span class="kit-live-chip">${level.label}</span>
-            <span class="kit-live-chip">${register==="msa"?"MSA":"Levantine"}</span>
+            <span class="kit-live-chip">MSA only</span>
             <span class="kit-live-chip">${progress}% cooked</span>
           </div>
         </div>
@@ -6086,7 +6086,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
     ${s?.kitchenHistory?.length?h`<div class="sp2-card" style=${{padding:14,marginTop:16}}>
       <div style=${{fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:1.4,color:"var(--sp-txt3)",marginBottom:10}}>Recent cooking</div>
       <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
-        ${s.kitchenHistory.slice(-8).reverse().map((r,i)=>h`<span key=${i} class="sp2-badge sp2-badge-g">${r.recipe} · ${r.score} · ${r.level}${r.register?" · "+r.register:""}</span>`)}
+        ${s.kitchenHistory.slice(-8).reverse().map((r,i)=>h`<span key=${i} class="sp2-badge sp2-badge-g">${r.recipe} · ${r.score} · ${r.level}</span>`)}
       </div>
     </div>`:null}
   </div>`;

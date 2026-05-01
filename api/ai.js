@@ -183,9 +183,9 @@ Additional notes: ${context.teacherNotes || 'None'}`;
 
 ══ OUTPUT FORMAT ══
 Respond with ONLY a valid JSON object, no markdown:
-{"dialect":"classical|quranic|levantine|general","questions":[...5 questions...]}
+{"dialect":"classical","questions":[...5 questions...]}
 
-- "dialect": Tag the quiz based on its content. Use "quranic" ONLY if questions use verified Quranic vocabulary or Tajweed concepts. Use "levantine" ONLY if you are 100% certain the dialect used is authentic Levantine Arabic (not MSA). Use "classical" for standard MSA content. Use "general" if mixed.
+- "dialect": Always use "classical". Games and quizzes must be Modern Standard Arabic / الفصحى only.
 - Each question: {"q":"English question","ar":"Arabic with full diacritics or empty","show_ar":true|false,"options":["A","B","C","D"],"answer":0,"tip":"explanation"}
 
 ══ QUESTION TYPES — use one of each ══
@@ -205,6 +205,7 @@ Respond with ONLY a valid JSON object, no markdown:
 - Wrong options must be plausible — similar roots, similar patterns, common mistakes
 - Randomise the correct answer position (don't put the answer at the same index repeatedly)
 - All Arabic text must have FULL tashkeel (diacritics) on every letter
+- Do NOT generate Levantine, Lebanese, colloquial, or dialect Arabic.
 - "tip": 1-2 sentences explaining WHY, with transliteration of key terms`;
 
         const prevQStr = (context.prevQuestions||[]).length > 0
@@ -220,7 +221,7 @@ ${context.interests ? `Interests: ${context.interests}` : ''}
 ${context.challenge ? `Biggest challenge: ${context.challenge}` : ''}
 ${context.personalGoal ? `Personal goal: ${context.personalGoal}` : ''}${prevQStr}
 
-Generate 5 questions (one of each type). Calibrate difficulty to "${context.level}". Match the Arabic type (${context.type}). If Quranic motivation or topic, include relevant content. Make every question unique and distinct.`;
+Generate 5 questions (one of each type). Calibrate difficulty to "${context.level}". Use Modern Standard Arabic / الفصحى only, regardless of the student's broader profile type. If Quranic motivation or topic, include relevant content using standard Arabic terminology. Make every question unique and distinct.`;
         break;
 
       case 'flashcard_generate':
