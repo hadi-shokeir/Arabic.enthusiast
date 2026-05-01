@@ -29,15 +29,27 @@ function PricingPage({ setPage }) {
           <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', lineHeight: 1.75, marginBottom: 44 }}>
             {pricing.description || 'Details are being finalised. In the meantime, reach out directly to discuss options based on your goals and availability.'}
           </p>
-          <button onClick={() => { setPage('about'); window.scrollTo(0,0); }} style={{
-            fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
-            letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600,
-            padding: '16px 44px', background: '#ffffff', color: '#080808',
-            border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-          }}
-            onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
-            onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'none'; }}
-          >{pricing.cta || 'Get in Touch'} →</button>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => { window.location.href = '/portal?signup=1'; }} style={{
+              fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
+              letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600,
+              padding: '16px 44px', background: 'var(--gold)', color: '#080808',
+              border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.target.style.filter = 'brightness(1.1)'; e.target.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.target.style.filter = ''; e.target.style.transform = 'none'; }}
+            >{pricing.cta || 'Apply to Study'} →</button>
+            <button onClick={() => { setPage('about'); window.scrollTo(0,0); }} style={{
+              fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              padding: '16px 32px', background: 'transparent',
+              border: '1px solid rgba(240,240,240,0.2)', color: 'rgba(240,240,240,0.6)',
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#ffffff'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(240,240,240,0.2)'; e.currentTarget.style.color = 'rgba(240,240,240,0.6)'; }}
+            >Meet Hadi →</button>
+          </div>
         </Reveal>
       </div>
     </div>

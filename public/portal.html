@@ -2449,7 +2449,8 @@ function LessonPlanAI({student, data}) {
 }
 
 function AuthScreen({onAuth}) {
-  const [mode, setMode] = useState("login"); // login | request | verify | setup
+  const initMode = (() => { try { return new URLSearchParams(window.location.search).get('signup') === '1' ? 'request' : 'login'; } catch { return 'login'; } })();
+  const [mode, setMode] = useState(initMode); // login | request | verify | setup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

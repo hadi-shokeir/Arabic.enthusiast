@@ -52,29 +52,26 @@ function HeroSection({ setPage }) {
           <p style={{ color: 'rgba(240,240,240,0.55)', fontSize: '1.05rem', lineHeight: 1.75, maxWidth: 440, marginBottom: 44 }}>
             {home.description || 'From your first letter to reading the Quran and conversing in dialect, structured courses that honour the depth and beauty of the Arabic language.'}
           </p>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-            <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => { window.location.href = '/portal?signup=1'; }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
               letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
-              padding: '16px 40px', background: '#ffffff', color: '#080808',
+              padding: '16px 40px', background: 'var(--gold)', color: '#080808',
               border: 'none', cursor: 'pointer', transition: 'all 0.2s',
             }}
-              onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'translateY(0)'; }}
-            >{home.primaryCta || 'Explore Courses'}</button>
-            <button onClick={() => { setPage('about'); window.scrollTo(0,0); }} style={{
+              onMouseEnter={e => { e.target.style.filter = 'brightness(1.1)'; e.target.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.target.style.filter = ''; e.target.style.transform = 'translateY(0)'; }}
+            >{home.primaryCta || 'Apply to Study'}</button>
+            <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem',
               letterSpacing: '0.08em', textTransform: 'uppercase',
               padding: '16px 28px', background: 'transparent',
               border: '1px solid rgba(240,240,240,0.2)', color: 'rgba(240,240,240,0.6)',
-              cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 10,
+              cursor: 'pointer', transition: 'all 0.2s',
             }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)'; e.currentTarget.style.color = '#ffffff'; }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#ffffff'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(240,240,240,0.2)'; e.currentTarget.style.color = 'rgba(240,240,240,0.6)'; }}
-            >
-              <span style={{ width: 30, height: 30, border: '1px solid currentColor', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>▶</span>
-              {home.secondaryCta || 'Meet your teacher'}
-            </button>
+            >{home.secondaryCta || 'Explore Courses'}</button>
           </div>
           {/* Subject pills */}
           <div style={{ marginTop: 48, paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -314,21 +311,21 @@ function CtaSection({ setPage }) {
           <p style={{ color: 'rgba(240,240,240,0.45)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 36 }}>
             {home.ctaDescription || "Take the first step towards understanding one of the world's most profound languages."}
           </p>
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-            <button onClick={() => { setPage('pricing'); window.scrollTo(0,0); }} style={{
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => { window.location.href = '/portal?signup=1'; }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600,
-              padding: '16px 44px', background: '#ffffff', color: '#080808', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+              padding: '16px 44px', background: 'var(--gold)', color: '#080808', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
             }}
-              onMouseEnter={e => { e.target.style.background = '#e0e0e0'; e.target.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.target.style.background = '#ffffff'; e.target.style.transform = 'none'; }}
-            >{home.ctaPrimary || 'See Pricing'}</button>
-            <button onClick={() => { setPage('courses'); window.scrollTo(0,0); }} style={{
+              onMouseEnter={e => { e.target.style.filter = 'brightness(1.1)'; e.target.style.transform = 'translateY(-2px)'; }}
+              onMouseLeave={e => { e.target.style.filter = ''; e.target.style.transform = 'none'; }}
+            >{home.ctaPrimary || 'Apply to Study'}</button>
+            <button onClick={() => { setPage('pricing'); window.scrollTo(0,0); }} style={{
               fontFamily: 'DM Sans, sans-serif', fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase',
               padding: '16px 32px', background: 'transparent', border: '1px solid rgba(240,240,240,0.2)', color: 'rgba(240,240,240,0.6)', cursor: 'pointer', transition: 'all 0.2s',
             }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#ffffff'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(240,240,240,0.2)'; e.currentTarget.style.color = 'rgba(240,240,240,0.6)'; }}
-            >{home.ctaSecondary || 'Browse Courses'}</button>
+            >{home.ctaSecondary || 'See Pricing'}</button>
           </div>
         </Reveal>
       </div>
