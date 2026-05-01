@@ -773,6 +773,9 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
 .quest-shop-item{min-height:118px;padding:12px;text-align:center}
 .quest-shop-item:hover,.quest-tile:hover,.quest-memory-card:hover{transform:translateY(-2px);border-color:var(--sp-border-h)}
 .quest-emoji{font-size:35px;margin-bottom:6px}.quest-shop-ar{font-family:'Noto Naskh Arabic','Amiri',serif;font-size:20px;direction:rtl;color:var(--sp-amber)}
+.quest-shop-item.recall,.kit-ingredient.recall{background:linear-gradient(180deg,rgba(201,162,74,.13),rgba(82,196,184,.07)),var(--sp-card)!important}
+.quest-shop-item.recall .quest-emoji,.kit-ingredient.recall .kit-ing-emoji{font-size:44px;margin-bottom:0}
+.recall-hidden-label{font-size:10px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:var(--sp-txt3);margin-top:7px}
 .quest-word-bank{grid-template-columns:repeat(auto-fit,minmax(58px,1fr));margin:14px 0}
 .quest-tile{min-height:58px;padding:10px;font-family:'Noto Naskh Arabic','Amiri',serif;font-size:25px;color:var(--sp-txt)}
 .quest-tile.used{opacity:.35;pointer-events:none}
@@ -2251,7 +2254,7 @@ function StudentAIPanel({student, data, setData, auth}) {
         type:"student_chat",
         context:{
           message:msg,
-          history: currentMsgs.slice(-40),
+          history: msgs.slice(-40),
           level:student.level||"Beginner",
           type:student.type||"Arabic",
           goals:student.goals||"",
@@ -3333,6 +3336,155 @@ function isDueToday(card) {
   return card.srsDue <= new Date().toISOString().split('T')[0];
 }
 
+const VETTED_FLASHCARD_DECKS = {
+  numbers:[
+    {en:"one", ar:"واحِد", translit:"waahid"},
+    {en:"two", ar:"اِثْنان", translit:"ithnaan"},
+    {en:"three", ar:"ثَلاثَة", translit:"thalaatha"},
+    {en:"four", ar:"أَرْبَعَة", translit:"arba'a"},
+    {en:"five", ar:"خَمْسَة", translit:"khamsa"},
+    {en:"six", ar:"سِتَّة", translit:"sitta"},
+    {en:"seven", ar:"سَبْعَة", translit:"sab'a"},
+    {en:"eight", ar:"ثَمانِيَة", translit:"thamaaniya"},
+    {en:"nine", ar:"تِسْعَة", translit:"tis'a"},
+    {en:"ten", ar:"عَشَرَة", translit:"ashara"}
+  ],
+  greetings:[
+    {en:"peace be upon you", ar:"السَّلامُ عَلَيْكُمْ", translit:"as-salaamu 'alaykum"},
+    {en:"and upon you peace", ar:"وَعَلَيْكُمُ السَّلام", translit:"wa 'alaykumu as-salaam"},
+    {en:"hello", ar:"مَرْحَبًا", translit:"marhaban"},
+    {en:"welcome", ar:"أَهْلًا وَسَهْلًا", translit:"ahlan wa sahlan"},
+    {en:"good morning", ar:"صَباحُ الخَيْر", translit:"sabaah al-khayr"},
+    {en:"good evening", ar:"مَساءُ الخَيْر", translit:"masaa al-khayr"},
+    {en:"thank you", ar:"شُكْرًا", translit:"shukran"},
+    {en:"excuse me", ar:"عَفْوًا", translit:"afwan"}
+  ],
+  family:[
+    {en:"father", ar:"أَب", translit:"ab"},
+    {en:"mother", ar:"أُم", translit:"umm"},
+    {en:"brother", ar:"أَخ", translit:"akh"},
+    {en:"sister", ar:"أُخْت", translit:"ukht"},
+    {en:"son", ar:"اِبْن", translit:"ibn"},
+    {en:"daughter", ar:"اِبْنَة", translit:"ibna"},
+    {en:"family", ar:"عائِلَة", translit:"aa'ila"},
+    {en:"grandfather", ar:"جَدّ", translit:"jadd"}
+  ],
+  food:[
+    {en:"water", ar:"ماء", translit:"maa"},
+    {en:"bread", ar:"خُبْز", translit:"khubz"},
+    {en:"tea", ar:"شاي", translit:"shaay"},
+    {en:"coffee", ar:"قَهْوَة", translit:"qahwa"},
+    {en:"rice", ar:"أَرُزّ", translit:"aruzz"},
+    {en:"salt", ar:"مِلْح", translit:"milh"},
+    {en:"lemon", ar:"لَيْمون", translit:"laymoon"},
+    {en:"olive oil", ar:"زَيْتُ الزَّيْتون", translit:"zayt az-zaytoon"}
+  ],
+  colors:[
+    {en:"red", ar:"أَحْمَر", translit:"ahmar"},
+    {en:"blue", ar:"أَزْرَق", translit:"azraq"},
+    {en:"green", ar:"أَخْضَر", translit:"akhdar"},
+    {en:"yellow", ar:"أَصْفَر", translit:"asfar"},
+    {en:"white", ar:"أَبْيَض", translit:"abyad"},
+    {en:"black", ar:"أَسْوَد", translit:"aswad"},
+    {en:"brown", ar:"بُنِّيّ", translit:"bunni"},
+    {en:"orange", ar:"بُرْتُقالِيّ", translit:"burtuqali"}
+  ],
+  verbs:[
+    {en:"I write", ar:"أَكْتُبُ", translit:"aktubu"},
+    {en:"I read", ar:"أَقْرَأُ", translit:"aqra'u"},
+    {en:"I go", ar:"أَذْهَبُ", translit:"adhhabu"},
+    {en:"I eat", ar:"آكُلُ", translit:"aakulu"},
+    {en:"I drink", ar:"أَشْرَبُ", translit:"ashrabu"},
+    {en:"I study", ar:"أَدْرُسُ", translit:"adrusu"},
+    {en:"I speak", ar:"أَتَكَلَّمُ", translit:"atakallamu"},
+    {en:"I listen", ar:"أَسْتَمِعُ", translit:"astami'u"}
+  ],
+  travel:[
+    {en:"airport", ar:"مَطار", translit:"mataar"},
+    {en:"ticket", ar:"تَذْكِرَة", translit:"tadhkira"},
+    {en:"passport", ar:"جَواز سَفَر", translit:"jawaaz safar"},
+    {en:"hotel", ar:"فُنْدُق", translit:"funduq"},
+    {en:"taxi", ar:"سَيّارَة أُجْرَة", translit:"sayyaarat ujra"},
+    {en:"station", ar:"مَحَطَّة", translit:"mahattah"},
+    {en:"street", ar:"شارِع", translit:"shaari'"},
+    {en:"city", ar:"مَدينَة", translit:"madeenah"}
+  ],
+  time:[
+    {en:"day", ar:"يَوْم", translit:"yawm"},
+    {en:"week", ar:"أُسْبوع", translit:"usboo'"},
+    {en:"month", ar:"شَهْر", translit:"shahr"},
+    {en:"year", ar:"سَنَة", translit:"sana"},
+    {en:"today", ar:"اليَوْم", translit:"al-yawm"},
+    {en:"tomorrow", ar:"غَدًا", translit:"ghadan"},
+    {en:"yesterday", ar:"أَمْس", translit:"ams"},
+    {en:"hour", ar:"ساعَة", translit:"saa'ah"}
+  ],
+  body:[
+    {en:"head", ar:"رَأْس", translit:"ra's"},
+    {en:"eye", ar:"عَيْن", translit:"ayn"},
+    {en:"hand", ar:"يَد", translit:"yad"},
+    {en:"foot", ar:"قَدَم", translit:"qadam"},
+    {en:"heart", ar:"قَلْب", translit:"qalb"},
+    {en:"ear", ar:"أُذُن", translit:"udhun"},
+    {en:"mouth", ar:"فَم", translit:"fam"},
+    {en:"nose", ar:"أَنْف", translit:"anf"}
+  ],
+  weather:[
+    {en:"weather", ar:"طَقْس", translit:"taqs"},
+    {en:"sun", ar:"شَمْس", translit:"shams"},
+    {en:"rain", ar:"مَطَر", translit:"matar"},
+    {en:"wind", ar:"ريح", translit:"reeh"},
+    {en:"cloud", ar:"سَحابَة", translit:"sahaabah"},
+    {en:"cold", ar:"بارِد", translit:"baarid"},
+    {en:"hot", ar:"حارّ", translit:"haarr"},
+    {en:"snow", ar:"ثَلْج", translit:"thalj"}
+  ]
+};
+function flashTopicKey(topic) {
+  const t = String(topic||"").toLowerCase();
+  if (t.includes("number")) return "numbers";
+  if (t.includes("greeting")) return "greetings";
+  if (t.includes("family")) return "family";
+  if (t.includes("food") || t.includes("drink")) return "food";
+  if (t.includes("color")) return "colors";
+  if (t.includes("verb")) return "verbs";
+  if (t.includes("travel")) return "travel";
+  if (t.includes("day") || t.includes("time")) return "time";
+  if (t.includes("body")) return "body";
+  if (t.includes("weather")) return "weather";
+  return "";
+}
+function cleanFlashText(v) {
+  return String(v||"").replace(/\s+/g," ").trim();
+}
+function normalizeFlashcardCard(c) {
+  const ar = cleanFlashText(c?.ar || c?.arabic || c?.wordAr || "");
+  const en = cleanFlashText(c?.en || c?.english || c?.meaning || c?.translation || "");
+  const translit = cleanFlashText(c?.translit || c?.transliteration || "");
+  const note = cleanFlashText(c?.note || c?.example || "");
+  if (!ar || !en) return null;
+  if (!/[\u0600-\u06FF]/.test(ar)) return null;
+  if (/https?:\/\//i.test(ar+en) || /\b(example|placeholder|undefined|null)\b/i.test(ar+en)) return null;
+  return {...(c||{}), id:c?.id || uid(), known:!!c?.known, en, ar, translit, note};
+}
+function cleanFlashcardCards(cards) {
+  const seen = new Set();
+  return (Array.isArray(cards)?cards:[]).map(normalizeFlashcardCard).filter(Boolean).filter(c=>{
+    const key = c.ar.replace(/[\u064B-\u065F\u0670\s]/g,"")+"|"+c.en.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function normalizeFlashcardDecks(decks) {
+  return (Array.isArray(decks)?decks:[]).map(d=>({...d, id:d.id||uid(), name:cleanFlashText(d.name)||"Arabic Deck", cards:cleanFlashcardCards(d.cards)})).filter(d=>d.cards.length);
+}
+function vettedFlashcardsForTopic(topic) {
+  const key = flashTopicKey(topic);
+  const cards = key ? VETTED_FLASHCARD_DECKS[key] : null;
+  return cards ? cards.map(c=>normalizeFlashcardCard(c)).filter(Boolean) : null;
+}
+
 // LIBRARY — FLASHCARDS
 // ════════════════════════════════════════
 function LibraryFlashcards({student: s, data, setData, initialTopic}) {
@@ -3347,7 +3499,9 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const decks = s.flashcardDecks || [];
+  const rawDecks = s.flashcardDecks || [];
+  const updDecks = (d) => setData({...data, students: data.students.map(x=>x.id===s.id?{...x,flashcardDecks:d}:x)});
+  const decks = normalizeFlashcardDecks(rawDecks);
   const activeDeck = decks.find(d=>d.id===activeDeckId);
   const allCards = activeDeck ? (activeDeck.cards||[]) : [];
 
@@ -3357,9 +3511,11 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
   const cards = srsMode ? dueCards : allCards;
   const card = cards[cardIdx] || null;
 
-  const updDecks = (d) => setData({...data, students: data.students.map(x=>x.id===s.id?{...x,flashcardDecks:d}:x)});
-
   const openDeck = (id) => { setActiveDeckId(id); setCardIdx(0); setFlipped(false); setLastRating(null); setView("study"); };
+
+  useEffect(() => {
+    if (JSON.stringify(rawDecks) !== JSON.stringify(decks)) updDecks(decks);
+  }, [s.id, rawDecks.length]);
 
   // Apply an SRS rating to the current card
   const rate = (rating) => {
@@ -3390,7 +3546,7 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
         const key = Object.keys(arr).find(k=>Array.isArray(arr[k]));
         arr = key ? arr[key] : [];
       }
-      return arr.map(c=>({id:uid(), known:false, en:c.en||"", ar:c.ar||"", translit:c.translit||""}));
+      return cleanFlashcardCards(arr);
     } catch(e) { return null; }
   };
 
@@ -3398,11 +3554,18 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
     if (!topic.trim()) return;
     setLoading(true); setErr("");
     try {
+      const vetted = vettedFlashcardsForTopic(topic);
+      if (vetted?.length) {
+        updDecks([...decks, {id:uid(), name:topic.trim(), cards:vetted, createdAt:new Date().toISOString(), audited:true}]);
+        setNewTopic("");
+        setLoading(false);
+        return;
+      }
       const d = await apiPost("/api/ai", {type:"flashcard_generate", context:{topic:topic.trim(), level:s.level||"beginner", type:s.type||"Classical Arabic"}});
       if (d.result) {
         const cards = safeParseCards(d.result);
-        if (!cards || cards.length === 0) { setErr("Generated cards were empty. Please try again."); setLoading(false); return; }
-        updDecks([...decks, {id:uid(), name:topic.trim(), cards, createdAt:new Date().toISOString()}]);
+        if (!cards || cards.length < 3) { setErr("The generated cards did not pass the Arabic quality check. Try a clearer topic, or use one of the vetted starter decks."); setLoading(false); return; }
+        updDecks([...decks, {id:uid(), name:topic.trim(), cards, createdAt:new Date().toISOString(), audited:false}]);
         setNewTopic("");
       } else { setErr(d.error || "Could not generate. Try again."); }
     } catch(e) { setErr(e.message); }
@@ -3416,9 +3579,10 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
       const d = await apiPost("/api/ai", {type:"flashcard_translate", context:{word:newWord.trim(), level:s.level||"beginner", type:s.type||"Classical Arabic"}});
       if (d.result) {
         let raw = d.result.replace(/```json|```/g,"").trim();
-        const card = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        const card = normalizeFlashcardCard({...parsed, en:parsed.en||newWord.trim()});
+        if (!card) { setErr("That word did not return a valid Arabic card. Please try again."); setLoading(false); return; }
         card.id = uid(); card.known = false;
-        card.en = card.en||newWord.trim(); card.ar = card.ar||""; card.translit = card.translit||"";
         updDecks(decks.map(dk=>dk.id===activeDeckId?{...dk,cards:[...(dk.cards||[]),card]}:dk));
         setNewWord("");
       } else { setErr(d.error || "Could not translate. Try again."); }
@@ -3591,6 +3755,7 @@ function LibraryFlashcards({student: s, data, setData, initialTopic}) {
           <div style=${{fontSize:28,marginBottom:8,marginTop:due>0?16:0}}>🃏</div>
           <div style=${{fontWeight:800,fontSize:14,fontFamily:"var(--fh)",letterSpacing:1,marginBottom:6}}>${dk.name.toUpperCase()}</div>
           <div style=${{fontSize:12,color:"var(--g500)",marginBottom:8}}>${total} card${total!==1?"s":""}</div>
+          <div style=${{fontSize:10,fontWeight:800,color:dk.audited?"#2e7d32":"#1565c0",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}>${dk.audited?"Vetted deck":"Arabic checked"}</div>
           <div style=${{height:4,background:"#f0f0f0",borderRadius:4,overflow:"hidden"}}>
             <div style=${{height:"100%",width:pct+"%",background:"#4caf50",borderRadius:4}}></div>
           </div>
@@ -3892,8 +4057,9 @@ function DictationTab({student: s, data, setData}) {
         const raw = d.result.replace(/```json|```/g,"").trim();
         const start = raw.indexOf("[");
         const arr = JSON.parse(start>=0?raw.slice(start):raw);
-        if (Array.isArray(arr) && arr.length > 0) {
-          setItems(arr.slice(0,10).map(c=>({ar:c.ar||"",en:c.en||"",translit:c.translit||""})));
+        const cards = cleanFlashcardCards(arr).slice(0,10);
+        if (cards.length > 0) {
+          setItems(cards.map(c=>({ar:c.ar||"",en:c.en||"",translit:c.translit||""})));
           setScore({correct:0,total:0});
           setSessionXP(0);
         }
@@ -5228,6 +5394,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
   const [showGrid, setShowGrid] = useState(true);
   const [score, setScore] = useState(null);
   const [feedback, setFeedback] = useState("");
+  const [boundaryPct, setBoundaryPct] = useState(0);
   const canvasRef = useRef(null);
   const guideRef = useRef(null);
   const inkRef = useRef(null);
@@ -5312,6 +5479,28 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     ctx.fillText("Start on the right. Trace inside the glowing guide.", w-18, 24);
   };
 
+  const drawBoundaryErrors = (ctx, guide, ink) => {
+    if (traceLevel === "advanced" || !guide || !ink || !guide.width || !ink.width) return;
+    const g = guide.getContext("2d").getImageData(0,0,guide.width,guide.height).data;
+    const k = ink.getContext("2d").getImageData(0,0,ink.width,ink.height).data;
+    const red = ctx.createImageData(guide.width, guide.height);
+    let any = false;
+    for (let i=3; i<k.length; i+=4) {
+      if (k[i] > 18 && g[i] <= 18) {
+        red.data[i-3] = 207;
+        red.data[i-2] = 71;
+        red.data[i-1] = 68;
+        red.data[i] = 150;
+        any = true;
+      }
+    }
+    if (!any) return;
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.putImageData(red,0,0);
+    ctx.restore();
+  };
+
   const redraw = () => {
     const canvas = canvasRef.current;
     const guide = guideRef.current;
@@ -5333,6 +5522,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     drawGuide(ctx,w,h,false);
     gctx.clearRect(0,0,w,h); drawGuide(gctx,w,h,true);
     ctx.drawImage(ink,0,0,w,h);
+    drawBoundaryErrors(ctx, guide, ink);
   };
 
   const clearInk = () => {
@@ -5342,7 +5532,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       ictx.setTransform(1,0,0,1,0,0);
       ictx.clearRect(0,0,ink.width,ink.height);
     }
-    setScore(null); setFeedback("");
+    setScore(null); setFeedback(""); setBoundaryPct(0);
     setTimeout(redraw,0);
   };
 
@@ -5434,6 +5624,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     }
     const coverage = guidePx ? covered/guidePx : 0;
     const drift = inkPx ? offGuide/inkPx : 0;
+    const driftPct = Math.round(drift * 100);
+    setBoundaryPct(traceLevel === "advanced" ? 0 : driftPct);
     const precision = Math.max(0, 1-drift);
     const boxesReady = isFinite(gb.minX) && isFinite(ib.minX);
     const boxMetrics = (() => {
@@ -5497,9 +5689,10 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         : (coverageScore*0.68 + precision*0.22 + boxMetrics.placement*0.10) * 100;
     const nextScore = Math.max(0, Math.min(100, Math.round(raw)));
     setScore(nextScore);
-    setFeedback(nextScore>=84 ? (traceLevel==="advanced"?"Strong free writing. You caught the letter shape well.":"Excellent control. Try the next one.")
+    const boundaryNote = traceLevel==="advanced" ? "" : driftPct>18 ? " Red marks show where the pen left the letter boundary." : " Your strokes mostly stayed inside the letter boundary.";
+    setFeedback((nextScore>=84 ? (traceLevel==="advanced"?"Strong free writing. You caught the letter shape well.":"Excellent control. Try the next one.")
       : nextScore>=62 ? (traceLevel==="advanced"?"Good attempt. Focus on the letter's proportions, dots, and open/closed shapes.":"Good start. Trace the lighter empty areas again.")
-      : (traceLevel==="advanced"?"Try again slowly. Capture the main body, dots, loops, and direction of the letter.":"Slow down and stay inside the guide. Reset if you want a clean try."));
+      : (traceLevel==="advanced"?"Try again slowly. Capture the main body, dots, loops, and direction of the letter.":"Slow down and stay inside the guide. Reset if you want a clean try.")) + boundaryNote);
     if (s && data && setData) {
       const entry = {date:new Date().toISOString(),text,score:nextScore,level:traceLevel};
       setData({...data,students:data.students.map(st=>st.id===s.id?{...st,tracingHistory:[...(st.tracingHistory||[]),entry].slice(-40)}:st)});
@@ -5557,6 +5750,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         <div style=${{fontFamily:traceFont.stack,fontSize:Math.max(28, Math.min(44, text.length<=1?44:34)),direction:"rtl",color:"var(--sp-amber)",lineHeight:1.4,letterSpacing:tracking+"px"}}>${text}</div>
       </div>`}
       <canvas ref=${canvasRef} onPointerDown=${start} onPointerMove=${move} onPointerUp=${stop} onPointerCancel=${stop} onPointerLeave=${stop} style=${{display:"block",width:"100%",borderRadius:14,border:"1px solid var(--sp-border-h)",background:"var(--sp-surface)",touchAction:"none",cursor:"crosshair",boxShadow:"inset 0 1px 0 rgba(255,255,255,.06),0 18px 38px rgba(0,0,0,.22)"}}></canvas>
+      ${traceLevel!=="advanced"&&boundaryPct>0?h`<div style=${{marginTop:8,fontSize:12,color:boundaryPct>18?"var(--sp-red)":"var(--sp-txt3)",fontWeight:800}}>Red overlay outside boundary: ${boundaryPct}% of your ink</div>`:null}
       <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginTop:12,flexWrap:"wrap"}}>
         <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
           <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${clearInk}>Reset</button>
@@ -5847,10 +6041,10 @@ function kitchenCommandText(step, register) {
   return cmd;
 }
 
-function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
+function ArabicKitchenGame({student:s, data, setData, onQuestComplete, initialLevel}) {
   const recipes = KITCHEN_RECIPE_ORDER.map(id=>KITCHEN_GAME_RECIPES.find(r=>r.id===id)).filter(Boolean);
   const [recipeId, setRecipeId] = useState("tea");
-  const [levelId, setLevelId] = useState("beginner");
+  const [levelId, setLevelId] = useState(initialLevel || "beginner");
   const register = "msa";
   const [harakat, setHarakat] = useState(() => { try { return localStorage.getItem("ae_kit_harakat") || "full"; } catch { return "full"; } });
   const [glossMode, setGlossMode] = useState(() => { try { return localStorage.getItem("ae_kit_gloss") || "always"; } catch { return "always"; } });
@@ -5867,6 +6061,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
   const [journalOpen, setJournalOpen] = useState(false);
   const recipe = recipes.find(r=>r.id===recipeId) || recipes[0];
   const level = KITCHEN_LEVELS.find(l=>l.id===levelId) || KITCHEN_LEVELS[0];
+  const recall = gameRecallMode(levelId);
   const step = recipe.steps[stepIdx] || recipe.steps[0];
   const done = stepIdx >= recipe.steps.length;
   const neededIds = recipe.steps.map(st=>st.target);
@@ -5879,7 +6074,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
   const requiredToolObj = KITCHEN_TOOLS.find(t=>t.id===requiredTool) || KITCHEN_TOOLS[0];
   const correctCommand = !done ? kitchenCommandText(step, register) : "";
   const needsCommand = !done && levelId !== "beginner";
-  const showGloss = glossMode === "always" || (glossMode === "hover" && levelId === "beginner");
+  const showGloss = !recall.hideEnglish && (glossMode === "always" || (glossMode === "hover" && levelId === "beginner"));
   const commandChoices = (() => {
     const all = [...new Set([correctCommand, ...recipe.steps.map(st=>kitchenCommandText(st, register)), "ضَعِ الماء", "قَطِّعِ البَصَل", "اِخْلِطْ المَقادير"].filter(Boolean))];
     const shuffled = kitchenShuffle(all, recipeId+"-"+stepIdx+"-"+register+"-cmd").slice(0,3);
@@ -5926,7 +6121,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
       const nextAdded = [...added,{id,key:stepIdx+"-"+id,label:kitchenLang(ing,register,harakat)}];
       const final = stepIdx === recipe.steps.length-1;
       setAdded(nextAdded);
-      setFeedback("صَحيح! "+kitchenLang(ing,register,harakat)+" - "+ing.en);
+      setFeedback("صَحيح! "+kitchenLang(ing,register,harakat)+(recall.hideEnglish?"":" - "+ing.en));
       speakText(kitchenCommandText(step, register));
       if (final) {
         const finalScore = Math.max(0, recipe.steps.length*12 + level.bonus - mistakes*5);
@@ -5937,7 +6132,7 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
       }
     } else {
       setMistakes(x=>x+1);
-      setFeedback("Not this one. Look for: "+kitchenLang(findIng(step.target),register,harakat)+" ("+findIng(step.target).en+").");
+      setFeedback(recall.hideEnglish ? "Not this one. Read the Arabic instruction again and infer from the image." : "Not this one. Look for: "+kitchenLang(findIng(step.target),register,harakat)+" ("+findIng(step.target).en+").");
     }
   };
   const pantryButtons = pantry.map(ing=>{
@@ -5946,9 +6141,9 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
     const used = added.some(x=>(x.id||x)===id) && !remainingNeeds.includes(id);
     const target = !done && id===step.target && levelId==="beginner";
     const label = kitchenLang(ing,register,harakat);
-    return h`<button key=${id} draggable=${!used} onDragStart=${e=>{setDragging(id);e.dataTransfer.setData("text/plain",id);}} onMouseEnter=${()=>audioAuto&&speakText(label)} onClick=${()=>choose(id)} disabled=${used} class=${"kit-ingredient "+(used?"used ":"")+(target?"target":"")} title=${label+" Â· "+ing.en}>
+    return h`<button key=${id} draggable=${!used} onDragStart=${e=>{setDragging(id);e.dataTransfer.setData("text/plain",id);}} onMouseEnter=${()=>audioAuto&&speakText(label)} onClick=${()=>choose(id)} disabled=${used} class=${"kit-ingredient "+(used?"used ":"")+(target?"target ":"")+(recall.hideArabicLabels?"recall":"")} title=${recall.hideArabicLabels?"Read the instruction and infer from the image":label+" Â· "+ing.en}>
       <div class="kit-ing-emoji">${ing.emoji}</div>
-      <div class="kit-ing-ar">${label}</div>
+      ${recall.hideArabicLabels?h`<div class="recall-hidden-label">Guess from Arabic</div>`:h`<div class="kit-ing-ar">${label}</div>`}
       ${showGloss&&h`<div style=${{fontSize:11,color:"var(--sp-txt3)",marginTop:2}}>${ing.en}</div>`}
     </button>`;
   });
@@ -6030,9 +6225,9 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
             <div class="kit-kicker" style=${{color:"#9a6b12"}}>Order Ticket</div>
             <div class="kit-ticket-ar">${stepLine}</div>
             <div style=${{display:"flex",gap:8,flexWrap:"wrap",marginTop:8,fontSize:12,color:"#6b4a12",fontWeight:800}}>
-              <span>${requiredToolObj.emoji} ${requiredToolObj.en}</span>
-              <span>${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.icon} ${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.en}</span>
-              ${targetIngredient&&!done?h`<span>${targetIngredient.emoji} ${targetIngredient.en}</span>`:null}
+              ${!recall.hideEnglish&&h`<span>${requiredToolObj.emoji} ${requiredToolObj.en}</span>`}
+              ${!recall.hideEnglish&&h`<span>${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.icon} ${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.en}</span>`}
+              ${targetIngredient&&!done&&!recall.hideEnglish?h`<span>${targetIngredient.emoji} ${targetIngredient.en}</span>`:null}
             </div>
           </div>
           <div class="kit-customer">
@@ -6065,8 +6260,8 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
           <div class="kit-step-dots">${recipe.steps.map((_,i)=>h`<span key=${i} class=${"kit-step-dot "+(i<stepIdx?"done":i===stepIdx&&!done?"now":"")}></span>`)}</div>
 
           <div class="kit-tool-rack">
-            ${KITCHEN_TOOLS.map(t=>h`<button key=${t.id} class=${"kit-tool "+(activeTool===t.id?"on ":"")+(requiredTool===t.id&&!done?"need":"")} onClick=${()=>setActiveTool(t.id)} onMouseEnter=${()=>audioAuto&&speakText(kitchenToolLabel(t,register))} title=${kitchenToolLabel(t,register)+" · "+t.en}>
-              <div class="kit-tool-ic">${t.emoji}</div><div style=${{fontWeight:900,fontSize:11}}>${t.en}</div><div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:13,direction:"rtl"}}>${kitchenToolLabel(t,register)}</div>
+            ${KITCHEN_TOOLS.map(t=>h`<button key=${t.id} class=${"kit-tool "+(activeTool===t.id?"on ":"")+(requiredTool===t.id&&!done?"need":"")} onClick=${()=>setActiveTool(t.id)} onMouseEnter=${()=>audioAuto&&speakText(kitchenToolLabel(t,register))} title=${recall.hideArabicLabels?"Infer the tool from the Arabic verb":kitchenToolLabel(t,register)+" · "+t.en}>
+              <div class="kit-tool-ic">${t.emoji}</div>${recall.hideArabicLabels?h`<div class="recall-hidden-label">Tool clue</div>`:h`<div><div style=${{fontWeight:900,fontSize:11}}>${recall.hideEnglish?"":t.en}</div><div style=${{fontFamily:"'Noto Naskh Arabic','Amiri',serif",fontSize:13,direction:"rtl"}}>${kitchenToolLabel(t,register)}</div></div>`}
             </button>`)}
           </div>
 
@@ -6082,8 +6277,8 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
             </div>`}
             <div class="kit-actions">
               <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${()=>speakText(stepLine)}>Listen</button>
-              <span class="sp2-badge sp2-badge-g">Tool: ${requiredToolObj.en}</span>
-              <span class="sp2-badge sp2-badge-t">Zone: ${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.en}</span>
+              ${!recall.hideEnglish&&h`<span class="sp2-badge sp2-badge-g">Tool: ${requiredToolObj.en}</span>`}
+              ${!recall.hideEnglish&&h`<span class="sp2-badge sp2-badge-t">Zone: ${KITCHEN_ZONES.find(z=>z.id===requiredZone)?.en}</span>`}
               ${targetIngredient&&levelId==="beginner"&&h`<span class="sp2-badge sp2-badge-a">Find: ${targetIngredient.emoji} ${targetIngredient.en}</span>`}
             </div>
           </div>` : h`<div class="kit-complete">
@@ -6161,9 +6356,9 @@ function ArabicKitchenGame({student:s, data, setData, onQuestComplete}) {
                 const used = added.some(x=>(x.id||x)===id) && !remainingNeeds.includes(id);
                 const target = !done && id===step.target && levelId==="beginner";
                 const label = kitchenLang(ing,register,harakat);
-                return h`<button key=${id} draggable=${!used} onDragStart=${e=>{setDragging(id);e.dataTransfer.setData("text/plain",id);}} onMouseEnter=${()=>audioAuto&&speakText(label)} onClick=${()=>choose(id)} disabled=${used} class=${"kit-ingredient "+(used?"used ":"")+(target?"target":"")} title=${label+" · "+ing.en}>
+                return h`<button key=${id} draggable=${!used} onDragStart=${e=>{setDragging(id);e.dataTransfer.setData("text/plain",id);}} onMouseEnter=${()=>audioAuto&&speakText(label)} onClick=${()=>choose(id)} disabled=${used} class=${"kit-ingredient "+(used?"used ":"")+(target?"target ":"")+(recall.hideArabicLabels?"recall":"")} title=${recall.hideArabicLabels?"Read the instruction and infer from the image":label+" · "+ing.en}>
                   <div class="kit-ing-emoji">${ing.emoji}</div>
-                  <div class="kit-ing-ar">${label}</div>
+                  ${recall.hideArabicLabels?h`<div class="recall-hidden-label">Guess from Arabic</div>`:h`<div class="kit-ing-ar">${label}</div>`}
                   ${showGloss&&h`<div style=${{fontSize:11,color:"var(--sp-txt3)",marginTop:2}}>${ing.en}</div>`}
                 </button>`;
               })}
@@ -6245,6 +6440,21 @@ function questStarText(stars) {
 function questShuffle(list) {
   return [...list].map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(x=>x.v);
 }
+function questGameLevel(doneCount) {
+  return doneCount >= 5 ? "advanced" : doneCount >= 2 ? "medium" : "beginner";
+}
+function gameRecallMode(levelId) {
+  return {
+    id: levelId,
+    hideEnglish: levelId !== "beginner",
+    hideArabicLabels: levelId === "advanced",
+    copy: levelId === "advanced"
+      ? "Advanced recall: read the Arabic direction and choose from emojis only."
+      : levelId === "medium"
+        ? "Medium recall: English help is hidden. Use the Arabic words."
+        : "Beginner support: Arabic and English labels are visible."
+  };
+}
 
 function QuestMiniHeader({chapter, scoreLabel, children}) {
   return h`<div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14,flexWrap:"wrap",marginBottom:14}}>
@@ -6305,8 +6515,9 @@ function QuestStoryChapter({onComplete}) {
   </div>`;
 }
 
-function QuestMarketChapter({onComplete}) {
+function QuestMarketChapter({onComplete, gameLevel}) {
   const chapter = QUEST_CHAPTERS.find(c=>c.id==="market");
+  const recall = gameRecallMode(gameLevel || "beginner");
   const [idx, setIdx] = useState(0);
   const [bag, setBag] = useState([]);
   const [mistakes, setMistakes] = useState(0);
@@ -6336,13 +6547,13 @@ function QuestMarketChapter({onComplete}) {
     <div class="quest-dialog" style=${{marginBottom:14}}>
       <div class="kit-kicker">Shopping Mission</div>
       <div class="quest-ar">${round.line}</div>
-      <div style=${{fontSize:13,color:"var(--sp-txt2)"}}>${round.en}</div>
+      <div style=${{fontSize:13,color:"var(--sp-txt2)"}}>${recall.hideEnglish?recall.copy:round.en}</div>
     </div>
     <div class="quest-shop-grid">
-      ${QUEST_MARKET_ITEMS.map(item=>h`<button key=${item.id} class="quest-shop-item" onClick=${()=>choose(item.id)}>
+      ${QUEST_MARKET_ITEMS.map(item=>h`<button key=${item.id} class=${"quest-shop-item "+(recall.hideArabicLabels?"recall":"")} onClick=${()=>choose(item.id)} title=${recall.hideArabicLabels?"Infer from the Arabic mission":item.ar+" · "+item.en}>
         <div class="quest-emoji">${item.emoji}</div>
-        <div class="quest-shop-ar">${item.ar}</div>
-        <div style=${{fontSize:12,color:"var(--sp-txt3)",marginTop:3}}>${item.en}</div>
+        ${recall.hideArabicLabels?h`<div class="recall-hidden-label">Choose from clue</div>`:h`<div class="quest-shop-ar">${item.ar}</div>`}
+        ${!recall.hideEnglish&&h`<div style=${{fontSize:12,color:"var(--sp-txt3)",marginTop:3}}>${item.en}</div>`}
       </button>`)}
     </div>
     ${feedback&&h`<div class=${"kit-feedback "+(feedback.startsWith("Correct")?"ok":"no")}>${feedback}</div>`}
@@ -6504,6 +6715,7 @@ function ArabicQuestGame({student:s, data, setData}) {
   const progress = normalizeQuestProgress(s.questProgress);
   const completed = progress.completed || {};
   const doneCount = QUEST_CHAPTERS.filter(c=>completed[c.id]).length;
+  const questLevelId = questGameLevel(doneCount);
   const bossUnlocked = doneCount >= 4 || !!completed.boss;
   const [activeId, setActiveId] = useState(progress.currentChapter || "story");
   const activeChapter = QUEST_CHAPTERS.find(c=>c.id===activeId) || QUEST_CHAPTERS[0];
@@ -6554,8 +6766,8 @@ function ArabicQuestGame({student:s, data, setData}) {
       <button class="sp2-btn sp2-btn-p" onClick=${()=>setActiveId("story")}>Start Chapter One</button>
     </div>`;
     if (activeId === "story") return h`<${QuestStoryChapter} onComplete=${r=>completeChapter("story",r)}/>`;
-    if (activeId === "kitchen") return h`<${ArabicKitchenGame} student=${s} data=${data} setData=${setData} onQuestComplete=${r=>completeChapter("kitchen",r)}/>`;
-    if (activeId === "market") return h`<${QuestMarketChapter} onComplete=${r=>completeChapter("market",r)}/>`;
+    if (activeId === "kitchen") return h`<${ArabicKitchenGame} student=${s} data=${data} setData=${setData} initialLevel=${questLevelId} onQuestComplete=${r=>completeChapter("kitchen",r)}/>`;
+    if (activeId === "market") return h`<${QuestMarketChapter} gameLevel=${questLevelId} onComplete=${r=>completeChapter("market",r)}/>`;
     if (activeId === "word") return h`<${QuestWordBuilder} onComplete=${r=>completeChapter("word",r)}/>`;
     if (activeId === "trace") return h`<${QuestTracingChapter} student=${s} data=${data} setData=${setData} onComplete=${r=>completeChapter("trace",r)}/>`;
     if (activeId === "memory") return h`<${QuestMemoryChapter} onComplete=${r=>completeChapter("memory",r)}/>`;
@@ -6597,7 +6809,10 @@ function ArabicQuestGame({student:s, data, setData}) {
           <div class="kit-kicker">Current Chapter</div>
           <div style=${{fontFamily:"'Playfair Display',serif",fontSize:24,fontWeight:800,color:"var(--sp-txt)"}}>${activeChapter.title}</div>
         </div>
-        <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${resetQuest}>Reset Quest</button>
+        <div style=${{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <span class="sp2-badge sp2-badge-a">Game logic: ${questLevelId}</span>
+          <button class="sp2-btn sp2-btn-g sp2-btn-sm" onClick=${resetQuest}>Reset Quest</button>
+        </div>
       </div>
       <div class="quest-stage">${renderChapter()}</div>
     </div>
