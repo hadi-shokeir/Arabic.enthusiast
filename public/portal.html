@@ -226,7 +226,7 @@ tr.ck{cursor:pointer}tr.ck:hover td{background:var(--g100)}
 .trace-control input[type="range"]{width:88px;accent-color:#2563eb}
 .trace-target{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe}
 .trace-target-ar{font-size:38px;direction:rtl;color:#0f172a;line-height:1.4}
-.trace-canvas{display:block;width:100%;border-radius:16px;border:2px solid #dbe4ee;background:#fff;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 1px rgba(15,23,42,.04),0 16px 32px rgba(15,23,42,.10)}
+.trace-canvas{display:block;width:100%;border-radius:16px;border:1px solid #dbe4ee;background:#fff;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 1px rgba(15,23,42,.035),0 14px 28px rgba(15,23,42,.09)}
 .trace-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin-top:10px}
 .trace-metric{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:8px 10px}
 .trace-metric .lb{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:900}
@@ -5492,17 +5492,17 @@ const TRACE_SETS = [
 ];
 
 const TRACE_FONTS = [
-  {id:"naskh",label:"Naskh",stack:"'Noto Naskh Arabic','Amiri',serif",weight:400,scale:1,stroke:0.045,desc:"Clear textbook shapes"},
-  {id:"lateef",label:"Lateef",stack:"'Lateef','Noto Naskh Arabic',serif",weight:400,scale:1.12,stroke:0.038,desc:"Slim handwriting feel"},
-  {id:"scheherazade",label:"Scheherazade",stack:"'Scheherazade New','Amiri',serif",weight:400,scale:1.02,stroke:0.044,desc:"Open traditional forms"},
-  {id:"amiri",label:"Amiri",stack:"'Amiri','Noto Naskh Arabic',serif",weight:400,scale:0.98,stroke:0.042,desc:"Elegant reading style"},
-  {id:"kufi",label:"Kufi",stack:"'Noto Kufi Arabic',sans-serif",weight:400,scale:0.84,stroke:0.04,desc:"Blocky beginner forms"}
+  {id:"naskh",label:"Naskh",stack:"'Noto Naskh Arabic','Amiri',serif",weight:400,scale:1,stroke:0.022,desc:"Clear textbook shapes"},
+  {id:"lateef",label:"Lateef",stack:"'Lateef','Noto Naskh Arabic',serif",weight:400,scale:1.12,stroke:0.018,desc:"Slim handwriting feel"},
+  {id:"scheherazade",label:"Scheherazade",stack:"'Scheherazade New','Amiri',serif",weight:400,scale:1.02,stroke:0.022,desc:"Open traditional forms"},
+  {id:"amiri",label:"Amiri",stack:"'Amiri','Noto Naskh Arabic',serif",weight:400,scale:0.98,stroke:0.021,desc:"Elegant reading style"},
+  {id:"kufi",label:"Kufi",stack:"'Noto Kufi Arabic',sans-serif",weight:400,scale:0.84,stroke:0.020,desc:"Blocky beginner forms"}
 ];
 
 const TRACE_LEVELS = [
-  {id:"beginner",label:"Beginner",short:"Trace",desc:"Large hollow outline guide, strict borders, and instant green/red feedback.",guideAlpha:0.34,fillAlpha:0,maskPad:0.12,minScore:82},
-  {id:"medium",label:"Medium",short:"Copy",desc:"Fainter outline guide with stricter scoring and less tolerance.",guideAlpha:0.20,fillAlpha:0,maskPad:0.085,minScore:78},
-  {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory; scoring compares shape, proportions, and line control.",guideAlpha:0,fillAlpha:0,maskPad:0.07,minScore:72}
+  {id:"beginner",label:"Beginner",short:"Trace",desc:"Large thin outline guide, strict borders, and instant green/red feedback.",guideAlpha:0.38,fillAlpha:0,maskPad:0.09,minScore:82},
+  {id:"medium",label:"Medium",short:"Copy",desc:"Fainter thin outline guide with stricter scoring and less tolerance.",guideAlpha:0.24,fillAlpha:0,maskPad:0.07,minScore:78},
+  {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory; scoring compares shape, proportions, and line control.",guideAlpha:0,fillAlpha:0,maskPad:0.06,minScore:72}
 ];
 
 function parseTraceSource(sourceText) {
@@ -5879,7 +5879,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     if (mask) {
-      ctx.lineWidth = Math.max(7, fontSize*level.maskPad);
+      ctx.lineWidth = Math.max(4, fontSize*level.maskPad);
       ctx.strokeStyle = "#fff";
       ctx.fillStyle = "#fff";
       ctx.strokeText(text,x,y);
@@ -5895,7 +5895,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       ctx.fillText("Free write: match the target above without a guide.", w-18, 24);
       return;
     }
-    ctx.lineWidth = Math.max(2, fontSize*traceFont.stroke);
+    ctx.lineWidth = Math.max(1.25, fontSize*traceFont.stroke);
     ctx.strokeStyle = "rgba(15,23,42,"+level.guideAlpha+")";
     ctx.strokeText(text,x,y);
     if (showHints) {
