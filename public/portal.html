@@ -5734,7 +5734,29 @@ function traceScoreLabel(score) {
   };
 }
 
-function buildTraceSegmentScores(g, k, width, height, gb, ib, coverageScore, lineControl, shapeScore, boxMetrics) {
+function traceDirectionScore(strokes, inkBox, letterCount) {
+  const raw = (strokes||[]).map(st => (st||[]).filter(Boolean)).filter(st => st.length > 1);
+  if (letterCount <= 1) return {score:null,hint:"Follow the start dot"};
+  if (!raw.length) return {score:null,hint:"Direction not checked"};
+  const pts = raw.flat();
+  const minX = pts.reduce((m,p)=>Math.min(m,p.x), Infinity);
+  const maxX = pts.reduce((m,p)=>Math.max(m,p.x), -Infinity);
+  if (!isFinite(minX) || !isFinite(maxX)) return {score:null,hint:"Direction not checked"};
+  const first = raw[0][0];
+  const lastStroke = raw[raw.length-1];
+  const last = lastStroke[lastStroke.length-1];
+  const width = Math.max(1, maxX-minX);
+  const startNearRight = Math.max(0, Math.min(1, 1 - (maxX-first.x)/(width*0.55)));
+  const rightToLeftFlow = (first.x-last.x)/width;
+  const flowScore = rightToLeftFlow >= 0.25 ? 1 : rightToLeftFlow >= 0.08 ? 0.78 : rightToLeftFlow >= -0.04 ? 0.52 : 0.18;
+  const score = Math.max(0, Math.min(1, startNearRight*0.42 + flowScore*0.58));
+  return {
+    score,
+    hint: score >= 0.76 ? "Starts right and moves left" : "Start on the right, then move left"
+  };
+}
+
+function buildTraceSegmentScores(g, k, width, height, gb, ib, coverageScore, lineControl, shapeScore, boxMetrics, directionInfo=null) {
   const guideComps = tracePixelComponents(g,width,height,k,4);
   const inkComps = tracePixelComponents(k,width,height,null,4);
   const guideCells = guideComps.reduce((sum,c)=>sum+c.count,0) || 1;
@@ -5775,6 +5797,7 @@ function buildTraceSegmentScores(g, k, width, height, gb, ib, coverageScore, lin
       ? {id:"dots",label:"Dots",score:dotsScore,hint:dotsScore>=0.72?"Dots are placed":"Add or center the dots"}
       : {id:"dots",label:"Dots",score:null,hint:"No required dots"},
     {id:"baseline",label:"Baseline",score:baselineScore,hint:baselineScore>=0.72?"Sits on the line":"Align the body to the line"},
+    {id:"direction",label:"Direction",score:directionInfo?.score ?? null,hint:directionInfo?.hint || "Follow the arrows"},
     {id:"line",label:"Line Control",score:lineControl,hint:lineControl>=0.82?"Clean straight/curved strokes":"Smooth kinks and waves"}
   ];
   if (shapeScore != null) segments.unshift({id:"shape",label:"Shape",score:shapeScore,hint:shapeScore>=0.72?"Shape matches well":"Match the letter silhouette"});
@@ -5879,8 +5902,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       const measured = Math.min(ctx.measureText(text).width, w-56);
       const right = Math.min(w-30, x + measured/2);
       const left = Math.max(30, x - measured/2);
-      const arrowY = Math.max(42, y - fontSize*0.43);
-      const arrows = Math.min(4, Math.max(2, Math.ceil(baseLetterCount/2)));
+      const arrowY = Math.max(34, Math.min(h*0.18, y - fontSize*0.58));
+      const arrows = Math.min(4, Math.max(1, Math.ceil(baseLetterCount/2)));
       const span = Math.max(64, right-left);
       const drawArrow = (sx,sy,ex,ey) => {
         const ang = Math.atan2(ey-sy,ex-sx);
@@ -5892,19 +5915,34 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         ctx.closePath(); ctx.fill();
       };
       ctx.save();
-      ctx.lineWidth = 2.4;
-      ctx.strokeStyle = "rgba(217,119,6,0.76)";
-      ctx.fillStyle = "rgba(217,119,6,0.82)";
+      ctx.direction = "ltr";
+      ctx.textAlign = "center";
+      ctx.letterSpacing = "0px";
       ctx.shadowColor = "rgba(255,255,255,0.85)";
       ctx.shadowBlur = 4;
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = "rgba(217,119,6,0.78)";
+      ctx.fillStyle = "rgba(217,119,6,0.90)";
       ctx.beginPath();
-      ctx.arc(right, arrowY, 7, 0, Math.PI*2);
+      ctx.arc(right, arrowY, 10, 0, Math.PI*2);
       ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 11px 'DM Sans',sans-serif";
+      ctx.fillText("1", right, arrowY+4);
+      ctx.fillStyle = "rgba(146,64,14,0.92)";
+      ctx.font = "900 10px 'DM Sans',sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText("start", Math.min(w-18,right+4), Math.max(14,arrowY-15));
       for (let i=0;i<arrows;i++) {
-        const sx = right - (span*(i+0.14)/arrows);
-        const ex = right - (span*(i+0.66)/arrows);
-        drawArrow(sx, arrowY + (i%2 ? 4 : -2), ex, arrowY + (i%2 ? -2 : 4));
+        const sx = right - (span*(i+0.18)/arrows);
+        const ex = right - (span*(i+0.74)/arrows);
+        drawArrow(sx, arrowY + (i%2 ? 3 : -1), ex, arrowY + (i%2 ? -1 : 3));
       }
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(146,64,14,0.82)";
+      ctx.font = "800 10px 'DM Sans',sans-serif";
+      ctx.fillText("right to left", (left+right)/2, Math.min(h-18, arrowY+22));
       ctx.restore();
     }
     ctx.letterSpacing = "0px";
@@ -6141,7 +6179,8 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       return Math.max(0,Math.min(1,recall*0.32 + shapePrecision*0.25 + dice*0.25 + profileScore*0.18));
     })();
     const coverageScore = Math.min(1, coverage*3.2);
-    const segmentScores = buildTraceSegmentScores(g,k,guide.width,guide.height,gb,ib,coverageScore,steady.steadiness,shapeMimicScore,boxMetrics);
+    const directionInfo = traceDirectionScore(strokesRef.current, ib, baseLetterCount);
+    const segmentScores = buildTraceSegmentScores(g,k,guide.width,guide.height,gb,ib,coverageScore,steady.steadiness,shapeMimicScore,boxMetrics,directionInfo);
     const raw = traceLevel==="advanced"
       ? (shapeMimicScore*0.72 + boxMetrics.proportion*0.16 + steady.steadiness*0.12) * 100
       : traceLevel==="medium"
@@ -6204,7 +6243,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
         </div>
         <div class="trace-controls">
           <label class="trace-control"><input type="checkbox" checked=${showGrid} onChange=${e=>setShowGrid(e.target.checked)}/> Grid</label>
-          <label class="trace-control"><input type="checkbox" checked=${showHints} disabled=${traceLevel==="advanced"} onChange=${e=>setShowHints(e.target.checked)}/> Arrows</label>
+          <label class="trace-control"><input type="checkbox" checked=${showHints && traceLevel!=="advanced"} disabled=${traceLevel==="advanced"} onChange=${e=>setShowHints(e.target.checked)}/> Start arrows</label>
           <label class="trace-control">Font <select value=${fontId} onChange=${e=>{setFontId(e.target.value);clearInk();}}>${TRACE_FONTS.map(f=>h`<option key=${f.id} value=${f.id}>${f.label}</option>`)}</select></label>
           <label class="trace-control">Size <input type="range" min="68" max="112" value=${guideSize} onInput=${e=>{setGuideSize(+e.target.value);clearInk();}}/></label>
           <label class="trace-control">Spacing <input type="range" min="0" max="10" value=${letterGap} onInput=${e=>{setLetterGap(+e.target.value);clearInk();}}/></label>
