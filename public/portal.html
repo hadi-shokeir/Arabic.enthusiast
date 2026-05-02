@@ -5501,7 +5501,7 @@ const TRACE_FONTS = [
 const TRACE_LEVELS = [
   {id:"beginner",label:"Beginner",short:"Trace",desc:"Large hollow outline guide, strict borders, and instant green/red feedback.",guideAlpha:0.34,fillAlpha:0,maskPad:0.12,minScore:82},
   {id:"medium",label:"Medium",short:"Copy",desc:"Fainter outline guide with stricter scoring and less tolerance.",guideAlpha:0.20,fillAlpha:0,maskPad:0.085,minScore:78},
-  {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory; scoring compares shape, proportions, and steadiness.",guideAlpha:0,fillAlpha:0,maskPad:0.07,minScore:72}
+  {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory; scoring compares shape, proportions, and line control.",guideAlpha:0,fillAlpha:0,maskPad:0.07,minScore:72}
 ];
 
 function parseTraceSource(sourceText) {
@@ -5539,7 +5539,7 @@ function playTraceSound(kind) {
 function analyzeTraceStrokes(strokes) {
   const rawStrokes = (strokes||[]).map(st => (st||[]).filter(Boolean)).filter(st => st.length > 1);
   const pts = rawStrokes.flat();
-  if (pts.length < 6) return {steadiness:0.78, shaky:false, advice:"Make a longer stroke before checking steadiness."};
+  if (pts.length < 6) return {steadiness:0.78, shaky:false, advice:"Make a longer stroke before checking line control."};
   const angleDelta = (a,b) => {
     let d = a-b;
     if (!Number.isFinite(d)) return 0;
@@ -5547,12 +5547,89 @@ function analyzeTraceStrokes(strokes) {
     while (d < -Math.PI) d += Math.PI*2;
     return d;
   };
-  const distToSegment = (p,a,b) => {
-    const vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
-    const len2 = vx*vx + vy*vy || 1;
-    const t = Math.max(0, Math.min(1, (wx*vx + wy*vy) / len2));
-    const px = a.x + vx*t, py = a.y + vy*t;
-    return Math.hypot(p.x-px,p.y-py);
+  const fitLineRms = pairs => {
+    const n = pairs.length || 1;
+    let su=0, sv=0, suu=0, suv=0;
+    pairs.forEach(([u,v]) => { su+=u; sv+=v; suu+=u*u; suv+=u*v; });
+    const den = n*suu - su*su;
+    const m = Math.abs(den) < 1e-6 ? 0 : (n*suv - su*sv) / den;
+    const b = (sv - m*su) / n;
+    const err = pairs.reduce((sum,[u,v]) => sum + Math.pow(v - (m*u+b), 2), 0) / n;
+    return Math.sqrt(err);
+  };
+  const solve3 = (m, y) => {
+    const a = m.map((row,i)=>[...row,y[i]]);
+    for (let col=0; col<3; col++) {
+      let pivot = col;
+      for (let r=col+1; r<3; r++) if (Math.abs(a[r][col]) > Math.abs(a[pivot][col])) pivot = r;
+      if (Math.abs(a[pivot][col]) < 1e-8) return null;
+      if (pivot !== col) [a[col],a[pivot]] = [a[pivot],a[col]];
+      const div = a[col][col];
+      for (let c=col; c<4; c++) a[col][c] /= div;
+      for (let r=0; r<3; r++) {
+        if (r === col) continue;
+        const factor = a[r][col];
+        for (let c=col; c<4; c++) a[r][c] -= factor*a[col][c];
+      }
+    }
+    return [a[0][3],a[1][3],a[2][3]];
+  };
+  const fitCurveRms = pairs => {
+    const n = pairs.length || 1;
+    let su=0,su2=0,su3=0,su4=0,sv=0,suv=0,su2v=0;
+    pairs.forEach(([u,v]) => {
+      const u2=u*u;
+      su+=u; su2+=u2; su3+=u2*u; su4+=u2*u2;
+      sv+=v; suv+=u*v; su2v+=u2*v;
+    });
+    const coeff = solve3([[su4,su3,su2],[su3,su2,su],[su2,su,n]],[su2v,suv,sv]);
+    if (!coeff) return fitLineRms(pairs);
+    const [a,b,c] = coeff;
+    const err = pairs.reduce((sum,[u,v]) => sum + Math.pow(v - (a*u*u+b*u+c), 2), 0) / n;
+    return Math.sqrt(err);
+  };
+  const windowScore = win => {
+    let path = 0;
+    for (let i=1;i<win.length;i++) path += Math.hypot(win[i].x-win[i-1].x, win[i].y-win[i-1].y);
+    const xs = win.map(p=>p.x), ys = win.map(p=>p.y);
+    const xSpread = Math.max(...xs) - Math.min(...xs);
+    const ySpread = Math.max(...ys) - Math.min(...ys);
+    const useX = xSpread >= ySpread;
+    const axis = win.map(p=>useX ? p.x : p.y);
+    const cross = win.map(p=>useX ? p.y : p.x);
+    const minAxis = Math.min(...axis), maxAxis = Math.max(...axis);
+    const axisSpan = Math.max(1, maxAxis-minAxis);
+    const meanCross = cross.reduce((a,b)=>a+b,0)/(cross.length||1);
+    const pairs = axis.map((u,i)=>[((u-minAxis)/axisSpan)*2-1, cross[i]-meanCross]);
+    const lineRms = fitLineRms(pairs);
+    const curveRms = fitCurveRms(pairs);
+    const scale = Math.max(3.2, Math.hypot(xSpread,ySpread) * 0.075);
+    const lineScore = 1 - Math.min(1, lineRms / scale);
+    const curveFitScore = 1 - Math.min(1, curveRms / scale);
+    const angles = [];
+    for (let i=1;i<win.length;i++) {
+      const a = win[i-1], b = win[i];
+      if (Math.hypot(b.x-a.x,b.y-a.y) > 0.5) angles.push(Math.atan2(b.y-a.y,b.x-a.x));
+    }
+    const turns = [];
+    for (let i=1;i<angles.length;i++) turns.push(angleDelta(angles[i], angles[i-1]));
+    const absTurns = turns.map(Math.abs).filter(v=>Number.isFinite(v));
+    const avgTurn = absTurns.reduce((a,b)=>a+b,0)/(absTurns.length||1);
+    const maxTurn = absTurns.reduce((a,b)=>Math.max(a,b),0);
+    const kinks = maxTurn > 0.01 ? Math.max(0, 1 - Math.min(1, (maxTurn - avgTurn) / 0.9)) : 1;
+    let signChanges = 0, strongTurns = 0;
+    for (let i=1;i<turns.length;i++) {
+      if (Math.abs(turns[i]) > 0.10 || Math.abs(turns[i-1]) > 0.10) {
+        strongTurns++;
+        if (Math.sign(turns[i]) !== Math.sign(turns[i-1]) && Math.abs(turns[i]) > 0.10 && Math.abs(turns[i-1]) > 0.10) signChanges++;
+      }
+    }
+    const curveFlow = Math.max(0, 1 - signChanges / Math.max(2, strongTurns)) * 0.55 + kinks * 0.45;
+    const curveScore = curveFitScore * 0.78 + curveFlow * 0.22;
+    const direct = Math.hypot(win[win.length-1].x-win[0].x, win[win.length-1].y-win[0].y);
+    const bend = direct ? path/direct - 1 : 0;
+    const straightOrCurveScore = bend < 0.08 ? Math.max(lineScore, curveScore*0.72) : Math.max(curveScore, lineScore*0.64);
+    return {score:Math.max(0,Math.min(1,straightOrCurveScore)), weight:Math.max(1,path)};
   };
   let weighted = 0, weightTotal = 0, usableStrokes = 0, ignoredDots = 0;
   for (const stroke of rawStrokes) {
@@ -5566,64 +5643,32 @@ function analyzeTraceStrokes(strokes) {
     for (let i=1;i<clean.length;i++) length += Math.hypot(clean[i].x-clean[i-1].x, clean[i].y-clean[i-1].y);
     if (length < 20) { ignoredDots++; continue; }
     usableStrokes++;
-    const residuals = [];
-    for (let i=2;i<clean.length-2;i++) residuals.push(distToSegment(clean[i], clean[i-2], clean[i+2]));
-    const avgResidual = residuals.reduce((a,b)=>a+b,0)/(residuals.length||1);
-    const sortedResidual = [...residuals].sort((a,b)=>a-b);
-    const p80Residual = sortedResidual[Math.min(sortedResidual.length-1, Math.floor(sortedResidual.length*0.8))] || avgResidual;
-    const detours = [];
-    for (let i=2;i<clean.length-2;i++) {
-      const direct = Math.hypot(clean[i+2].x-clean[i-2].x, clean[i+2].y-clean[i-2].y);
-      const path =
-        Math.hypot(clean[i-1].x-clean[i-2].x, clean[i-1].y-clean[i-2].y) +
-        Math.hypot(clean[i].x-clean[i-1].x, clean[i].y-clean[i-1].y) +
-        Math.hypot(clean[i+1].x-clean[i].x, clean[i+1].y-clean[i].y) +
-        Math.hypot(clean[i+2].x-clean[i+1].x, clean[i+2].y-clean[i+1].y);
-      if (direct > 8 && path > 8) detours.push(Math.max(0, path / direct - 1));
+    if (clean.length < 9) {
+      const local = windowScore(clean);
+      weighted += local.score * length;
+      weightTotal += length;
+      continue;
     }
-    const avgDetour = detours.reduce((a,b)=>a+b,0)/(detours.length||1);
-    const sortedDetour = [...detours].sort((a,b)=>a-b);
-    const p85Detour = sortedDetour[Math.min(sortedDetour.length-1, Math.floor(sortedDetour.length*0.85))] || avgDetour;
-    const angles = [];
-    const steps = [];
-    for (let i=1;i<clean.length;i++) {
-      const a = clean[i-1], b = clean[i];
-      const d = Math.hypot(b.x-a.x,b.y-a.y);
-      steps.push(d);
-      angles.push(Math.atan2(b.y-a.y,b.x-a.x));
+    for (let i=0;i<=clean.length-9;i+=3) {
+      const local = windowScore(clean.slice(i,i+9));
+      weighted += local.score * local.weight;
+      weightTotal += local.weight;
     }
-    const turns = [];
-    for (let i=1;i<angles.length;i++) turns.push(angleDelta(angles[i], angles[i-1]));
-    const jerkVals = [];
-    let reversals = 0, meaningfulTurns = 0;
-    for (let i=1;i<turns.length;i++) {
-      const jerk = Math.abs(angleDelta(turns[i], turns[i-1]));
-      jerkVals.push(jerk);
-      if (Math.abs(turns[i]) > 0.24 || Math.abs(turns[i-1]) > 0.24) meaningfulTurns++;
-      if (Math.sign(turns[i]) !== Math.sign(turns[i-1]) && Math.abs(turns[i]) > 0.24 && Math.abs(turns[i-1]) > 0.24) reversals++;
+    if ((clean.length-9) % 3 !== 0) {
+      const local = windowScore(clean.slice(-9));
+      weighted += local.score * local.weight;
+      weightTotal += local.weight;
     }
-    const avgJerk = jerkVals.reduce((a,b)=>a+b,0)/(jerkVals.length||1);
-    const avgStep = steps.reduce((a,b)=>a+b,0)/(steps.length||1);
-    const stepMad = steps.reduce((a,b)=>a+Math.abs(b-avgStep),0)/(steps.length||1);
-    const residualPenalty = Math.min(1, (avgResidual*0.65 + p80Residual*0.35) / 7.5);
-    const jerkPenalty = Math.min(1, avgJerk / 1.18);
-    const reversalPenalty = Math.min(1, reversals / Math.max(3, meaningfulTurns));
-    const pacePenalty = Math.min(1, (stepMad/(avgStep+0.001)) / 1.15);
-    const detourPenalty = Math.min(1, (avgDetour*0.55 + p85Detour*0.45) / 1.8);
-    const penalty = residualPenalty*0.28 + detourPenalty*0.34 + jerkPenalty*0.20 + reversalPenalty*0.14 + pacePenalty*0.04;
-    const strokeSteady = Math.max(0, Math.min(1, 1 - penalty));
-    weighted += strokeSteady * length;
-    weightTotal += length;
   }
   if (!usableStrokes) {
-    const dotAdvice = ignoredDots ? "Dots are fine; add the main letter stroke before judging steadiness." : "Make a longer stroke before checking steadiness.";
+    const dotAdvice = ignoredDots ? "Dots are fine; add the main letter stroke before judging line control." : "Make a longer stroke before checking line control.";
     return {steadiness:0.80, shaky:false, advice:dotAdvice};
   }
   const steadiness = Math.max(0, Math.min(1, weighted / Math.max(1, weightTotal)));
-  const shaky = steadiness < 0.55;
+  const shaky = steadiness < 0.58;
   const advice = shaky
-    ? "Your hand looks shaky: rest your wrist, slow down, and avoid tiny back-and-forth corrections."
-    : steadiness > 0.82 ? "Your stroke is steady. Curves and dots are being handled well." : "Mostly steady. Try one slower, continuous stroke through each curve.";
+    ? "Line control needs work: keep straight strokes straight and let curves bend smoothly."
+    : steadiness > 0.82 ? "Strong line control: straight parts stay clean and curves flow naturally." : "Good start. Smooth each curve and avoid sudden kinks in straight sections.";
   return {steadiness, shaky, advice};
 }
 
@@ -5964,7 +6009,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     const boundaryNote = traceLevel==="advanced" ? "" : driftPct>14 ? " Red areas are outside the letter boundary; erase and stay inside the grey shape." : driftPct>6 ? " A few red areas left the boundary; slow down at corners and dots." : " Your pencil mostly stayed inside the letter boundary.";
     const steadyNote = " " + steady.advice;
     setMetrics({inside:Math.round(insideRate*100),coverage:Math.round(coverageScore*100),steadiness:Math.round(steady.steadiness*100),shaky:steady.shaky});
-    setFeedback((passed ? (traceLevel==="advanced"?"Strong free writing. The shape, proportions, and steadiness are good.":"Excellent control. Clean green strokes and strong coverage.")
+    setFeedback((passed ? (traceLevel==="advanced"?"Strong free writing. The shape, proportions, and line control are good.":"Excellent control. Clean green strokes and strong coverage.")
       : nextScore>=62 ? (traceLevel==="advanced"?"Good attempt. Focus on proportions, dots, loops, and stroke direction.":"Good start, but the score is strict. Trace the grey areas again and keep red marks out.")
       : (traceLevel==="advanced"?"Try again slowly. Capture the main body, dots, loops, and direction of the word.":"Reset and try again slowly. Red means your pencil left the letter body.")) + boundaryNote + steadyNote);
     playTraceSound(passed ? "success" : nextScore>=62 ? "almost" : "retry");
@@ -5981,7 +6026,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       <div>
         <div class="trace-kicker">Writing Practice</div>
         <h2 class="trace-title">${title||"Arabic Tracing Lab"}</h2>
-        <p class="trace-sub">Trace with Apple Pencil, stylus, finger, trackpad, or mouse. Green means inside the Arabic shape; red means outside. Score is strict on borders, coverage, shape, and steadiness.</p>
+        <p class="trace-sub">Trace with Apple Pencil, stylus, finger, trackpad, or mouse. Green means inside the Arabic shape; red means outside. Score is strict on borders, coverage, shape, and line control.</p>
       </div>
       ${score!==null?h`<div class="trace-score-card">
         <div class="lb">Trace Score</div>
@@ -6022,7 +6067,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       ${traceLevel==="advanced"&&h`<div class="trace-target">
         <div>
           <div class="trace-kicker" style=${{marginBottom:2}}>Target</div>
-          <div style=${{fontSize:12,color:"#475569"}}>Write this from memory. The score compares shape and steadiness, not exact placement.</div>
+          <div style=${{fontSize:12,color:"#475569"}}>Write this from memory. The score compares shape and line control, not exact placement.</div>
         </div>
         <div class="trace-target-ar" style=${{fontFamily:traceFont.stack,letterSpacing:tracking+"px"}}>${text}</div>
       </div>`}
@@ -6030,7 +6075,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       ${metrics&&h`<div class="trace-metrics">
         <div class="trace-metric"><div class="lb">Inside Border</div><div class="vl" style=${{color:metrics.inside>=92?"#16a34a":metrics.inside>=78?"#d97706":"#ef4444"}}>${metrics.inside}%</div></div>
         <div class="trace-metric"><div class="lb">Coverage</div><div class="vl">${metrics.coverage}%</div></div>
-        <div class="trace-metric"><div class="lb">Steadiness</div><div class="vl" style=${{color:metrics.shaky?"#ef4444":"#16a34a"}}>${metrics.steadiness}%</div></div>
+        <div class="trace-metric"><div class="lb">Line Control</div><div class="vl" style=${{color:metrics.shaky?"#ef4444":"#16a34a"}}>${metrics.steadiness}%</div></div>
       </div>`}
       ${traceLevel!=="advanced"&&boundaryPct>0?h`<div style=${{marginTop:8,fontSize:12,color:boundaryPct>14?"#ef4444":"#64748b",fontWeight:900}}>Red outside boundary: ${boundaryPct}% of your ink</div>`:null}
       <div style=${{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",marginTop:12,flexWrap:"wrap"}}>
@@ -6047,7 +6092,7 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     ${s?.tracingHistory?.length?h`<div class="trace-panel" style=${{marginBottom:0}}>
       <div class="trace-kicker">Recent tracing</div>
       <div style=${{display:"flex",gap:8,flexWrap:"wrap"}}>
-        ${s.tracingHistory.slice(-8).reverse().map((r,i)=>h`<span key=${i} class=${"sp2-badge "+(r.score>=82?"sp2-badge-g":r.score>=58?"sp2-badge-a":"sp2-badge-r")}>${r.text} · ${r.score}%${r.steadiness?" · steady "+r.steadiness+"%":""}</span>`)}
+        ${s.tracingHistory.slice(-8).reverse().map((r,i)=>h`<span key=${i} class=${"sp2-badge "+(r.score>=82?"sp2-badge-g":r.score>=58?"sp2-badge-a":"sp2-badge-r")}>${r.text} · ${r.score}%${r.steadiness?" · line "+r.steadiness+"%":""}</span>`)}
       </div>
     </div>`:null}
   </div>`;
