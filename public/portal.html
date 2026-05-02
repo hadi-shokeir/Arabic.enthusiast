@@ -5537,39 +5537,93 @@ function playTraceSound(kind) {
 }
 
 function analyzeTraceStrokes(strokes) {
-  const pts = (strokes||[]).flat().filter(Boolean);
-  if (pts.length < 6) return {steadiness:0.55, shaky:false, advice:"Make a longer, slower stroke before checking."};
-  let turnSum = 0, turnCount = 0, shortSteps = 0, totalDist = 0;
-  const speeds = [];
-  for (const stroke of strokes||[]) {
-    for (let i=1; i<stroke.length; i++) {
-      const a = stroke[i-1], b = stroke[i];
-      const d = Math.hypot(b.x-a.x,b.y-a.y);
-      if (d < 1.2) shortSteps++;
-      totalDist += d;
-      const dt = Math.max(8, (b.t||0)-(a.t||0));
-      speeds.push(d/dt);
-      if (i>=2) {
-        const p = stroke[i-2];
-        const a1 = Math.atan2(a.y-p.y,a.x-p.x);
-        const a2 = Math.atan2(b.y-a.y,b.x-a.x);
-        let diff = Math.abs(a2-a1);
-        if (diff > Math.PI) diff = Math.PI*2-diff;
-        if (d > 1.5) { turnSum += diff; turnCount++; }
-      }
+  const rawStrokes = (strokes||[]).map(st => (st||[]).filter(Boolean)).filter(st => st.length > 1);
+  const pts = rawStrokes.flat();
+  if (pts.length < 6) return {steadiness:0.78, shaky:false, advice:"Make a longer stroke before checking steadiness."};
+  const angleDelta = (a,b) => {
+    let d = a-b;
+    if (!Number.isFinite(d)) return 0;
+    while (d > Math.PI) d -= Math.PI*2;
+    while (d < -Math.PI) d += Math.PI*2;
+    return d;
+  };
+  const distToSegment = (p,a,b) => {
+    const vx=b.x-a.x, vy=b.y-a.y, wx=p.x-a.x, wy=p.y-a.y;
+    const len2 = vx*vx + vy*vy || 1;
+    const t = Math.max(0, Math.min(1, (wx*vx + wy*vy) / len2));
+    const px = a.x + vx*t, py = a.y + vy*t;
+    return Math.hypot(p.x-px,p.y-py);
+  };
+  let weighted = 0, weightTotal = 0, usableStrokes = 0, ignoredDots = 0;
+  for (const stroke of rawStrokes) {
+    const clean = [stroke[0]];
+    for (let i=1;i<stroke.length;i++) {
+      const last = clean[clean.length-1], p = stroke[i];
+      if (Math.hypot(p.x-last.x,p.y-last.y) >= 2.25) clean.push(p);
     }
+    if (clean.length < 5) { ignoredDots++; continue; }
+    let length = 0;
+    for (let i=1;i<clean.length;i++) length += Math.hypot(clean[i].x-clean[i-1].x, clean[i].y-clean[i-1].y);
+    if (length < 20) { ignoredDots++; continue; }
+    usableStrokes++;
+    const residuals = [];
+    for (let i=2;i<clean.length-2;i++) residuals.push(distToSegment(clean[i], clean[i-2], clean[i+2]));
+    const avgResidual = residuals.reduce((a,b)=>a+b,0)/(residuals.length||1);
+    const sortedResidual = [...residuals].sort((a,b)=>a-b);
+    const p80Residual = sortedResidual[Math.min(sortedResidual.length-1, Math.floor(sortedResidual.length*0.8))] || avgResidual;
+    const detours = [];
+    for (let i=2;i<clean.length-2;i++) {
+      const direct = Math.hypot(clean[i+2].x-clean[i-2].x, clean[i+2].y-clean[i-2].y);
+      const path =
+        Math.hypot(clean[i-1].x-clean[i-2].x, clean[i-1].y-clean[i-2].y) +
+        Math.hypot(clean[i].x-clean[i-1].x, clean[i].y-clean[i-1].y) +
+        Math.hypot(clean[i+1].x-clean[i].x, clean[i+1].y-clean[i].y) +
+        Math.hypot(clean[i+2].x-clean[i+1].x, clean[i+2].y-clean[i+1].y);
+      if (direct > 8 && path > 8) detours.push(Math.max(0, path / direct - 1));
+    }
+    const avgDetour = detours.reduce((a,b)=>a+b,0)/(detours.length||1);
+    const sortedDetour = [...detours].sort((a,b)=>a-b);
+    const p85Detour = sortedDetour[Math.min(sortedDetour.length-1, Math.floor(sortedDetour.length*0.85))] || avgDetour;
+    const angles = [];
+    const steps = [];
+    for (let i=1;i<clean.length;i++) {
+      const a = clean[i-1], b = clean[i];
+      const d = Math.hypot(b.x-a.x,b.y-a.y);
+      steps.push(d);
+      angles.push(Math.atan2(b.y-a.y,b.x-a.x));
+    }
+    const turns = [];
+    for (let i=1;i<angles.length;i++) turns.push(angleDelta(angles[i], angles[i-1]));
+    const jerkVals = [];
+    let reversals = 0, meaningfulTurns = 0;
+    for (let i=1;i<turns.length;i++) {
+      const jerk = Math.abs(angleDelta(turns[i], turns[i-1]));
+      jerkVals.push(jerk);
+      if (Math.abs(turns[i]) > 0.24 || Math.abs(turns[i-1]) > 0.24) meaningfulTurns++;
+      if (Math.sign(turns[i]) !== Math.sign(turns[i-1]) && Math.abs(turns[i]) > 0.24 && Math.abs(turns[i-1]) > 0.24) reversals++;
+    }
+    const avgJerk = jerkVals.reduce((a,b)=>a+b,0)/(jerkVals.length||1);
+    const avgStep = steps.reduce((a,b)=>a+b,0)/(steps.length||1);
+    const stepMad = steps.reduce((a,b)=>a+Math.abs(b-avgStep),0)/(steps.length||1);
+    const residualPenalty = Math.min(1, (avgResidual*0.65 + p80Residual*0.35) / 7.5);
+    const jerkPenalty = Math.min(1, avgJerk / 1.18);
+    const reversalPenalty = Math.min(1, reversals / Math.max(3, meaningfulTurns));
+    const pacePenalty = Math.min(1, (stepMad/(avgStep+0.001)) / 1.15);
+    const detourPenalty = Math.min(1, (avgDetour*0.55 + p85Detour*0.45) / 1.8);
+    const penalty = residualPenalty*0.28 + detourPenalty*0.34 + jerkPenalty*0.20 + reversalPenalty*0.14 + pacePenalty*0.04;
+    const strokeSteady = Math.max(0, Math.min(1, 1 - penalty));
+    weighted += strokeSteady * length;
+    weightTotal += length;
   }
-  const avgTurn = turnCount ? turnSum/turnCount : 0;
-  const avgSpeed = speeds.reduce((a,b)=>a+b,0)/(speeds.length||1);
-  const speedVar = speeds.reduce((a,b)=>a+Math.abs(b-avgSpeed),0)/(speeds.length||1);
-  const jitter = Math.min(1, avgTurn/1.35);
-  const speedJitter = Math.min(1, speedVar/(avgSpeed+0.001)/1.4);
-  const stopStart = Math.min(1, shortSteps/Math.max(1, pts.length)*4);
-  const steadiness = Math.max(0, Math.min(1, 1 - (jitter*0.55 + speedJitter*0.25 + stopStart*0.20)));
-  const shaky = steadiness < 0.68;
+  if (!usableStrokes) {
+    const dotAdvice = ignoredDots ? "Dots are fine; add the main letter stroke before judging steadiness." : "Make a longer stroke before checking steadiness.";
+    return {steadiness:0.80, shaky:false, advice:dotAdvice};
+  }
+  const steadiness = Math.max(0, Math.min(1, weighted / Math.max(1, weightTotal)));
+  const shaky = steadiness < 0.55;
   const advice = shaky
-    ? "Your hand looks shaky: rest your wrist, slow down, and use one confident stroke instead of many tiny corrections."
-    : steadiness > 0.86 ? "Your stroke is steady. Keep the same pace through curves and dots." : "Good control. Slow slightly on curves to make it smoother.";
+    ? "Your hand looks shaky: rest your wrist, slow down, and avoid tiny back-and-forth corrections."
+    : steadiness > 0.82 ? "Your stroke is steady. Curves and dots are being handled well." : "Mostly steady. Try one slower, continuous stroke through each curve.";
   return {steadiness, shaky, advice};
 }
 
