@@ -18,6 +18,43 @@ async function kv(cmd) {
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
+const FREE_EXPIRY_WEEKS = 6;
+function freeLessonExpiry(s, now = new Date()) {
+  if (!s?.startDate || !(s.freeTotal || 0)) return { expired: false };
+  const [sy, sm, sd] = String(s.startDate).split('-').map(Number);
+  if (!sy || !sm || !sd) return { expired: false };
+  const expiry = new Date(sy, sm - 1, sd + FREE_EXPIRY_WEEKS * 7, 23, 59, 59);
+  return { expired: now > expiry };
+}
+function freeLessonsLeft(s, now = new Date()) {
+  if (freeLessonExpiry(s, now).expired) return 0;
+  return Math.max(0, (s?.freeTotal || 0) - (s?.freeTaken || 0));
+}
+function paidCreditsLeft(s) {
+  if (typeof s?.remainingClasses === 'number') return Math.max(0, s.remainingClasses || 0);
+  return Math.max(0, (s?.lessonsTotal || 0) - (s?.lessonsTaken || 0));
+}
+function deductLessonCredit(s, now = new Date()) {
+  const paidBefore = paidCreditsLeft(s);
+  const freeBefore = freeLessonsLeft(s, now);
+  const before = paidBefore + freeBefore;
+  if (freeBefore > 0) {
+    return {
+      student: { ...s, freeTaken: Math.min(s.freeTotal || 0, (s.freeTaken || 0) + 1) },
+      before,
+      after: Math.max(0, before - 1),
+      creditType: 'free'
+    };
+  }
+  const paidAfter = Math.max(0, paidBefore - 1);
+  return {
+    student: { ...s, remainingClasses: paidAfter, lessonsTaken: (s.lessonsTaken || 0) + 1 },
+    before,
+    after: paidAfter,
+    creditType: 'paid'
+  };
+}
+
 export default async function handler(req, res) {
   // Guard: must come from Vercel cron (Authorization header)
   const cronSecret = process.env.CRON_SECRET;
@@ -52,18 +89,17 @@ export default async function handler(req, res) {
       // Find and update student
       const stu = (studentData?.students || []).find(st => st.id === s.studentId);
       if (stu && studentData) {
-        const before = typeof stu.remainingClasses === 'number' ? stu.remainingClasses : Math.max(0, (stu.lessonsTotal || 0) - (stu.lessonsTaken || 0));
-        const after  = Math.max(0, before - 1);
+        const credit = deductLessonCredit(stu, now);
         studentData = {
           ...studentData,
           students: studentData.students.map(st =>
-            st.id === stu.id ? { ...st, remainingClasses: after, lessonsTaken: (st.lessonsTaken || 0) + 1 } : st
+            st.id === stu.id ? credit.student : st
           )
         };
         deductions = [...deductions, {
           id: uid(), studentId: stu.id, studentName: stu.name, slotId: s.id,
           date: s.date, time: s.time, duration: s.duration,
-          deductedAt: now.toISOString(), classesBefore: before, classesAfter: after, type: 'auto'
+          deductedAt: now.toISOString(), classesBefore: credit.before, classesAfter: credit.after, type: 'auto', creditType: credit.creditType
         }];
       }
 

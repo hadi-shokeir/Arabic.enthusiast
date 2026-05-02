@@ -23,8 +23,8 @@
 html,body{height:100%;overflow-x:hidden;max-width:100%}#root{height:100%;overflow:hidden}.student-root ~ * {overflow:auto}
 body:has(.student-root){overflow:auto;overflow-x:hidden}
 #root:has(.student-root){overflow:auto;overflow-x:hidden;height:auto}
-body:has(.auth-wrap){overflow:auto;overflow-x:hidden}
-#root:has(.auth-wrap){overflow:auto;overflow-x:hidden;height:auto}
+body:has(.auth-wrap){overflow:auto;overflow-x:hidden;background:#080808;min-height:100dvh}
+#root:has(.auth-wrap){overflow:auto;overflow-x:hidden;height:auto;min-height:100dvh;background:#080808}
 /* Mobile keyboard fix: when an input/textarea is focused, un-stick the headers
    so the keyboard doesn't cause layout shifts that blur the input */
 @media (max-width: 768px) {
@@ -972,6 +972,60 @@ tr.ck:hover td,.tutor-root tr.ck:hover td{
   .quest-memory-card{min-height:78px}
   .quest-built{font-size:30px;min-height:62px}
 }
+
+/* Tablet + phone dashboard fit pass */
+@media(max-width:1024px){
+  html,body{max-width:100%;overflow-x:hidden}
+  body:has(.sp2-root),#root:has(.sp2-root){height:100dvh;overflow:hidden}
+  .sp2-content,.tutor-content{box-sizing:border-box;max-width:100%;overflow-x:hidden;padding:18px}
+  .tutor-root .tutor-page-head{align-items:flex-start;flex-direction:column;gap:10px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .fr,.fr3,.portal-grid,.kit-board,.quest-hero-inner,.quest-scene,.dash-two-col{grid-template-columns:1fr!important}
+  .fg,input,select,textarea{min-width:0;max-width:100%;box-sizing:border-box}
+  .card,.sp2-card,.assess-card,.stat,.stu-card,.prof-hd,.mo,.res-card,.fc-deck{box-sizing:border-box;max-width:100%}
+  .auth-tabs,.tabs,.sp2-tabs,.lib-tab-nav,.assessment-section-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .auth-tabs::-webkit-scrollbar,.tabs::-webkit-scrollbar,.sp2-tabs::-webkit-scrollbar,.lib-tab-nav::-webkit-scrollbar,.assessment-section-tabs::-webkit-scrollbar{display:none}
+  .assessment-track-grid,.assessment-skill-body,.assessment-skill-rows{grid-template-columns:1fr!important}
+  .kit-settings,.kit-order-strip{grid-template-columns:1fr!important}
+  .quest-map{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mo{width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important}
+}
+@media(max-width:768px){
+  .sp2-layout{display:block;min-height:0}
+  .sp2-sidebar{display:none!important}
+  .sp2-mob-nav{display:flex!important}
+  .sp2-content,.tutor-content{height:calc(100dvh - 58px);padding:14px 12px calc(92px + env(safe-area-inset-bottom))!important;overflow-y:auto}
+  .tutor-root .tutor-page-head h1{font-size:26px}
+  .tutor-root .tutor-page-head p{font-size:12px}
+  .stats,.stu-card .sc-stats{grid-template-columns:1fr 1fr!important}
+  .stu-grid{grid-template-columns:1fr!important}
+  .sc-top,.prof-hd{align-items:flex-start}
+  .prof-hd{flex-direction:column;text-align:left}
+  .prof-info,.prof-info h2{width:100%}
+  .prof-meta{justify-content:flex-start}
+  .students-table-card{border-radius:14px!important}
+  .students-table-card table,.sp2-content table,.tutor-content table{min-width:640px}
+  .fg input,.fg select,.fg textarea,input,select,textarea{font-size:16px!important;box-sizing:border-box}
+  .mo{border-radius:16px!important;max-height:88dvh!important}
+  .mo-bd{padding:14px!important}
+  .mo-ft{position:sticky;bottom:0;background:var(--ae-panel,#fff);padding:12px 14px!important}
+  .kit-kitchen-map{grid-template-columns:repeat(7,88px)!important;overflow-x:auto}
+  .kit-tool-rack,.kit-shelf,.quest-shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .quest-map,.quest-choice-grid,.quest-word-bank{grid-template-columns:1fr!important}
+  .sp2-chat{height:calc(100dvh - 160px)!important}
+}
+@media(max-width:520px){
+  .sp2-content,.tutor-content{padding-left:10px!important;padding-right:10px!important}
+  .stats,.stu-card .sc-stats{grid-template-columns:1fr!important}
+  .sp2-card,.card,.assess-card,.stat,.stu-card{padding:12px!important;border-radius:12px!important}
+  .fr,.fr3{gap:10px!important}
+  .sc-actions,.kit-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+  .sc-actions .btn,.kit-actions .sp2-btn{width:100%;justify-content:center}
+  .auth-tabs,.tabs{gap:0}
+  .auth-tab,.tab{min-width:max-content;padding-left:10px!important;padding-right:10px!important}
+  .kit-tool-rack,.kit-shelf,.quest-shop-grid,.quest-memory-grid{grid-template-columns:1fr!important}
+  .sp2-mob-it{min-width:58px}
+}
 </style>
 </head>
 <body>
@@ -1427,6 +1481,46 @@ function freeLeft(s) {
   const fe = freeExpiry(s);
   if (fe.expired) return 0;
   return Math.max(0, (s.freeTotal||0) - (s.freeTaken||0));
+}
+function paidLessonsLeft(s) {
+  if (!s) return 0;
+  if (typeof s.remainingClasses === "number") return Math.max(0, s.remainingClasses || 0);
+  return Math.max(0, (s.lessonsTotal||0) - (s.lessonsTaken||0));
+}
+function lessonStats(s) {
+  const paidTotal = Math.max(0, s?.lessonsTotal || 0);
+  const paidTaken = Math.max(0, s?.lessonsTaken || 0);
+  const paidLeft = paidLessonsLeft(s);
+  const freeTotal = Math.max(0, s?.freeTotal || 0);
+  const freeTaken = Math.max(0, s?.freeTaken || 0);
+  const freeRemaining = freeLeft(s || {});
+  const plannedTotal = paidTotal + freeTaken + freeRemaining;
+  const taken = paidTaken + freeTaken;
+  const left = paidLeft + freeRemaining;
+  const total = Math.max(plannedTotal, taken + left);
+  const pct = total > 0 ? Math.min(100, Math.round((taken / total) * 100)) : 0;
+  return {paidTotal, paidTaken, paidLeft, freeTotal, freeTaken, freeLeft:freeRemaining, total, taken, left, pct};
+}
+function takeLessonCredit(s) {
+  const freeRemaining = freeLeft(s || {});
+  if (freeRemaining > 0) {
+    return {...s, freeTaken: Math.min(s.freeTotal||0, (s.freeTaken||0) + 1)};
+  }
+  const paidLeft = paidLessonsLeft(s);
+  return {
+    ...s,
+    lessonsTaken: (s.lessonsTaken||0) + 1,
+    remainingClasses: typeof s.remainingClasses === "number" ? Math.max(0, paidLeft - 1) : s.remainingClasses
+  };
+}
+function restoreLessonCredit(s) {
+  if ((s.freeTaken||0) > 0) return {...s, freeTaken: Math.max(0, (s.freeTaken||0) - 1)};
+  const paidLeft = paidLessonsLeft(s);
+  return {
+    ...s,
+    lessonsTaken: Math.max(0, (s.lessonsTaken||0) - 1),
+    remainingClasses: typeof s.remainingClasses === "number" ? paidLeft + 1 : s.remainingClasses
+  };
 }
 
 // ─── Skill Helpers ───
@@ -2509,7 +2603,7 @@ function LessonPlanAI({student, data}) {
     setLoading(true); setError(""); setPlan("");
     try {
       const d = await apiPost("/api/ai", {type:"lesson_plan", context:{
-        name:s.name, level:s.level, type:s.type, lessonsTaken:s.lessonsTaken, attendance:att.rate,
+        name:s.name, level:s.level, type:s.type, lessonsTaken:lessonStats(s).taken, attendance:att.rate,
         studyTypes:activeTracks.join(", "), trackSummary,
         skillReading:s.skillReading||3, skillWriting:s.skillWriting||3, skillListening:s.skillListening||3, skillSpeaking:s.skillSpeaking||3,
         goals:s.goals||"", nextSteps:s.nextSteps||"", teacherNotes:s.teacherPrivateNotes||s.teacherSummary||"",
@@ -2804,9 +2898,7 @@ function StudentScheduler({student, data, setData, auth}) {
   const blockedDates = data.settings.blockedDates || [];
   const tz        = student.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const accent    = student.studentTheme || "#1976d2";
-  const credits   = typeof student.remainingClasses === "number"
-    ? student.remainingClasses
-    : Math.max(0, (student.lessonsTotal||0) - (student.lessonsTaken||0));
+  const credits   = lessonStats(student).left;
 
   const flash = (m, isErr) => {
     if (isErr) setErr(m); else setMsg(m);
@@ -7025,7 +7117,8 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
   const sLessons = data.lessons.filter(l=>l.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const sHomework = (data.homework||[]).filter(hw=>hw.studentId===s.id).sort((a,b)=>new Date(b.dueDate)-new Date(a.dueDate));
   const pendingHw = sHomework.filter(hw=>hw.status==="assigned");
-  const left = s.lessonsTotal - s.lessonsTaken;
+  const lessonSummary = lessonStats(s);
+  const left = lessonSummary.left;
   const att = attendanceStats(s.id, data.lessons);
   const assigned = (data.curriculum||[]).filter(c=>(s.assignedLessons||[]).includes(c.id));
   const doneCount = (s.completedLessons||[]).filter(id=>(s.assignedLessons||[]).includes(id)).length;
@@ -7075,13 +7168,14 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
           </div>
           <div style=${{flex:1}}>
             <div style=${{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"var(--sp-txt)",marginBottom:4}}>${greeting}, ${firstName}!</div>
-            <div style=${{fontSize:13,color:"var(--sp-txt2)"}}>${att.streak>=2?"🔥 "+att.streak+"-lesson streak — keep going!":s.lessonsTaken===0?"Your Arabic journey begins here ✨":"Ready to practice today?"}</div>
+            <div style=${{fontSize:13,color:"var(--sp-txt2)"}}>${att.streak>=2?"🔥 "+att.streak+"-lesson streak — keep going!":lessonSummary.taken===0?"Your Arabic journey begins here ✨":"Ready to practice today?"}</div>
           </div>
           <div style=${{display:"flex",gap:8,flexShrink:0}}>
             ${(()=>{const credColor=left<=2?"var(--sp-red)":left<=4?"#f59e0b":"var(--sp-green)";const credBorder=left<=2?"rgba(207,71,68,0.3)":left<=4?"rgba(245,158,11,0.3)":"rgba(76,175,125,0.3)";return h`<div style=${{textAlign:"center",background:"var(--sp-glow)",border:"1px solid "+credBorder,borderRadius:12,padding:"10px 14px"}}>
               <div style=${{fontSize:9,fontWeight:700,color:credColor,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Lessons Left</div>
               <div style=${{fontSize:22,fontWeight:900,fontFamily:"'Playfair Display',serif",color:credColor,lineHeight:1}}>${left<=0?"0":left}</div>
-              <div style=${{fontSize:9,color:"var(--sp-txt3)",marginTop:2}}>of ${s.lessonsTotal||0}</div>
+              <div style=${{fontSize:9,color:"var(--sp-txt3)",marginTop:2}}>of ${lessonSummary.total||0}</div>
+              ${lessonSummary.freeTotal>0?h`<div style=${{fontSize:9,color:"var(--sp-green)",marginTop:3,fontWeight:700}}>${lessonSummary.freeLeft} free left</div>`:null}
               ${left<=2?h`<div style=${{fontSize:9,color:credColor,marginTop:4,fontWeight:700}}>${left===0?"⚠️ Refill needed":"⚠️ Running low"}</div>`:null}
             </div>`})()}
             ${nextLesson?h`<div style=${{textAlign:"center",background:"var(--sp-glow)",border:"1px solid var(--sp-border-h)",borderRadius:12,padding:"10px 14px"}}>
@@ -7094,7 +7188,7 @@ function StudentPortal({data, setData, user, auth, onLogout}) {
       </div>
 
       <div style=${{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:18}}>
-        ${[["📚","Lessons Done",s.lessonsTaken,"var(--sp-amber)"],["📅","Attendance",att.rate+"%",att.rate>=80?"var(--sp-green)":att.rate>=60?"#f59e0b":"var(--sp-red)"],["🔥","Streak",(s.streakDays||0)+" days","#ff6b35"],["📖","Topics",doneCount+"/"+assigned.length,"var(--sp-teal)"]].map(([icon,label,val,color])=>h`<div class="sp2-card" style=${{textAlign:"center",padding:16,borderTop:"3px solid "+color}} key=${label}>
+        ${[["📚","Lessons Done",lessonSummary.taken,"var(--sp-amber)"],["📅","Attendance",att.rate+"%",att.rate>=80?"var(--sp-green)":att.rate>=60?"#f59e0b":"var(--sp-red)"],["🔥","Streak",(s.streakDays||0)+" days","#ff6b35"],["📖","Topics",doneCount+"/"+assigned.length,"var(--sp-teal)"]].map(([icon,label,val,color])=>h`<div class="sp2-card" style=${{textAlign:"center",padding:16,borderTop:"3px solid "+color}} key=${label}>
           <div style=${{fontSize:22,marginBottom:6}}>${icon}</div>
           <div style=${{fontSize:20,fontWeight:700,fontFamily:"'Playfair Display',serif",color}}>${val}</div>
           <div style=${{fontSize:10,color:"var(--sp-txt3)",textTransform:"uppercase",letterSpacing:0.8,marginTop:3}}>${label}</div>
@@ -7580,11 +7674,12 @@ function StudentProfile({data, setData, profileId, auth}) {
   const sHomework = (data.homework||[]).filter(hw=>hw.studentId===s.id).sort((a,b)=>new Date(b.assignedDate)-new Date(a.assignedDate));
   const sLessonLogs = (data.lessonLogs||[]).filter(l=>l.studentId===s.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const att = attendanceStats(s.id, data.lessons);
+  const lessonSummary = lessonStats(s);
 
   const runAI = async () => {
     setAiLoading(true); setAiResult("");
     try {
-      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:auth?.token,type:"student_analysis",context:{name:s.name,level:s.level,type:s.type,lessonsTaken:s.lessonsTaken,attendance:att.rate,skillReading:s.skillReading||3,skillWriting:s.skillWriting||3,skillListening:s.skillListening||3,skillSpeaking:s.skillSpeaking||3,goals:s.goals||"",nextSteps:s.nextSteps||"",teacherNotes:s.teacherPrivateNotes||"",homeworkNotes:s.homeworkNotes||""}})});
+      const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:auth?.token,type:"student_analysis",context:{name:s.name,level:s.level,type:s.type,lessonsTaken:lessonSummary.taken,attendance:att.rate,skillReading:s.skillReading||3,skillWriting:s.skillWriting||3,skillListening:s.skillListening||3,skillSpeaking:s.skillSpeaking||3,goals:s.goals||"",nextSteps:s.nextSteps||"",teacherNotes:s.teacherPrivateNotes||"",homeworkNotes:s.homeworkNotes||""}})});
       const d = await res.json();
       setAiResult(d.result||d.error||"No response from AI.");
     } catch(e) { setAiResult("Error: "+e.message); }
@@ -7598,7 +7693,7 @@ function StudentProfile({data, setData, profileId, auth}) {
     if (withAI) {
       try {
         const res = await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({type:"lesson_feedback",context:{
-          name:s.name,level:s.level,type:s.type,lessonsTaken:s.lessonsTaken,
+          name:s.name,level:s.level,type:s.type,lessonsTaken:lessonSummary.taken,
           goals:s.goals||"",currentNextSteps:s.nextSteps||"",
           skillReading:s.skillReading||3,skillWriting:s.skillWriting||3,skillListening:s.skillListening||3,skillSpeaking:s.skillSpeaking||3,
           date:logForm.date,coveredTopics:logForm.coveredTopics,performance:logForm.performance,teacherNotes:logForm.teacherNotes
@@ -7679,8 +7774,8 @@ function StudentProfile({data, setData, profileId, auth}) {
     </div>
 
     <div class="stats" style=${{gridTemplateColumns:"repeat(4,1fr)",marginBottom:20}}>
-      <div class="stat"><div class="lb">Lessons Done</div><div class="vl">${s.lessonsTaken}</div></div>
-      <div class="stat"><div class="lb">Lessons Left</div><div class=${"vl ll "+((s.lessonsTotal-s.lessonsTaken)<=0?"low":(s.lessonsTotal-s.lessonsTaken)<=2?"ok":"good")}>${s.lessonsTotal-s.lessonsTaken}</div></div>
+      <div class="stat"><div class="lb">Lessons Done</div><div class="vl">${lessonSummary.taken}</div></div>
+      <div class="stat"><div class="lb">Lessons Left</div><div class=${"vl ll "+(lessonSummary.left<=0?"low":lessonSummary.left<=2?"ok":"good")}>${lessonSummary.left}</div></div>
       <div class="stat"><div class="lb">Attendance</div><div class="vl" style=${{color:att.rate>=80?"var(--ok)":att.rate>=60?"var(--wn)":"var(--bd)"}}>${att.rate}%</div></div>
       <div class="stat"><div class="lb">HW Pending</div><div class="vl" style=${{color:sHomework.filter(x=>x.status==="assigned").length>0?"var(--wn)":"var(--ok)"}}>${sHomework.filter(x=>x.status==="assigned").length}</div></div>
     </div>
@@ -7739,11 +7834,14 @@ function StudentProfile({data, setData, profileId, auth}) {
         <div class="fr3">
           <div class="fg"><label>Timezone</label><input value=${s.timezone||""} onInput=${e=>upd("timezone",e.target.value)} placeholder="Asia/Beirut"/></div>
           <div class="fg"><label>Learning Studio Access</label><select value=${s.studioAccess===false?"off":"on"} onChange=${e=>upd("studioAccess",e.target.value==="on")}><option value="on">Active / Included</option><option value="off">Off / Subscription inactive</option></select></div>
-          <div class="fg"><label>Total Lessons</label><input type="number" value=${s.lessonsTotal||0} onInput=${e=>upd("lessonsTotal",+e.target.value)}/></div>
+          <div class="fg"><label>Paid Lessons Purchased</label><input type="number" value=${s.lessonsTotal||0} onInput=${e=>{const next=Math.max(0,+e.target.value); updMany({lessonsTotal:next, remainingClasses:Math.max(0, paidLessonsLeft(s)+(next-(s.lessonsTotal||0)))})}}/></div>
         </div>
         <div class="fr3">
-          <div class="fg"><label>Lessons Taken</label><input type="number" value=${s.lessonsTaken||0} onInput=${e=>upd("lessonsTaken",+e.target.value)}/></div>
+          <div class="fg"><label>Paid Lessons Taken</label><input type="number" value=${s.lessonsTaken||0} onInput=${e=>{const next=Math.max(0,+e.target.value); updMany({lessonsTaken:next, remainingClasses:Math.max(0, paidLessonsLeft(s)-(next-(s.lessonsTaken||0)))})}}/></div>
+          <div class="fg"><label>Free Lessons Given</label><input type="number" value=${s.freeTotal||0} onInput=${e=>upd("freeTotal",Math.max(0,+e.target.value))}/></div>
+          <div class="fg"><label>Free Lessons Taken</label><input type="number" value=${s.freeTaken||0} onInput=${e=>upd("freeTaken",Math.max(0,Math.min(s.freeTotal||0,+e.target.value)))}/></div>
         </div>
+        <div style=${{marginTop:4,padding:"10px 12px",borderRadius:8,background:"var(--g50)",border:"1.5px solid var(--g200)",fontSize:12,color:"var(--g600)",fontWeight:700}}>Total lesson credit: ${lessonSummary.left} left of ${lessonSummary.total} (${lessonSummary.paidLeft} paid + ${lessonSummary.freeLeft} free)</div>
       </div>
       ${s.studentNote&&h`<div class="assess-card" style=${{borderLeftColor:"#7b1fa2",background:"#fdf4ff",marginBottom:14}}>
         <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
@@ -8249,9 +8347,9 @@ function Dashboard({data, setData, auth}) {
           ${noL.map(s => h`<div key=${s.id} style=${{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid var(--g100)"}}><div style=${{display:"flex",alignItems:"center",gap:6}}><span class="rd"></span><span style=${{fontWeight:600}}>${s.name}</span></div>${s.whatsapp && h`<button class="btn btn-xs btn-wa" onClick=${()=>waMsg(s.whatsapp,fillMsg(S.msgGen,s,null))}>${ic('wa')} Remind</button>`}</div>`)}
         </div>`}
         <div class="card" style=${{marginBottom:14}}><h3>LOW BALANCE</h3>
-          ${active.filter(s=>(s.lessonsTotal-s.lessonsTaken)<=2).length===0 ? h`<p style=${{color:"var(--g400)",fontSize:13}}>All good</p>` : h`<table><thead><tr><th>Student</th><th>Left</th></tr></thead><tbody>
-            ${active.filter(s=>(s.lessonsTotal-s.lessonsTaken)<=2).map(s => h`<tr key=${s.id}><td style=${{fontWeight:600}}>${s.name}</td><td><span class=${"ll "+(s.lessonsTotal-s.lessonsTaken<=0?"low":"ok")}>${s.lessonsTotal-s.lessonsTaken}</span></td></tr>`)}
-          </tbody></table>`}
+          ${(()=>{const low=active.filter(s=>lessonStats(s).left<=2);return low.length===0 ? h`<p style=${{color:"var(--g400)",fontSize:13}}>All good</p>` : h`<table><thead><tr><th>Student</th><th>Left</th></tr></thead><tbody>
+            ${low.map(s => {const ls=lessonStats(s);return h`<tr key=${s.id}><td style=${{fontWeight:600}}>${s.name}</td><td><span class=${"ll "+(ls.left<=0?"low":"ok")}>${ls.left}</span></td></tr>`;})}
+          </tbody></table>`})()}
         </div>
         <div class="card">
           <h3>💬 STUDENT ENGAGEMENT TIPS</h3>
@@ -8299,12 +8397,16 @@ function Students({data, setData, onProfile, auth}) {
           : "Top-up — "+lessonDiff+" lesson"+(lessonDiff>1?"s":"")+" added";
         newPayments = [...data.payments, {id:uid(),studentId:form.id,amount,date:today(),method:"Cash",notes:note,lessonsAdded:lessonDiff,status:payStatus}];
       }
-      const saved = {...form, enrollmentStatus: form.enrollmentStatus==="pending" ? "active" : form.enrollmentStatus};
+      const saved = {
+        ...form,
+        remainingClasses: Math.max(0, paidLessonsLeft(ex) + lessonDiff - ((form.lessonsTaken||0) - (ex.lessonsTaken||0))),
+        enrollmentStatus: form.enrollmentStatus==="pending" ? "active" : form.enrollmentStatus
+      };
       setData({...data, students: data.students.map(s=>s.id===form.id?saved:s), payments: newPayments});
     } else {
       const amount = form.lessonsTotal * form.lessonRate;
       const newPayment = {id:uid(),studentId:form.id,amount,date:today(),method:"Cash",notes:"Initial enrollment — "+form.lessonsTotal+" lessons",lessonsAdded:form.lessonsTotal,status:payStatus};
-      setData({...data, students:[...data.students,{...form, studentNumber: nextStudentNumber(data.students)}], payments: amount>0 ? [...data.payments,newPayment] : data.payments});
+      setData({...data, students:[...data.students,{...form, remainingClasses:Math.max(0, (form.lessonsTotal||0) - (form.lessonsTaken||0)), studentNumber: nextStudentNumber(data.students)}], payments: amount>0 ? [...data.payments,newPayment] : data.payments});
       // Optionally create a login account for the new student
       if (loginPw && form.email && auth?.token) {
         const r = await apiPost("/api/users", {token: auth.token, action:"create", name:form.name.trim(), email:form.email.toLowerCase().trim(), password:loginPw, role:"student", phone:form.whatsapp||""});
@@ -8316,8 +8418,15 @@ function Students({data, setData, onProfile, auth}) {
   };
   const doDelete = id => { if(confirm("Delete student and all their records?")) setData({...data,students:data.students.filter(s=>s.id!==id),lessons:data.lessons.filter(l=>l.studentId!==id),payments:data.payments.filter(p=>p.studentId!==id)}); };
 
-  const adjTaken = (sid, delta) => { setData({...data, students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: Math.max(0, s.lessonsTaken+delta)} : s)}); };
-  const adjTotal = (sid, delta) => { setData({...data, students: data.students.map(s => s.id===sid ? {...s, lessonsTotal: Math.max(0, s.lessonsTotal+delta)} : s)}); };
+  const adjTaken = (sid, delta) => { setData({...data, students: data.students.map(s => {
+    if (s.id!==sid) return s;
+    const nextTaken = Math.max(0, (s.lessonsTaken||0)+delta);
+    return {...s, lessonsTaken: nextTaken, remainingClasses: typeof s.remainingClasses==="number" ? Math.max(0, paidLessonsLeft(s)-delta) : s.remainingClasses};
+  })}); };
+  const adjTotal = (sid, delta) => { setData({...data, students: data.students.map(s => {
+    if (s.id!==sid) return s;
+    return {...s, lessonsTotal: Math.max(0, (s.lessonsTotal||0)+delta), remainingClasses: typeof s.remainingClasses==="number" ? Math.max(0, paidLessonsLeft(s)+delta) : s.remainingClasses};
+  })}); };
   const adjFreeTaken = (sid, delta) => { setData({...data, students: data.students.map(s => { if(s.id!==sid) return s; const fe=freeExpiry(s); if(fe.expired && delta>0) return s; const nv=Math.max(0, Math.min((s.freeTotal||0), (s.freeTaken||0)+delta)); return {...s, freeTaken:nv}; })}); };
 
   // FIX #4: Quick complete creates a lesson record if none exists
@@ -8326,7 +8435,7 @@ function Students({data, setData, onProfile, auth}) {
     if (todayL) {
       setData({...data,
         lessons: data.lessons.map(l => l.id===todayL.id ? {...l,status:"Completed"} : l),
-        students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: s.lessonsTaken+1} : s)
+        students: data.students.map(s => s.id===sid ? takeLessonCredit(s) : s)
       });
     } else {
       // Create a new completed lesson record + increment counter
@@ -8334,7 +8443,7 @@ function Students({data, setData, onProfile, auth}) {
       const newLesson = {id:uid(),studentId:sid,groupId:"",date:today(),time:new Date().toTimeString().slice(0,5),duration:60,type:st?.type||(S.types||[])[0]||"Levantine",status:"Completed",notes:"Quick-completed"};
       setData({...data,
         lessons: [...data.lessons, newLesson],
-        students: data.students.map(s => s.id===sid ? {...s, lessonsTaken: s.lessonsTaken+1} : s)
+        students: data.students.map(s => s.id===sid ? takeLessonCredit(s) : s)
       });
     }
   };
@@ -8353,9 +8462,10 @@ function Students({data, setData, onProfile, auth}) {
 
     viewMode==="cards" ? h`<div class="stu-grid">
       ${list.map((s,i) => {
-        const left = s.lessonsTotal - s.lessonsTaken;
+        const ls = lessonStats(s);
+        const left = ls.left;
         const noL = s.active && !hadLesson(s.id, data.lessons, S.weekStartDay);
-        const pct = s.lessonsTotal > 0 ? Math.round(s.lessonsTaken / s.lessonsTotal * 100) : 0;
+        const pct = ls.pct;
         const sPay = data.payments.filter(p=>p.studentId===s.id);
         const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
         const hasToday = data.lessons.some(l => l.studentId===s.id && l.date===today() && l.status==="Scheduled");
@@ -8377,15 +8487,17 @@ function Students({data, setData, onProfile, auth}) {
               <div style=${{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                 <div class="stepper" onClick=${e=>e.stopPropagation()}>
                   <button class="st-btn minus" onClick=${()=>adjTaken(s.id,-1)}>−</button>
-                  <div class="st-val">${s.lessonsTaken}</div>
+                  <div class="st-val">${ls.taken}</div>
                   <button class="st-btn" onClick=${()=>adjTaken(s.id,1)}>+</button>
                 </div>
               </div>
+              ${ls.freeTotal>0&&h`<div style=${{fontSize:9,color:"var(--g400)",marginTop:6}}>paid ${ls.paidTaken} · free ${ls.freeTaken}</div>`}
             </div>
             <div class="sc-stat">
               <div class="sc-sl">Lessons Left</div>
               <span class=${"ll "+(left<=0?"low":left<=2?"ok":"good")} style=${{fontSize:26}}>${left}</span>
-              <span style=${{fontSize:10,color:"var(--g400)"}}> / ${s.lessonsTotal}</span>
+              <span style=${{fontSize:10,color:"var(--g400)"}}> / ${ls.total}</span>
+              ${ls.freeTotal>0&&h`<div style=${{fontSize:9,color:"var(--ok)",fontWeight:700}}>${ls.freeLeft} free left</div>`}
               <div class="prog"><div class=${"prog-fill "+(pct>=80?"low":pct>=50?"ok":"good")} style=${{width:pct+"%"}}></div></div>
             </div>
             <div class="sc-stat">
@@ -8406,7 +8518,8 @@ function Students({data, setData, onProfile, auth}) {
 
     h`<div class="card students-table-card" style=${{padding:0,overflow:"hidden"}}><div style=${{overflowX:"auto"}}><table class="students-table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Taken</th><th>Left</th><th>Attend.</th><th>Paid</th><th>Status</th><th></th></tr></thead><tbody>
       ${list.map((s,i) => {
-        const left = s.lessonsTotal - s.lessonsTaken;
+        const ls = lessonStats(s);
+        const left = ls.left;
         const att = attendanceStats(s.id, data.lessons);
         const sPay = data.payments.filter(p=>p.studentId===s.id);
         const totalPaid = sPay.reduce((a,p)=>a+(p.amount||0),0);
@@ -8415,7 +8528,7 @@ function Students({data, setData, onProfile, auth}) {
           <td class="nc" style=${{borderLeft:needsSetup?"4px solid #ff9800":"4px solid transparent",paddingLeft:needsSetup?6:8}}>${i+1}</td>
           <td style=${{fontWeight:600}}>${s.name}${needsSetup?h`<span style=${{marginLeft:6,fontSize:9,fontWeight:700,color:"#ff9800",background:"#fff3e0",padding:"2px 5px",borderRadius:4,verticalAlign:"middle"}}>⚠ SETUP</span>`:null}</td>
           <td><span class="tg">${s.type}</span></td>
-          <td>${s.lessonsTaken}</td>
+          <td>${ls.taken}</td>
           <td><span class=${"ll "+(left<=0?"low":left<=2?"ok":"good")}>${left}</span></td>
           <td><span class=${"ll "+(att.rate>=80?"good":att.rate>=60?"ok":"low")} style=${{fontSize:16}}>${att.rate}%</span></td>
           <td style=${{fontFamily:"var(--fh)",fontSize:16}}>${fm(totalPaid, CUR)}</td>
@@ -8974,15 +9087,16 @@ function Scheduling({data, setData, auth}) {
       ${activeStudents.length === 0
         ? h`<div class="sc-empty">No active students yet.</div>`
         : activeStudents.map(s => {
-            const credits = typeof s.remainingClasses === "number" ? s.remainingClasses : Math.max(0, (s.lessonsTotal||0) - (s.lessonsTaken||0));
+            const ls = lessonStats(s);
+            const credits = ls.left;
             const cls = credits <= 0 ? "cred-low" : credits <= 2 ? "cred-warn" : "cred-ok";
             return h`<div key=${s.id} class="cred-row">
               <div class=${"cred-num "+cls}>${credits}</div>
               <div style=${{flex:1}}>
                 <div style=${{fontWeight:700,fontSize:14}}>${s.name}</div>
-                <div style=${{fontSize:11,color:"var(--g500)"}}>${credits===0?"No classes left":credits===1?"1 class left":credits+" classes left"}</div>
+                <div style=${{fontSize:11,color:"var(--g500)"}}>${credits===0?"No classes left":credits===1?"1 class left":credits+" classes left"}${ls.freeTotal>0?" · "+ls.paidLeft+" paid + "+ls.freeLeft+" free":""}</div>
               </div>
-              <button class="btn btn-sm" onClick=${()=>{setCreditModal({studentId:s.id,name:s.name,current:credits});setCreditDelta(0);setCreditNote("");}}>Adjust</button>
+              <button class="btn btn-sm" onClick=${()=>{setCreditModal({studentId:s.id,name:s.name,current:ls.paidLeft});setCreditDelta(0);setCreditNote("");}}>Adjust Paid</button>
             </div>`;
           })
       }
@@ -9056,8 +9170,8 @@ function Calendar({data, setData}) {
     const ex = data.lessons.find(l=>l.id===form.id);
     let nL = ex ? data.lessons.map(l=>l.id===form.id?{...form}:l) : [...data.lessons,{...form}];
     let nS = data.students;
-    if (form.status==="Completed" && ex?.status!=="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?{...s,lessonsTaken:s.lessonsTaken+1}:s);
-    if (form.status!=="Completed" && ex?.status==="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?{...s,lessonsTaken:Math.max(0,s.lessonsTaken-1)}:s);
+    if (form.status==="Completed" && ex?.status!=="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?takeLessonCredit(s):s);
+    if (form.status!=="Completed" && ex?.status==="Completed" && form.studentId) nS = nS.map(s=>s.id===form.studentId?restoreLessonCredit(s):s);
     setData({...data, lessons:nL, students:nS}); setShow(false); setForm(mkLesson(S));
   };
   const doDel = id => { if(confirm("Delete this lesson?")) { setData({...data, lessons:data.lessons.filter(l=>l.id!==id)}); setShow(false); } };

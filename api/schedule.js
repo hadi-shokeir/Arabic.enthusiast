@@ -106,6 +106,46 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 
 function timeToMin(t) { const [h, m] = (t || '00:00').split(':').map(Number); return h * 60 + (m || 0); }
 
+const FREE_EXPIRY_WEEKS = 6;
+function freeLessonExpiry(s, now = new Date()) {
+  if (!s?.startDate || !(s.freeTotal || 0)) return { expired: false };
+  const [sy, sm, sd] = String(s.startDate).split('-').map(Number);
+  if (!sy || !sm || !sd) return { expired: false };
+  const expiry = new Date(sy, sm - 1, sd + FREE_EXPIRY_WEEKS * 7, 23, 59, 59);
+  return { expired: now > expiry };
+}
+function freeLessonsLeft(s, now = new Date()) {
+  if (freeLessonExpiry(s, now).expired) return 0;
+  return Math.max(0, (s?.freeTotal || 0) - (s?.freeTaken || 0));
+}
+function paidCreditsLeft(s) {
+  if (typeof s?.remainingClasses === 'number') return Math.max(0, s.remainingClasses || 0);
+  return Math.max(0, (s?.lessonsTotal || 0) - (s?.lessonsTaken || 0));
+}
+function totalLessonCredits(s, now = new Date()) {
+  return paidCreditsLeft(s) + freeLessonsLeft(s, now);
+}
+function deductLessonCredit(s, now = new Date()) {
+  const paidBefore = paidCreditsLeft(s);
+  const freeBefore = freeLessonsLeft(s, now);
+  const before = paidBefore + freeBefore;
+  if (freeBefore > 0) {
+    return {
+      student: { ...s, freeTaken: Math.min(s.freeTotal || 0, (s.freeTaken || 0) + 1) },
+      before,
+      after: Math.max(0, before - 1),
+      creditType: 'free'
+    };
+  }
+  const paidAfter = Math.max(0, paidBefore - 1);
+  return {
+    student: { ...s, remainingClasses: paidAfter, lessonsTaken: (s.lessonsTaken || 0) + 1 },
+    before,
+    after: paidAfter,
+    creditType: 'paid'
+  };
+}
+
 function hasConflict(slots, date, time, duration, excludeId = null) {
   const ns = timeToMin(time), ne = ns + (duration || 60);
   return slots.some(s => {
@@ -134,18 +174,17 @@ async function runDeductions(slots, studentData, deductions) {
     const stu = (studentData?.students || []).find(st => st.id === s.studentId);
 
     if (stu && studentData) {
-      const before = typeof stu.remainingClasses === 'number' ? stu.remainingClasses : Math.max(0, (stu.lessonsTotal || 0) - (stu.lessonsTaken || 0));
-      const after  = Math.max(0, before - 1);
+      const credit = deductLessonCredit(stu, now);
       studentData = {
         ...studentData,
         students: studentData.students.map(st =>
-          st.id === stu.id ? { ...st, remainingClasses: after, lessonsTaken: (st.lessonsTaken || 0) + 1 } : st
+          st.id === stu.id ? credit.student : st
         )
       };
       deductions = [...deductions, {
         id: uid(), studentId: stu.id, studentName: stu.name, slotId: s.id,
         date: s.date, time: s.time, duration: s.duration,
-        deductedAt: now.toISOString(), classesBefore: before, classesAfter: after, type: 'auto'
+        deductedAt: now.toISOString(), classesBefore: credit.before, classesAfter: credit.after, type: 'auto', creditType: credit.creditType
       }];
     }
 
@@ -305,8 +344,8 @@ export default async function handler(req, res) {
 
       // Credit check (students only — tutor can override)
       if (!isTutor) {
-        const credits = typeof student.remainingClasses === 'number' ? student.remainingClasses : null;
-        if (credits !== null && credits <= 0) {
+        const credits = totalLessonCredits(student);
+        if (credits <= 0) {
           return res.status(402).json({ error: 'no_credits', message: 'No remaining classes. Ask Hadi to top up your balance.' });
         }
       }
@@ -382,10 +421,10 @@ export default async function handler(req, res) {
       if (slot.studentId && studentData) {
         const stu = (studentData.students || []).find(s => s.id === slot.studentId);
         if (stu) {
-          const before = typeof stu.remainingClasses === 'number' ? stu.remainingClasses : Math.max(0, (stu.lessonsTotal || 0) - (stu.lessonsTaken || 0));
-          const after  = Math.max(0, before - 1);
-          studentData = { ...studentData, students: studentData.students.map(s => s.id === stu.id ? { ...s, remainingClasses: after, lessonsTaken: (s.lessonsTaken || 0) + 1 } : s) };
-          deductions  = [...deductions, { id: uid(), studentId: stu.id, studentName: stu.name, slotId: slot.id, date: slot.date, time: slot.time, duration: slot.duration, deductedAt: new Date().toISOString(), classesBefore: before, classesAfter: after, type: 'manual' }];
+          const now = new Date();
+          const credit = deductLessonCredit(stu, now);
+          studentData = { ...studentData, students: studentData.students.map(s => s.id === stu.id ? credit.student : s) };
+          deductions  = [...deductions, { id: uid(), studentId: stu.id, studentName: stu.name, slotId: slot.id, date: slot.date, time: slot.time, duration: slot.duration, deductedAt: now.toISOString(), classesBefore: credit.before, classesAfter: credit.after, type: 'manual', creditType: credit.creditType }];
           await Promise.all([saveStudentData(studentData), saveDeductions(deductions)]);
         }
       }
