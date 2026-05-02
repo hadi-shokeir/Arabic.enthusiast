@@ -5499,8 +5499,8 @@ const TRACE_FONTS = [
 ];
 
 const TRACE_LEVELS = [
-  {id:"beginner",label:"Beginner",short:"Trace",desc:"Large solid guide, strict borders, and instant green/red feedback.",guideAlpha:0.28,fillAlpha:0.12,maskPad:0.12,minScore:82},
-  {id:"medium",label:"Medium",short:"Copy",desc:"Fainter guide with stricter scoring and less tolerance.",guideAlpha:0.15,fillAlpha:0.055,maskPad:0.085,minScore:78},
+  {id:"beginner",label:"Beginner",short:"Trace",desc:"Large hollow outline guide, strict borders, and instant green/red feedback.",guideAlpha:0.34,fillAlpha:0,maskPad:0.12,minScore:82},
+  {id:"medium",label:"Medium",short:"Copy",desc:"Fainter outline guide with stricter scoring and less tolerance.",guideAlpha:0.20,fillAlpha:0,maskPad:0.085,minScore:78},
   {id:"advanced",label:"Advanced",short:"Free write",desc:"Blank canvas. Write from memory; scoring compares shape, proportions, and steadiness.",guideAlpha:0,fillAlpha:0,maskPad:0.07,minScore:72}
 ];
 
@@ -5719,8 +5719,6 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
     ctx.lineWidth = Math.max(2, fontSize*traceFont.stroke);
     ctx.strokeStyle = "rgba(15,23,42,"+level.guideAlpha+")";
     ctx.strokeText(text,x,y);
-    ctx.fillStyle = "rgba(15,23,42,"+level.fillAlpha+")";
-    ctx.fillText(text,x,y);
     ctx.letterSpacing = "0px";
     ctx.fillStyle = "#64748b";
     ctx.font = "800 12px 'DM Sans',sans-serif";
@@ -5748,9 +5746,17 @@ function ArabicTracingLab({student:s, data, setData, sourceText, title, compact}
       }
     }
     if (!any) return;
+    const overlayCanvas = drawScoredInk.canvas || (drawScoredInk.canvas = document.createElement("canvas"));
+    if (overlayCanvas.width !== guide.width || overlayCanvas.height !== guide.height) {
+      overlayCanvas.width = guide.width;
+      overlayCanvas.height = guide.height;
+    }
+    const overlayCtx = overlayCanvas.getContext("2d");
+    overlayCtx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
+    overlayCtx.putImageData(overlay,0,0);
     ctx.save();
     ctx.setTransform(1,0,0,1,0,0);
-    ctx.putImageData(overlay,0,0);
+    ctx.drawImage(overlayCanvas,0,0);
     ctx.restore();
   };
 
